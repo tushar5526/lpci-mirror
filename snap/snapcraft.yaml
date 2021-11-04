@@ -1,0 +1,88 @@
+# Copyright 2021 Canonical Ltd.  This software is licensed under the
+# GNU General Public License version 3 (see the file LICENSE).
+
+name: lpcraft
+base: core20
+summary: Runner for Launchpad CI jobs
+license: GPL-3.0
+description: |
+  lpcraft is a runner for Launchpad CI jobs.  You can use it locally, though
+  most people will use it via Launchpad.  Create a `.launchpad.yaml` file
+  describing the builds and tests you want to run, and Launchpad will run them
+  for you.
+adopt-info: lpcraft  # look for 'snapcraftctl set-*' in the lpcraft part
+compression: lzo
+
+apps:
+  lpcraft:
+    command: bin/python3 $SNAP/bin/lpcraft
+    environment:
+      # have the cache outside of the version dirs (avoids keeping N copies)
+      XDG_CACHE_HOME: $SNAP_USER_COMMON/cache
+      # same for config
+      XDG_CONFIG_HOME: $SNAP_USER_COMMON/config
+      # help git find its stuff
+      GIT_TEMPLATE_DIR: $SNAP/git/templates
+      GIT_EXEC_PATH: $SNAP/git/git-core
+
+grade: devel
+confinement: classic
+
+parts:
+  # Classic core20 snaps require staged python.
+  python3:
+    plugin: nil
+    build-packages:
+      - python3-dev
+    stage-packages:
+      - libpython3-stdlib
+      - libpython3.8-minimal
+      - libpython3.8-stdlib
+      - python3.8-minimal
+      - python3-distutils
+      - python3-minimal
+      - python3-pkg-resources
+      - python3-pip
+      - python3-setuptools
+      - python3-venv
+      - python3-wheel
+    override-build: |
+      snapcraftctl build
+      install -D -m 0755 $SNAPCRAFT_PROJECT_DIR/snap/local/sitecustomize.py $SNAPCRAFT_PART_INSTALL/usr/lib/python3.8/sitecustomize.py
+
+  lpcraft:
+    after: [python3]
+    source: .
+    plugin: python
+    requirements:
+      - requirements.txt
+    stage-packages:
+      - git
+      - apt
+    # snapcraft uses venv, which doesn't pull in wheel (as opposed to virtualenv)
+    # so then 'pip install PyYAML' gets cross.
+    python-packages: [wheel]
+    build-environment:
+      - LDFLAGS: -L/usr/lib/python3.8
+      - CPPFLAGS: -I/usr/include/python3.8
+    override-pull: |
+      # do the usual pull stuff
+      snapcraftctl pull
+      # set the version
+      snapcraftctl set-version "$( python3 -c 'from lpcraft._version import version; print(version)' )"
+    override-build: |
+      snapcraftctl build
+      # python3 fixup symlink (snapcraft bug)
+      ln -sf ../usr/bin/python3.8 $SNAPCRAFT_PART_INSTALL/bin/python3
+    organize:
+      # move things around so they're tidier
+      usr/lib/git-core: git/git-core
+      usr/share/git-core/templates: git/templates
+      usr/bin/git: bin/git
+      lib/python3.8/site-packages: lib/
+
+hooks:
+  configure:
+    passthrough:
+      environment:
+        PATH: "$SNAP/bin"
