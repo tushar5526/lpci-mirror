@@ -1,0 +1,5 @@
+*.egg-info
+*.snap
+.python-version
+.tox
+__pycache__
