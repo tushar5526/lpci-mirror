@@ -15,7 +15,6 @@ repos:
     rev: 4.0.1
     hooks:
     -   id: flake8
-        exclude: ^lib/contrib/
 -   repo: https://github.com/PyCQA/isort
     rev: 5.10.0
     hooks:
