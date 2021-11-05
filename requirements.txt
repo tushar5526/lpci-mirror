@@ -6,11 +6,31 @@
 #
 appdirs==1.4.4
     # via craft-cli
+certifi==2021.10.8
+    # via requests
+charset-normalizer==2.0.7
+    # via requests
 craft-cli @ git+git://github.com/canonical/craft-cli.git@4af19f9c0da733321dc754be1180aea28f3feeb1
     # via -r requirements.in
+craft-providers==1.0.3
+    # via -r requirements.in
+idna==3.3
+    # via requests
 pydantic==1.8.2
-    # via craft-cli
+    # via
+    #   craft-cli
+    #   craft-providers
 pyyaml==6.0
-    # via craft-cli
+    # via
+    #   craft-cli
+    #   craft-providers
+requests==2.26.0
+    # via requests-unixsocket
+requests-unixsocket==0.2.0
+    # via craft-providers
 typing-extensions==3.10.0.2
     # via pydantic
+urllib3==1.26.7
+    # via
+    #   requests
+    #   requests-unixsocket
