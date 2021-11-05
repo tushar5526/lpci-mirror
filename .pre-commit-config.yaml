@@ -27,7 +27,3 @@ repos:
     rev: v1.19.0
     hooks:
     -   id: setup-cfg-fmt
--   repo: https://github.com/jazzband/pip-tools
-    rev: 6.4.0
-    hooks:
-    -   id: pip-compile
