@@ -3,11 +3,27 @@
 
 __all__ = [
     "ask_user",
+    "load_yaml",
 ]
 
 import sys
+from pathlib import Path
+
+import yaml
 
 from lpcraft.env import is_managed_mode
+from lpcraft.errors import YAMLError
+
+
+def load_yaml(path: Path):
+    """Return the content of a YAML file."""
+    if not path.is_file():
+        raise YAMLError(f"Couldn't find config file {str(path)!r}")
+    try:
+        with path.open("rb") as f:
+            return yaml.safe_load(f)
+    except (yaml.error.YAMLError, OSError) as e:
+        raise YAMLError(f"Failed to read/parse config file {str(path)!r}: {e}")
 
 
 def ask_user(prompt: str, default: bool = False) -> bool:

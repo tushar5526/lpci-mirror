@@ -18,10 +18,12 @@ idna==3.3
     # via requests
 pydantic==1.8.2
     # via
+    #   -r requirements.in
     #   craft-cli
     #   craft-providers
 pyyaml==6.0
     # via
+    #   -r requirements.in
     #   craft-cli
     #   craft-providers
 requests==2.26.0

@@ -2,11 +2,58 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import os
+import re
+from pathlib import Path
 from unittest.mock import patch
 
+from fixtures import TempDir
 from testtools import TestCase
 
-from lpcraft.utils import ask_user
+from lpcraft.errors import YAMLError
+from lpcraft.utils import ask_user, load_yaml
+
+
+class TestLoadYAML(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.tempdir = Path(self.useFixture(TempDir()).path)
+
+    def test_success(self):
+        path = self.tempdir / "testfile.yaml"
+        path.write_text("foo: 123\n")
+        self.assertEqual({"foo": 123}, load_yaml(path))
+
+    def test_no_file(self):
+        path = self.tempdir / "testfile.yaml"
+        self.assertRaisesRegex(
+            YAMLError,
+            re.escape(f"Couldn't find config file {str(path)!r}"),
+            load_yaml,
+            path,
+        )
+
+    def test_directory(self):
+        path = self.tempdir / "testfile.yaml"
+        path.mkdir()
+        self.assertRaisesRegex(
+            YAMLError,
+            re.escape(f"Couldn't find config file {str(path)!r}"),
+            load_yaml,
+            path,
+        )
+
+    def test_corrupted_format(self):
+        path = self.tempdir / "testfile.yaml"
+        path.write_text("foo: [1, 2\n")
+        self.assertRaisesRegex(
+            YAMLError,
+            re.escape(
+                f"Failed to read/parse config file {str(path)!r}: "
+                "while parsing a flow sequence"
+            ),
+            load_yaml,
+            path,
+        )
 
 
 class TestAskUser(TestCase):
