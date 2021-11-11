@@ -11,7 +11,7 @@ from craft_cli import EmitterMode, emit
 from lpcraft._version import version_description as lpcraft_version
 
 
-def _configure_logger(name):
+def _configure_logger(name: str) -> None:
     """Configure a logger for use with craft-cli.
 
     Setting up a library's logger in DEBUG level causes its content to be
@@ -24,7 +24,7 @@ def _configure_logger(name):
 _configure_logger("craft_providers")
 
 
-def main():
+def main() -> int:
     """lpcraft runs Launchpad CI jobs."""
     parser = ArgumentParser(description="Run Launchpad CI jobs.")
     parser.add_argument(

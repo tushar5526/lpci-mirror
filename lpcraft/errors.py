@@ -11,5 +11,5 @@ __all__ = [
 class CommandError(Exception):
     """Base exception for all error commands."""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         super().__init__(message)

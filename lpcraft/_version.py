@@ -11,7 +11,7 @@ from configparser import ConfigParser
 from pathlib import Path
 
 
-def _get_version():
+def _get_version() -> str:
     try:
         return importlib.metadata.version("lpcraft")
     except importlib.metadata.PackageNotFoundError:
