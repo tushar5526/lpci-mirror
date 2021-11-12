@@ -3,9 +3,9 @@
 
 from dataclasses import dataclass
 from typing import List
+from unittest.mock import patch
 
 from craft_cli import CraftError
-from fixtures import MockPatch
 from testtools import TestCase
 
 from lpcraft.main import main
@@ -23,7 +23,7 @@ class _CommandResult:
 
 class CommandBaseTestCase(TestCase):
     def run_command(self, *args, **kwargs):
-        with MockPatch("sys.argv", ["lpcraft"] + list(args)):
+        with patch("sys.argv", ["lpcraft"] + list(args)):
             with EmitterFixture() as emitter:
                 exit_code = main()
                 return _CommandResult(
