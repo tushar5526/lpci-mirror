@@ -2,7 +2,7 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import pydantic
 from pydantic import StrictStr
@@ -27,7 +27,9 @@ class Job(ModelConfigDefaults):
     run: Optional[StrictStr]
 
     @pydantic.validator("architectures", pre=True)
-    def validate_architectures(cls, v):
+    def validate_architectures(
+        cls, v: Union[StrictStr, List[StrictStr]]
+    ) -> List[StrictStr]:
         if isinstance(v, str):
             v = [v]
         return v

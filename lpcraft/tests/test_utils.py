@@ -55,6 +55,16 @@ class TestLoadYAML(TestCase):
             path,
         )
 
+    def test_not_mapping(self):
+        path = self.tempdir / "testfile.yaml"
+        path.write_text("- foo\n")
+        self.assertRaisesRegex(
+            YAMLError,
+            re.escape(f"Config file {str(path)!r} does not define a mapping"),
+            load_yaml,
+            path,
+        )
+
 
 class TestAskUser(TestCase):
     @patch("lpcraft.utils.input")
