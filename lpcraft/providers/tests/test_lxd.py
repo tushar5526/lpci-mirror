@@ -2,16 +2,19 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from unittest.mock import Mock, call
+from typing import Optional
+from unittest.mock import Mock, call, patch
 
 from craft_providers.bases import BaseConfigurationError, BuilddBaseAlias
-from craft_providers.lxd import LXDError, LXDInstallationError
-from fixtures import EnvironmentVariable, MockPatch
+from craft_providers.lxd import LXC, LXDError, LXDInstallationError, launch
+from fixtures import EnvironmentVariable
 
 from lpcraft.errors import CommandError
-from lpcraft.providers._lxd import LXDProvider
-from lpcraft.providers.tests import MockLXC, ProviderBaseTestCase
+from lpcraft.providers._buildd import LPCraftBuilddBaseConfiguration
+from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
+from lpcraft.providers.tests import ProviderBaseTestCase
 from lpcraft.tests.fixtures import EmitterFixture
 
 _base_path = (
@@ -19,45 +22,66 @@ _base_path = (
 )
 
 
+@dataclass
+class FakeLXDInstaller:
+    """A fake LXD installer implementation for tests."""
+
+    can_install: bool = True
+    already_installed: bool = True
+    is_ready: bool = True
+
+    def install(self) -> str:
+        if self.can_install:
+            return "4.0"
+        else:
+            raise LXDInstallationError("Cannot install LXD")
+
+    def is_installed(self) -> bool:
+        return self.already_installed
+
+    def ensure_lxd_is_ready(self) -> None:
+        if not self.is_ready:
+            raise LXDError("LXD is broken")
+
+
 class TestLXDProvider(ProviderBaseTestCase):
     def setUp(self):
         super().setUp()
-        self.mock_lxc = self.useFixture(MockLXC()).mock
-        self.mock_lxd_is_installed = self.useFixture(
-            MockPatch("craft_providers.lxd.is_installed", return_value=True)
-        ).mock
-        self.mock_ask_user = self.useFixture(
-            MockPatch("lpcraft.providers._lxd.ask_user", return_value=False)
-        ).mock
-        self.mock_lxd_install = self.useFixture(
-            MockPatch("craft_providers.lxd.install")
-        ).mock
-        self.mock_configure_buildd_image_remote = self.useFixture(
-            MockPatch(
-                "craft_providers.lxd.configure_buildd_image_remote",
-                return_value="buildd-remote",
-            )
-        ).mock
-        self.mock_buildd_base_configuration = self.useFixture(
-            MockPatch(
-                "lpcraft.providers._lxd.LPCraftBuilddBaseConfiguration",
-                autospec=True,
-            )
-        ).mock
-        self.mock_lxd_launch = self.useFixture(
-            MockPatch("craft_providers.lxd.launch", autospec=True)
-        ).mock
         self.mock_path = Mock(spec=Path)
         self.mock_path.stat.return_value.st_ino = 12345
         self.emitter = self.useFixture(EmitterFixture())
 
-    def test_clean_project_environments_without_lxd(self):
-        self.mock_lxd_is_installed.return_value = False
-        provider = LXDProvider(
-            lxc=self.mock_lxc,
-            lxd_project="test-project",
-            lxd_remote="test-remote",
+    def makeLXDProvider(
+        self,
+        lxc: Optional[LXC] = None,
+        can_install: bool = True,
+        already_installed: bool = True,
+        is_ready: bool = True,
+        lxd_launcher: Optional[_LXDLauncher] = None,
+        lxd_project: str = "test-project",
+        lxd_remote: str = "test-remote",
+    ) -> LXDProvider:
+        if lxc is None:
+            lxc = Mock(spec=LXC)
+            lxc.remote_list.return_value = {}
+        lxd_installer = FakeLXDInstaller(
+            can_install=can_install,
+            already_installed=already_installed,
+            is_ready=is_ready,
         )
+        if lxd_launcher is None:
+            lxd_launcher = Mock(spec=launch)
+        return LXDProvider(
+            lxc=lxc,
+            lxd_installer=lxd_installer,
+            lxd_launcher=lxd_launcher,
+            lxd_project=lxd_project,
+            lxd_remote=lxd_remote,
+        )
+
+    def test_clean_project_environments_without_lxd(self):
+        mock_lxc = Mock(spec=LXC)
+        provider = self.makeLXDProvider(lxc=mock_lxc, already_installed=False)
 
         self.assertEqual(
             [],
@@ -66,18 +90,14 @@ class TestLXDProvider(ProviderBaseTestCase):
             ),
         )
 
-        self.mock_lxd_is_installed.assert_called_once_with()
-        self.mock_lxc.assert_not_called()
+        mock_lxc.assert_not_called()
 
     def test_clean_project_environments_no_matches(self):
-        self.mock_lxc.list_names.return_value = [
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.list_names.return_value = [
             "lpcraft-testproject-12345-focal-amd64"
         ]
-        provider = LXDProvider(
-            lxc=self.mock_lxc,
-            lxd_project="test-project",
-            lxd_remote="test-remote",
-        )
+        provider = self.makeLXDProvider(lxc=mock_lxc)
 
         self.assertEqual(
             [],
@@ -88,11 +108,12 @@ class TestLXDProvider(ProviderBaseTestCase):
 
         self.assertEqual(
             [call.list_names(project="test-project", remote="test-remote")],
-            self.mock_lxc.mock_calls,
+            mock_lxc.mock_calls,
         )
 
     def test_clean_project_environments(self):
-        self.mock_lxc.list_names.return_value = [
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.list_names.return_value = [
             "do-not-delete-me",
             "lpcraft-testproject-12345-focal-amd64",
             "lpcraft-my-project-12345--",
@@ -101,11 +122,7 @@ class TestLXDProvider(ProviderBaseTestCase):
             "lpcraft-my-project-123456--",
             "lpcraft_12345_focal_amd64",
         ]
-        provider = LXDProvider(
-            lxc=self.mock_lxc,
-            lxd_project="test-project",
-            lxd_remote="test-remote",
-        )
+        provider = self.makeLXDProvider(lxc=mock_lxc)
 
         self.assertEqual(
             [
@@ -133,13 +150,14 @@ class TestLXDProvider(ProviderBaseTestCase):
                     remote="test-remote",
                 ),
             ],
-            self.mock_lxc.mock_calls,
+            mock_lxc.mock_calls,
         )
 
     def test_clean_project_environments_list_failure(self):
         error = LXDError(brief="Boom")
-        self.mock_lxc.list_names.side_effect = error
-        provider = LXDProvider(lxc=self.mock_lxc)
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.list_names.side_effect = error
+        provider = self.makeLXDProvider(lxc=mock_lxc)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             provider.clean_project_environments(
@@ -150,11 +168,10 @@ class TestLXDProvider(ProviderBaseTestCase):
 
     def test_clean_project_environments_delete_failure(self):
         error = LXDError(brief="Boom")
-        self.mock_lxc.list_names.return_value = [
-            "lpcraft-test-12345-focal-amd64"
-        ]
-        self.mock_lxc.delete.side_effect = error
-        provider = LXDProvider(lxc=self.mock_lxc)
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.list_names.return_value = ["lpcraft-test-12345-focal-amd64"]
+        mock_lxc.delete.side_effect = error
+        provider = self.makeLXDProvider(lxc=mock_lxc)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             provider.clean_project_environments(
@@ -164,13 +181,15 @@ class TestLXDProvider(ProviderBaseTestCase):
         self.assertIs(error, raised.exception.__cause__)
 
     def test_ensure_provider_is_available_ok_when_installed(self):
-        provider = LXDProvider()
+        provider = self.makeLXDProvider()
 
         provider.ensure_provider_is_available()
 
-    def test_ensure_provider_is_available_errors_when_user_declines(self):
-        self.mock_lxd_is_installed.return_value = False
-        provider = LXDProvider()
+    @patch("lpcraft.providers._lxd.ask_user", return_value=False)
+    def test_ensure_provider_is_available_errors_when_user_declines(
+        self, mock_ask_user
+    ):
+        provider = self.makeLXDProvider(already_installed=False)
 
         self.assertRaisesRegex(
             CommandError,
@@ -182,18 +201,19 @@ class TestLXDProvider(ProviderBaseTestCase):
             provider.ensure_provider_is_available,
         )
 
-        self.mock_ask_user.assert_called_once_with(
+        mock_ask_user.assert_called_once_with(
             "LXD is required, but not installed. Do you wish to install LXD "
             "and configure it with the defaults?",
             default=False,
         )
 
-    def test_ensure_provider_is_available_errors_when_lxd_install_fails(self):
-        error = LXDInstallationError("Boom")
-        self.mock_lxd_is_installed.return_value = False
-        self.mock_ask_user.return_value = True
-        self.mock_lxd_install.side_effect = error
-        provider = LXDProvider()
+    @patch("lpcraft.providers._lxd.ask_user", return_value=True)
+    def test_ensure_provider_is_available_errors_when_lxd_install_fails(
+        self, mock_ask_user
+    ):
+        provider = self.makeLXDProvider(
+            can_install=False, already_installed=False
+        )
 
         with self.assertRaisesRegex(
             CommandError,
@@ -202,26 +222,30 @@ class TestLXDProvider(ProviderBaseTestCase):
                 "instructions on how to install the LXD snap for your "
                 "distribution."
             ),
-        ) as raised:
+        ):
             provider.ensure_provider_is_available()
 
-        self.mock_ask_user.assert_called_once_with(
+        mock_ask_user.assert_called_once_with(
             "LXD is required, but not installed. Do you wish to install LXD "
             "and configure it with the defaults?",
             default=False,
         )
-        self.assertIs(error, raised.exception.__cause__)
+
+    def test_ensure_provider_is_available_errors_when_lxd_is_not_ready(self):
+        provider = self.makeLXDProvider(is_ready=False)
+
+        with self.assertRaisesRegex(CommandError, r"LXD is broken"):
+            provider.ensure_provider_is_available()
 
     def test_is_provider_available(self):
         for is_installed in (True, False):
             with self.subTest(is_installed=is_installed):
-                self.mock_lxd_is_installed.return_value = is_installed
-                provider = LXDProvider()
+                provider = self.makeLXDProvider(already_installed=is_installed)
 
                 self.assertIs(is_installed, provider.is_provider_available())
 
     def test_get_instance_name(self):
-        provider = LXDProvider()
+        provider = self.makeLXDProvider()
 
         self.assertEqual(
             "lpcraft-my-project-12345-focal-amd64",
@@ -236,7 +260,7 @@ class TestLXDProvider(ProviderBaseTestCase):
     def test_get_command_environment_minimal(self):
         self.useFixture(EnvironmentVariable("IGNORE", "sentinel"))
         self.useFixture(EnvironmentVariable("PATH", "not-using-host-path"))
-        provider = LXDProvider()
+        provider = self.makeLXDProvider()
 
         env = provider.get_command_environment()
 
@@ -254,7 +278,7 @@ class TestLXDProvider(ProviderBaseTestCase):
         self.useFixture(EnvironmentVariable("http_proxy", "test-http-proxy"))
         self.useFixture(EnvironmentVariable("https_proxy", "test-https-proxy"))
         self.useFixture(EnvironmentVariable("no_proxy", "test-no-proxy"))
-        provider = LXDProvider()
+        provider = self.makeLXDProvider()
 
         env = provider.get_command_environment()
 
@@ -271,7 +295,12 @@ class TestLXDProvider(ProviderBaseTestCase):
 
     def test_launched_environment(self):
         expected_instance_name = "lpcraft-my-project-12345-focal-amd64"
-        provider = LXDProvider()
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.remote_list.return_value = {}
+        mock_launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(
+            lxc=mock_lxc, lxd_launcher=mock_launcher
+        )
 
         with provider.launched_environment(
             project_name="my-project",
@@ -280,46 +309,49 @@ class TestLXDProvider(ProviderBaseTestCase):
             architecture="amd64",
         ) as instance:
             self.assertIsNotNone(instance)
-            self.mock_configure_buildd_image_remote.assert_called_once_with()
-            self.mock_buildd_base_configuration.assert_called_once_with(
-                alias=BuilddBaseAlias.FOCAL,
-                environment={"LPCRAFT_MANAGED_MODE": "1", "PATH": _base_path},
-                hostname=expected_instance_name,
-            )
+            mock_lxc.remote_add.assert_called_once()
             self.assertEqual(
                 [
                     call(
                         name=expected_instance_name,
-                        base_configuration=(
-                            self.mock_buildd_base_configuration.return_value
+                        base_configuration=LPCraftBuilddBaseConfiguration(
+                            alias=BuilddBaseAlias.FOCAL,
+                            environment={
+                                "LPCRAFT_MANAGED_MODE": "1",
+                                "PATH": _base_path,
+                            },
+                            hostname=expected_instance_name,
                         ),
                         image_name="focal",
-                        image_remote="buildd-remote",
+                        image_remote="craft-com.ubuntu.cloud-buildd",
                         auto_clean=True,
                         auto_create_project=True,
                         map_user_uid=True,
                         use_snapshots=True,
-                        project="lpcraft",
-                        remote="local",
+                        project="test-project",
+                        remote="test-remote",
+                        lxc=mock_lxc,
                     ),
                     call().mount(
                         host_source=self.mock_path,
                         target=Path("/root/project"),
                     ),
                 ],
-                self.mock_lxd_launch.mock_calls,
+                mock_launcher.mock_calls,
             )
-            self.mock_lxd_launch.reset_mock()
+            mock_launcher.reset_mock()
 
         self.assertEqual(
             [call().unmount_all(), call().stop()],
-            self.mock_lxd_launch.mock_calls,
+            mock_launcher.mock_calls,
         )
 
     def test_launched_environment_launch_base_configuration_error(self):
         error = BaseConfigurationError(brief="Boom")
-        self.mock_lxd_launch.side_effect = error
-        provider = LXDProvider()
+        mock_launcher = Mock(
+            "craft_providers.lxd.launch", autospec=True, side_effect=error
+        )
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             with provider.launched_environment(
@@ -334,8 +366,10 @@ class TestLXDProvider(ProviderBaseTestCase):
 
     def test_launched_environment_launch_lxd_error(self):
         error = LXDError(brief="Boom")
-        self.mock_lxd_launch.side_effect = error
-        provider = LXDProvider()
+        mock_launcher = Mock(
+            "craft_providers.lxd.launch", autospec=True, side_effect=error
+        )
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             with provider.launched_environment(
@@ -349,7 +383,8 @@ class TestLXDProvider(ProviderBaseTestCase):
         self.assertIs(error, raised.exception.__cause__)
 
     def test_launched_environment_unmounts_and_stops_after_error(self):
-        provider = LXDProvider()
+        mock_launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
 
         with self.assertRaisesRegex(RuntimeError, r"Boom"):
             with provider.launched_environment(
@@ -358,18 +393,19 @@ class TestLXDProvider(ProviderBaseTestCase):
                 series="focal",
                 architecture="amd64",
             ):
-                self.mock_lxd_launch.reset_mock()
+                mock_launcher.reset_mock()
                 raise RuntimeError("Boom")
 
         self.assertEqual(
             [call().unmount_all(), call().stop()],
-            self.mock_lxd_launch.mock_calls,
+            mock_launcher.mock_calls,
         )
 
     def test_launched_environment_unmount_all_error(self):
         error = LXDError(brief="Boom")
-        self.mock_lxd_launch.return_value.unmount_all.side_effect = error
-        provider = LXDProvider()
+        mock_launcher = Mock(spec=launch)
+        mock_launcher.return_value.unmount_all.side_effect = error
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             with provider.launched_environment(
@@ -384,8 +420,9 @@ class TestLXDProvider(ProviderBaseTestCase):
 
     def test_launched_environment_stop_error(self):
         error = LXDError(brief="Boom")
-        self.mock_lxd_launch.return_value.stop.side_effect = error
-        provider = LXDProvider()
+        mock_launcher = Mock(spec=launch)
+        mock_launcher.return_value.stop.side_effect = error
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
 
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             with provider.launched_environment(

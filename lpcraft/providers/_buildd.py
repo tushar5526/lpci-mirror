@@ -8,7 +8,7 @@ __all__ = [
     "SERIES_TO_BUILDD_IMAGE_ALIAS",
 ]
 
-from typing import Optional
+from typing import Any, Optional
 
 from craft_providers import Executor, bases
 from craft_providers.actions import snap_installer
@@ -78,3 +78,12 @@ class LPCraftBuilddBaseConfiguration(bases.BuilddBase):
             executor=executor, retry_wait=retry_wait, timeout=timeout
         )
         self._setup_lpcraft(executor=executor)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, LPCraftBuilddBaseConfiguration):
+            return NotImplemented
+        return (
+            self.alias == other.alias
+            and self.environment == other.environment
+            and self.hostname == other.hostname
+        )

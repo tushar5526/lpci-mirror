@@ -15,8 +15,3 @@ class ProviderBaseTestCase(TestCase):
                 lambda *args, **kwargs: None,
             )
         )
-
-
-class MockLXC(MockPatch):
-    def __init__(self):
-        super().__init__("craft_providers.lxd.LXC", autospec=True)

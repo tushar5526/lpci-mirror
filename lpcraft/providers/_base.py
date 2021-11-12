@@ -31,17 +31,15 @@ class Provider(ABC):
         :return: List of containers deleted.
         """
 
-    @classmethod
     @abstractmethod
-    def ensure_provider_is_available(cls) -> None:
+    def ensure_provider_is_available(self) -> None:
         """Ensure provider is available, prompting to install it if required.
 
         :raises CommandError: if provider is not available.
         """
 
-    @classmethod
     @abstractmethod
-    def is_provider_available(cls) -> bool:
+    def is_provider_available(self) -> bool:
         """Check if provider is installed and available for use.
 
         :return: True if installed.

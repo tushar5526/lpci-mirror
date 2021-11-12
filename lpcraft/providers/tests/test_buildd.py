@@ -1,11 +1,10 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from craft_providers import Executor, bases
 from craft_providers.actions import snap_installer
-from fixtures import MockPatch
 
 from lpcraft.providers._buildd import (
     SERIES_TO_BUILDD_IMAGE_ALIAS,
@@ -15,13 +14,9 @@ from lpcraft.providers.tests import ProviderBaseTestCase
 
 
 class TestLPCraftBuilddBaseConfiguration(ProviderBaseTestCase):
-    def test_setup_inject_from_host(self):
+    @patch("craft_providers.actions.snap_installer.inject_from_host")
+    def test_setup_inject_from_host(self, mock_inject):
         mock_instance = Mock(spec=Executor)
-        mock_inject = self.useFixture(
-            MockPatch(
-                "craft_providers.actions.snap_installer.inject_from_host"
-            )
-        ).mock
         config = LPCraftBuilddBaseConfiguration(
             alias=SERIES_TO_BUILDD_IMAGE_ALIAS["focal"]
         )
@@ -33,13 +28,9 @@ class TestLPCraftBuilddBaseConfiguration(ProviderBaseTestCase):
             executor=mock_instance, snap_name="lpcraft", classic=True
         )
 
-    def test_setup_inject_from_host_error(self):
+    @patch("craft_providers.actions.snap_installer.inject_from_host")
+    def test_setup_inject_from_host_error(self, mock_inject):
         mock_instance = Mock(spec=Executor)
-        mock_inject = self.useFixture(
-            MockPatch(
-                "craft_providers.actions.snap_installer.inject_from_host"
-            )
-        ).mock
         mock_inject.side_effect = snap_installer.SnapInstallationError(
             brief="Boom"
         )

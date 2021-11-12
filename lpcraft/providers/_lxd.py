@@ -10,10 +10,10 @@ __all__ = [
 import re
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List
+from typing import Generator, List, Protocol
 
 from craft_cli import emit
-from craft_providers import bases, lxd
+from craft_providers import Base, bases, lxd
 
 from lpcraft.env import get_managed_environment_project_path
 from lpcraft.errors import CommandError
@@ -24,23 +24,84 @@ from lpcraft.providers._buildd import (
 )
 from lpcraft.utils import ask_user
 
+_lxc_client = lxd.LXC()
+
+
+class _LXDInstaller(Protocol):
+    def install(self) -> str:
+        """Install LXD."""
+
+    def is_installed(self) -> bool:
+        """Check if LXD is installed (and found on PATH)."""
+
+    def ensure_lxd_is_ready(self) -> None:
+        """Ensure LXD is ready for use."""
+
+
+class _LXDLauncher(Protocol):
+    def __call__(
+        self,
+        name: str,
+        *,
+        base_configuration: Base,
+        image_name: str,
+        image_remote: str,
+        auto_clean: bool = False,
+        auto_create_project: bool = False,
+        ephemeral: bool = False,
+        map_user_uid: bool = False,
+        use_snapshots: bool = False,
+        project: str = "default",
+        remote: str = "local",
+        lxc: lxd.LXC = _lxc_client,
+    ) -> lxd.LXDInstance:
+        """Create, start, and configure a LXD instance."""
+
+
+class _RealLXDInstaller:
+    """A LXD installer implementation using craft-providers.
+
+    This only exists because mypy doesn't support using modules as subtypes
+    of protocols; see https://github.com/python/mypy/issues/5018.
+    """
+
+    def install(self) -> str:
+        """Install LXD."""
+        return lxd.install()
+
+    def is_installed(self) -> bool:
+        """Check if LXD is installed (and found on PATH)."""
+        return lxd.is_installed()
+
+    def ensure_lxd_is_ready(self) -> None:
+        """Ensure LXD is ready for use."""
+        return lxd.ensure_lxd_is_ready()
+
 
 class LXDProvider(Provider):
     """A LXD build environment provider for lpcraft.
 
     :param lxc: Optional lxc client to use.
-    :param lxd_project: LXD project to use (default is lpcraft).
-    :param lxd_remote: LXD remote to use (default is local).
+    :param lxd_installer: LXD installer to use (default is
+        craft_providers.lxd).
+    :param lxd_launcher: LXD launcher to use (default is
+        craft_providers.lxd.launch).
+    :param lxd_project: LXD project to use (default is "lpcraft").
+    :param lxd_remote: LXD remote to use (default is "local").
     """
 
     def __init__(
         self,
         *,
-        lxc: lxd.LXC = lxd.LXC(),
+        lxc: lxd.LXC = _lxc_client,
+        lxd_installer: _LXDInstaller = _RealLXDInstaller(),
+        lxd_launcher: _LXDLauncher = lxd.launch,
         lxd_project: str = "lpcraft",
         lxd_remote: str = "local",
     ) -> None:
         self.lxc = lxc
+        self.lxd_installer = lxd_installer
+        self.lxd_launcher = lxd_launcher
         self.lxd_project = lxd_project
         self.lxd_remote = lxd_remote
 
@@ -90,20 +151,19 @@ class LXDProvider(Provider):
 
         return deleted
 
-    @classmethod
-    def ensure_provider_is_available(cls) -> None:
+    def ensure_provider_is_available(self) -> None:
         """Ensure provider is available, prompting to install it if required.
 
         :raises CommandError: if provider is not available.
         """
-        if not lxd.is_installed():
+        if not self.lxd_installer.is_installed():
             if ask_user(
                 "LXD is required, but not installed. Do you wish to install "
                 "LXD and configure it with the defaults?",
                 default=False,
             ):
                 try:
-                    lxd.install()
+                    self.lxd_installer.install()
                 except lxd.LXDInstallationError as error:
                     raise CommandError(
                         "Failed to install LXD. Visit "
@@ -118,17 +178,16 @@ class LXDProvider(Provider):
                 )
 
         try:
-            lxd.ensure_lxd_is_ready()
+            self.lxd_installer.ensure_lxd_is_ready()
         except lxd.LXDError as error:
             raise CommandError(str(error)) from error
 
-    @classmethod
-    def is_provider_available(cls) -> bool:
+    def is_provider_available(self) -> bool:
         """Check if provider is installed and available for use.
 
         :return: True if installed.
         """
-        return lxd.is_installed()
+        return self.lxd_installer.is_installed()
 
     @contextmanager
     def launched_environment(
@@ -155,7 +214,7 @@ class LXDProvider(Provider):
         )
         environment = self.get_command_environment()
         try:
-            image_remote = lxd.configure_buildd_image_remote()
+            image_remote = lxd.configure_buildd_image_remote(lxc=self.lxc)
         except lxd.LXDError as error:
             raise CommandError(str(error)) from error
         base_configuration = LPCraftBuilddBaseConfiguration(
@@ -163,7 +222,7 @@ class LXDProvider(Provider):
         )
 
         try:
-            instance = lxd.launch(
+            instance = self.lxd_launcher(
                 name=instance_name,
                 base_configuration=base_configuration,
                 image_name=series,
@@ -174,6 +233,7 @@ class LXDProvider(Provider):
                 use_snapshots=True,
                 project=self.lxd_project,
                 remote=self.lxd_remote,
+                lxc=self.lxc,
             )
         except (bases.BaseConfigurationError, lxd.LXDError) as error:
             raise CommandError(str(error)) from error
