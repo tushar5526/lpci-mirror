@@ -78,7 +78,7 @@ def main() -> int:
         return 1
 
     try:
-        ret = args.func(args)
+        ret = int(args.func(args))
     except KeyboardInterrupt as e:
         error = CraftError("Interrupted.")
         error.__cause__ = e
@@ -91,7 +91,5 @@ def main() -> int:
         ret = 1
     else:
         emit.ended_ok()
-        if ret is None:
-            ret = 0
 
     return ret
