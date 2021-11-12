@@ -1,6 +1,7 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,7 +10,6 @@ from unittest.mock import Mock, call, patch
 
 from craft_providers.bases import BaseConfigurationError, BuilddBaseAlias
 from craft_providers.lxd import LXC, LXDError, LXDInstallationError, launch
-from fixtures import EnvironmentVariable
 
 from lpcraft.errors import CommandError
 from lpcraft.providers._buildd import LPCraftBuilddBaseConfiguration
@@ -257,9 +257,10 @@ class TestLXDProvider(ProviderBaseTestCase):
             ),
         )
 
+    @patch.dict(
+        os.environ, {"IGNORE": "sentinel", "PATH": "not-using-host-path"}
+    )
     def test_get_command_environment_minimal(self):
-        self.useFixture(EnvironmentVariable("IGNORE", "sentinel"))
-        self.useFixture(EnvironmentVariable("PATH", "not-using-host-path"))
         provider = self.makeLXDProvider()
 
         env = provider.get_command_environment()
@@ -272,12 +273,17 @@ class TestLXDProvider(ProviderBaseTestCase):
             env,
         )
 
+    @patch.dict(
+        os.environ,
+        {
+            "IGNORE": "sentinel",
+            "PATH": "not-using-host-path",
+            "http_proxy": "test-http-proxy",
+            "https_proxy": "test-https-proxy",
+            "no_proxy": "test-no-proxy",
+        },
+    )
     def test_get_command_environment_with_proxy(self):
-        self.useFixture(EnvironmentVariable("IGNORE", "sentinel"))
-        self.useFixture(EnvironmentVariable("PATH", "not-using-host-path"))
-        self.useFixture(EnvironmentVariable("http_proxy", "test-http-proxy"))
-        self.useFixture(EnvironmentVariable("https_proxy", "test-https-proxy"))
-        self.useFixture(EnvironmentVariable("no_proxy", "test-no-proxy"))
         provider = self.makeLXDProvider()
 
         env = provider.get_command_environment()

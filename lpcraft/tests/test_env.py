@@ -1,9 +1,10 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import os
 from pathlib import Path
+from unittest.mock import patch
 
-from fixtures import EnvironmentVariable
 from testtools import TestCase
 
 from lpcraft import env
@@ -20,12 +21,14 @@ class TestEnvironment(TestCase):
             Path("/root/project"), env.get_managed_environment_project_path()
         )
 
-    def test_is_managed_mode(self):
-        for mode, expected in (
-            (None, False),
-            ("1", True),
-            ("0", False),
-        ):
-            with self.subTest(mode=mode):
-                with EnvironmentVariable("LPCRAFT_MANAGED_MODE", mode):
-                    self.assertIs(expected, env.is_managed_mode())
+    @patch.dict(os.environ, {})
+    def test_is_managed_mode_unset(self):
+        self.assertIs(False, env.is_managed_mode())
+
+    @patch.dict(os.environ, {"LPCRAFT_MANAGED_MODE": "0"})
+    def test_is_managed_mode_0(self):
+        self.assertIs(False, env.is_managed_mode())
+
+    @patch.dict(os.environ, {"LPCRAFT_MANAGED_MODE": "1"})
+    def test_is_managed_mode_1(self):
+        self.assertIs(True, env.is_managed_mode())
