@@ -54,6 +54,6 @@ class TestAskUser(TestCase):
                 self.mock_input.reset_mock()
 
     def test_errors_in_managed_mode(self):
-        self.useFixture(EnvironmentVariable("LPCRAFT_MANAGED_MODE", "y"))
+        self.useFixture(EnvironmentVariable("LPCRAFT_MANAGED_MODE", "1"))
 
         self.assertRaises(RuntimeError, ask_user, "prompt")

@@ -23,8 +23,6 @@ class TestEnvironment(TestCase):
     def test_is_managed_mode(self):
         for mode, expected in (
             (None, False),
-            ("y", True),
-            ("n", False),
             ("1", True),
             ("0", False),
         ):

@@ -4,7 +4,6 @@
 """lpcraft environment utilities."""
 
 import os
-from distutils.util import strtobool
 from pathlib import Path
 
 
@@ -19,4 +18,4 @@ def get_managed_environment_project_path() -> Path:
 
 
 def is_managed_mode() -> bool:
-    return bool(strtobool(os.environ.get("LPCRAFT_MANAGED_MODE", "n")))
+    return os.environ.get("LPCRAFT_MANAGED_MODE", "0") == "1"
