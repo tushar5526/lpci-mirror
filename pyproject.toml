@@ -1,23 +1,2 @@
 [tool.black]
 line-length = 79
-
-[tool.mypy]
-python_version = 3.8
-
-[[tool.mypy.overrides]]
-module = "*.tests.*"
-disallow_subclassing_any = false
-disallow_untyped_calls = false
-disallow_untyped_defs = false
-
-[[tool.mypy.overrides]]
-module = [
-    "craft_cli",
-    "fixtures",
-    "testtools",
-]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "craft_providers.*"
-implicit_reexport = true
