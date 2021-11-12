@@ -10,7 +10,7 @@ __all__ = [
 import re
 from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+from typing import Generator, List
 
 from craft_cli import emit
 from craft_providers import bases, lxd
@@ -138,7 +138,7 @@ class LXDProvider(Provider):
         project_path: Path,
         series: str,
         architecture: str,
-    ):
+    ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 
         :param project_name: Name of project.

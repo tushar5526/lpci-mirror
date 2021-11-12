@@ -5,9 +5,10 @@ __all__ = [
     "get_provider",
 ]
 
+from lpcraft.providers._base import Provider
 from lpcraft.providers._lxd import LXDProvider
 
 
-def get_provider():
+def get_provider() -> Provider:
     """Get the configured or appropriate provider for the host OS."""
     return LXDProvider()

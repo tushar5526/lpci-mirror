@@ -10,7 +10,7 @@ import sys
 from lpcraft.env import is_managed_mode
 
 
-def ask_user(prompt, default=False) -> bool:
+def ask_user(prompt: str, default: bool = False) -> bool:
     """Ask user for a yes/no answer.
 
     If stdin is not a tty, or if the user returns an empty answer, return

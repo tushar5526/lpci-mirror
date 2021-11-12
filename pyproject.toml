@@ -17,3 +17,7 @@ module = [
     "testtools",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "craft_providers.*"
+implicit_reexport = true

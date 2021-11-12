@@ -8,15 +8,15 @@ from distutils.util import strtobool
 from pathlib import Path
 
 
-def get_managed_environment_home_path():
+def get_managed_environment_home_path() -> Path:
     """Path for home when running in managed environment."""
     return Path("/root")
 
 
-def get_managed_environment_project_path():
+def get_managed_environment_project_path() -> Path:
     """Path for project when running in managed environment."""
     return get_managed_environment_home_path() / "project"
 
 
-def is_managed_mode():
+def is_managed_mode() -> bool:
     return bool(strtobool(os.environ.get("LPCRAFT_MANAGED_MODE", "n")))

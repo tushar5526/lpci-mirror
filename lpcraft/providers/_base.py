@@ -11,9 +11,9 @@ import os
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Generator, List, Optional
 
-from craft_providers import bases
+from craft_providers import bases, lxd
 
 
 class Provider(ABC):
@@ -67,7 +67,7 @@ class Provider(ABC):
             f"-{series}-{architecture}"
         )
 
-    def get_command_environment(self) -> Dict[str, str]:
+    def get_command_environment(self) -> Dict[str, Optional[str]]:
         """Construct the required environment."""
         env = bases.buildd.default_command_environment()
         env["LPCRAFT_MANAGED_MODE"] = "1"
@@ -88,7 +88,7 @@ class Provider(ABC):
         project_path: Path,
         series: str,
         architecture: str,
-    ):
+    ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 
         :param project_name: Name of project.

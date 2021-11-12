@@ -7,7 +7,10 @@ from craft_providers import Executor, bases
 from craft_providers.actions import snap_installer
 from fixtures import MockPatch
 
-from lpcraft.providers._buildd import LPCraftBuilddBaseConfiguration
+from lpcraft.providers._buildd import (
+    SERIES_TO_BUILDD_IMAGE_ALIAS,
+    LPCraftBuilddBaseConfiguration,
+)
 from lpcraft.providers.tests import ProviderBaseTestCase
 
 
@@ -19,7 +22,9 @@ class TestLPCraftBuilddBaseConfiguration(ProviderBaseTestCase):
                 "craft_providers.actions.snap_installer.inject_from_host"
             )
         ).mock
-        config = LPCraftBuilddBaseConfiguration(alias="focal")
+        config = LPCraftBuilddBaseConfiguration(
+            alias=SERIES_TO_BUILDD_IMAGE_ALIAS["focal"]
+        )
 
         config.setup(executor=mock_instance)
 
@@ -38,7 +43,9 @@ class TestLPCraftBuilddBaseConfiguration(ProviderBaseTestCase):
         mock_inject.side_effect = snap_installer.SnapInstallationError(
             brief="Boom"
         )
-        config = LPCraftBuilddBaseConfiguration(alias="focal")
+        config = LPCraftBuilddBaseConfiguration(
+            alias=SERIES_TO_BUILDD_IMAGE_ALIAS["focal"]
+        )
 
         with self.assertRaisesRegex(
             bases.BaseConfigurationError,
