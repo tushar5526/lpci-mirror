@@ -1,26 +1,49 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-from fixtures import Fixture, MockPatch
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import call
+
+from craft_cli import messages
+from fixtures import Fixture, MockPatchObject
 
 
-class EmitterFixture(Fixture):
+class RecordingEmitter:
+    """Record what is shown using the emitter."""
+
+    def __init__(self):
+        self.interactions = []
+
+    def record(self, method_name, args, kwargs):
+        """Record the method call and its specific parameters."""
+        self.interactions.append(call(method_name, *args, **kwargs))
+
+
+class RecordingEmitterFixture(Fixture):
     def _setUp(self):
-        # Temporarily mock these until craft-cli grows additional testing
-        # support.
-        self.useFixture(MockPatch("craft_cli.emit.init"))
-        self.emit_message = self.useFixture(
-            MockPatch("craft_cli.emit.message")
-        ).mock
-        self.emit_progress = self.useFixture(
-            MockPatch("craft_cli.emit.progress")
-        ).mock
-        self.emit_trace = self.useFixture(
-            MockPatch("craft_cli.emit.trace")
-        ).mock
-        self.emit_error = self.useFixture(
-            MockPatch("craft_cli.emit.error")
-        ).mock
-        self.emit_ended_ok = self.useFixture(
-            MockPatch("craft_cli.emit.ended_ok")
-        ).mock
+        fd, filename = tempfile.mkstemp(prefix="emitter-logs")
+        os.close(fd)
+        self.addCleanup(os.unlink, filename)
+
+        messages.TESTMODE = True
+        messages.emit.init(
+            messages.EmitterMode.QUIET,
+            "test-emitter",
+            "Hello",
+            log_filepath=Path(filename),
+        )
+        self.addCleanup(messages.emit.ended_ok)
+
+        self.recorder = recorder = RecordingEmitter()
+        for method_name in ("message", "progress", "trace", "error"):
+            self.useFixture(
+                MockPatchObject(
+                    messages.emit,
+                    method_name,
+                    lambda *a, method_name=method_name, **kw: recorder.record(
+                        method_name, a, kw
+                    ),
+                )
+            )

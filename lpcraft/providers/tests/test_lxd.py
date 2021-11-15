@@ -3,45 +3,22 @@
 
 import os
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from unittest.mock import Mock, call, patch
 
 from craft_providers.bases import BaseConfigurationError, BuilddBaseAlias
-from craft_providers.lxd import LXC, LXDError, LXDInstallationError, launch
+from craft_providers.lxd import LXC, LXDError, launch
 
 from lpcraft.errors import CommandError
 from lpcraft.providers._buildd import LPCraftBuilddBaseConfiguration
 from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
-from lpcraft.providers.tests import ProviderBaseTestCase
-from lpcraft.tests.fixtures import EmitterFixture
+from lpcraft.providers.tests import FakeLXDInstaller, ProviderBaseTestCase
+from lpcraft.tests.fixtures import RecordingEmitterFixture
 
 _base_path = (
     "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
 )
-
-
-@dataclass
-class FakeLXDInstaller:
-    """A fake LXD installer implementation for tests."""
-
-    can_install: bool = True
-    already_installed: bool = True
-    is_ready: bool = True
-
-    def install(self) -> str:
-        if self.can_install:
-            return "4.0"
-        else:
-            raise LXDInstallationError("Cannot install LXD")
-
-    def is_installed(self) -> bool:
-        return self.already_installed
-
-    def ensure_lxd_is_ready(self) -> None:
-        if not self.is_ready:
-            raise LXDError("LXD is broken")
 
 
 class TestLXDProvider(ProviderBaseTestCase):
@@ -49,7 +26,7 @@ class TestLXDProvider(ProviderBaseTestCase):
         super().setUp()
         self.mock_path = Mock(spec=Path)
         self.mock_path.stat.return_value.st_ino = 12345
-        self.emitter = self.useFixture(EmitterFixture())
+        self.useFixture(RecordingEmitterFixture())
 
     def makeLXDProvider(
         self,

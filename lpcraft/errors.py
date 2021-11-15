@@ -8,12 +8,21 @@ __all__ = [
     "YAMLError",
 ]
 
+from typing import Any
 
-class CommandError(Exception):
+from craft_cli import CraftError
+
+
+class CommandError(CraftError):
     """Base exception for all error commands."""
 
-    def __init__(self, message: str):
-        super().__init__(message)
+    def __init__(self, message: str, retcode: int = 1):
+        super().__init__(message, retcode=retcode)
+
+    def __eq__(self, other: Any) -> bool:
+        if type(self) != type(other):
+            return NotImplemented
+        return str(self) == str(other) and self.retcode == other.retcode
 
 
 class YAMLError(CommandError):

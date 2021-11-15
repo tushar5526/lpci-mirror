@@ -16,6 +16,11 @@ class TestEnvironment(TestCase):
             Path("/root"), env.get_managed_environment_home_path()
         )
 
+    def test_get_managed_environment_log_path(self):
+        self.assertEqual(
+            Path("/tmp/lpcraft.log"), env.get_managed_environment_log_path()
+        )
+
     def test_get_managed_environment_project_path(self):
         self.assertEqual(
             Path("/root/project"), env.get_managed_environment_project_path()

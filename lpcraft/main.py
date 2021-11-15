@@ -4,13 +4,15 @@
 """Main entry point."""
 
 import logging
-import sys
 from argparse import ArgumentParser
 
 from craft_cli import CraftError, EmitterMode, emit
 
+from lpcraft import env
 from lpcraft._version import version_description as lpcraft_version
+from lpcraft.commands.run import run
 from lpcraft.commands.version import version
+from lpcraft.errors import CommandError
 
 
 def _configure_logger(name: str) -> None:
@@ -48,8 +50,26 @@ def main() -> int:
         action="store_true",
         help="Show debug information and be more verbose.",
     )
+    verbosity_group.add_argument(
+        "--trace",
+        action="store_true",
+        help="Show all information needed to trace internal behaviour.",
+    )
 
     subparsers = parser.add_subparsers()
+
+    # XXX cjwatson 2021-11-15: Subcommand arguments should be defined
+    # alongside the individual subcommands rather than here.
+
+    parser_run = subparsers.add_parser("run", help=run.__doc__)
+    if env.is_managed_mode():
+        parser_run.add_argument(
+            "--series", help="Only run jobs for this series."
+        )
+        parser_run.add_argument(
+            "job_name", nargs="?", help="Only run this job name."
+        )
+    parser_run.set_defaults(func=run)
 
     parser_version = subparsers.add_parser("version", help=version.__doc__)
     parser_version.set_defaults(func=version)
@@ -66,19 +86,19 @@ def main() -> int:
         emit.set_mode(EmitterMode.QUIET)
     elif args.verbose:
         emit.set_mode(EmitterMode.VERBOSE)
+    elif args.trace:
+        emit.set_mode(EmitterMode.TRACE)
 
     if args.version:
         emit.message(lpcraft_version)
         emit.ended_ok()
         return 0
 
-    if getattr(args, "func", None) is None:
-        parser.print_usage(file=sys.stderr)
-        emit.ended_ok()
-        return 1
-
     try:
-        ret = int(args.func(args))
+        ret = int(getattr(args, "func", run)(args))
+    except CommandError as e:
+        emit.error(e)
+        ret = e.retcode
     except KeyboardInterrupt as e:
         error = CraftError("Interrupted.")
         error.__cause__ = e

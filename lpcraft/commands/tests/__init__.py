@@ -3,13 +3,13 @@
 
 from dataclasses import dataclass
 from typing import List
-from unittest.mock import patch
+from unittest.mock import ANY, call, patch
 
 from craft_cli import CraftError
 from testtools import TestCase
 
 from lpcraft.main import main
-from lpcraft.tests.fixtures import EmitterFixture
+from lpcraft.tests.fixtures import RecordingEmitterFixture
 
 
 @dataclass
@@ -24,16 +24,18 @@ class _CommandResult:
 class CommandBaseTestCase(TestCase):
     def run_command(self, *args, **kwargs):
         with patch("sys.argv", ["lpcraft"] + list(args)):
-            with EmitterFixture() as emitter:
+            with RecordingEmitterFixture() as emitter:
                 exit_code = main()
                 return _CommandResult(
                     exit_code,
                     [
-                        call.args[0]
-                        for call in emitter.emit_message.call_args_list
+                        c.args[1]
+                        for c in emitter.recorder.interactions
+                        if c == call("message", ANY)
                     ],
                     [
-                        call.args[0]
-                        for call in emitter.emit_error.call_args_list
+                        c.args[1]
+                        for c in emitter.recorder.interactions
+                        if c == call("error", ANY)
                     ],
                 )

@@ -3,10 +3,13 @@
 
 __all__ = [
     "ask_user",
+    "get_host_architecture",
     "load_yaml",
 ]
 
+import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict
 
@@ -30,6 +33,19 @@ def load_yaml(path: Path) -> Dict[Any, Any]:
         return loaded
     except (yaml.error.YAMLError, OSError) as e:
         raise YAMLError(f"Failed to read/parse config file {str(path)!r}: {e}")
+
+
+@lru_cache
+def get_host_architecture() -> str:
+    """Get the host architecture name, using dpkg's vocabulary."""
+    # We may need a more complex implementation at some point in order to
+    # run in non-dpkg-based environments.
+    return subprocess.run(
+        ["dpkg", "--print-architecture"],
+        capture_output=True,
+        check=True,
+        universal_newlines=True,
+    ).stdout.rstrip("\n")
 
 
 def ask_user(prompt: str, default: bool = False) -> bool:

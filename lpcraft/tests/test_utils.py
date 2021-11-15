@@ -1,16 +1,18 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import io
 import os
 import re
 from pathlib import Path
 from unittest.mock import patch
 
 from fixtures import TempDir
+from systemfixtures import FakeProcesses
 from testtools import TestCase
 
 from lpcraft.errors import YAMLError
-from lpcraft.utils import ask_user, load_yaml
+from lpcraft.utils import ask_user, get_host_architecture, load_yaml
 
 
 class TestLoadYAML(TestCase):
@@ -64,6 +66,37 @@ class TestLoadYAML(TestCase):
             load_yaml,
             path,
         )
+
+
+class TestGetHostArchitecture(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(get_host_architecture.cache_clear)
+
+    def test_returns_dpkg_architecture(self):
+        processes_fixture = self.useFixture(FakeProcesses())
+        processes_fixture.add(
+            lambda _: {"stdout": io.StringIO("ppc64el\n")}, name="dpkg"
+        )
+
+        self.assertEqual("ppc64el", get_host_architecture())
+
+        self.assertEqual(
+            [["dpkg", "--print-architecture"]],
+            [proc._args["args"] for proc in processes_fixture.procs],
+        )
+
+    def test_caches(self):
+        processes_fixture = self.useFixture(FakeProcesses())
+        processes_fixture.add(
+            lambda _: {"stdout": io.StringIO("amd64\n")}, name="dpkg"
+        )
+
+        self.assertEqual("amd64", get_host_architecture())
+        self.assertEqual(1, len(processes_fixture.procs))
+
+        self.assertEqual("amd64", get_host_architecture())
+        self.assertEqual(1, len(processes_fixture.procs))
 
 
 class TestAskUser(TestCase):
