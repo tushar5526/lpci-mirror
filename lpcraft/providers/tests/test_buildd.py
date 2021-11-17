@@ -3,8 +3,10 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
 from craft_providers import Executor, bases
 from craft_providers.actions import snap_installer
+from craft_providers.bases.buildd import BuilddBaseAlias
 
 from lpcraft.providers._buildd import (
     SERIES_TO_BUILDD_IMAGE_ALIAS,
@@ -45,3 +47,10 @@ class TestLPCraftBuilddBaseConfiguration(ProviderBaseTestCase):
             config.setup(executor=mock_instance)
 
         self.assertIsNotNone(raised.exception.__cause__)
+
+    def test_compare_configuration_with_other_type(self):
+        """The configuration should only be comparable to its own type"""
+        with pytest.raises(TypeError):
+            "foo" == LPCraftBuilddBaseConfiguration(
+                alias=BuilddBaseAlias.FOCAL,
+            )

@@ -81,7 +81,7 @@ class LPCraftBuilddBaseConfiguration(bases.BuilddBase):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, LPCraftBuilddBaseConfiguration):
-            return NotImplemented
+            raise TypeError
         return (
             self.alias == other.alias
             and self.environment == other.environment

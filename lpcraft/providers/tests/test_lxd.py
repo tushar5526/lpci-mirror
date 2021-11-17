@@ -343,7 +343,7 @@ class TestLXDProvider(ProviderBaseTestCase):
                 series="focal",
                 architecture="amd64",
             ):
-                pass
+                pass  # pragma: no cover
 
         self.assertIs(error, raised.exception.__cause__)
 
@@ -353,7 +353,6 @@ class TestLXDProvider(ProviderBaseTestCase):
             "craft_providers.lxd.launch", autospec=True, side_effect=error
         )
         provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
-
         with self.assertRaisesRegex(CommandError, r"Boom") as raised:
             with provider.launched_environment(
                 project_name="my-project",
@@ -361,14 +360,13 @@ class TestLXDProvider(ProviderBaseTestCase):
                 series="focal",
                 architecture="amd64",
             ):
-                pass
+                pass  # pragma: no cover
 
         self.assertIs(error, raised.exception.__cause__)
 
     def test_launched_environment_unmounts_and_stops_after_error(self):
         mock_launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
-
         with self.assertRaisesRegex(RuntimeError, r"Boom"):
             with provider.launched_environment(
                 project_name="my-project",

@@ -2,6 +2,7 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import sys
+from unittest.mock import patch
 
 from craft_cli import EmitterMode
 from fixtures import MockPatch
@@ -9,6 +10,7 @@ from testtools import TestCase
 
 from lpcraft._version import version_description as lpcraft_version
 from lpcraft.main import main
+from lpcraft.tests.fixtures import RecordingEmitterFixture
 
 
 class TestMain(TestCase):
@@ -42,3 +44,35 @@ class TestMain(TestCase):
             sys.stderr,
         )
         mock_emit.ended_ok.assert_called_once_with()
+
+    @patch("lpcraft.main.run")
+    def test_keyboard_interrupt(self, mock_run):
+        self.useFixture(MockPatch("sys.argv", ["lpcraft"]))
+        mock_run.side_effect = KeyboardInterrupt()
+
+        with RecordingEmitterFixture() as emitter:
+            ret = main()
+
+        self.assertEqual(1, ret)
+        # cannot compare the results directly but only the str representation
+        # see https://github.com/canonical/craft-cli/issues/40
+        self.assertEqual(
+            "call('error', CraftError('Interrupted.'))",
+            str(emitter.recorder.interactions[0]),
+        )
+
+    @patch("lpcraft.main.run")
+    def test_handling_unexpected_exception(self, mock_run):
+        self.useFixture(MockPatch("sys.argv", ["lpcraft"]))
+        mock_run.side_effect = RuntimeError()
+
+        with RecordingEmitterFixture() as emitter:
+            ret = main()
+
+        self.assertEqual(1, ret)
+        # cannot compare the results directly but only the str representation
+        # see https://github.com/canonical/craft-cli/issues/40
+        self.assertEqual(
+            "call('error', CraftError('lpcraft internal error: RuntimeError()'))",  # noqa: E501
+            str(emitter.recorder.interactions[0]),
+        )

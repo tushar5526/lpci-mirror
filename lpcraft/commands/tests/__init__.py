@@ -19,6 +19,7 @@ class _CommandResult:
     exit_code: int
     messages: List[str]
     errors: List[CraftError]
+    trace: List[str]
 
 
 class CommandBaseTestCase(TestCase):
@@ -26,7 +27,7 @@ class CommandBaseTestCase(TestCase):
         with patch("sys.argv", ["lpcraft"] + list(args)):
             with RecordingEmitterFixture() as emitter:
                 exit_code = main()
-                return _CommandResult(
+                result = _CommandResult(
                     exit_code,
                     [
                         c.args[1]
@@ -38,4 +39,10 @@ class CommandBaseTestCase(TestCase):
                         for c in emitter.recorder.interactions
                         if c == call("error", ANY)
                     ],
+                    [
+                        c.args[1]
+                        for c in emitter.recorder.interactions
+                        if c == call("trace", ANY)
+                    ],
                 )
+                return result
