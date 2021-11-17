@@ -1,0 +1,5 @@
+[html]
+show_contexts = true
+
+[run]
+dynamic_context = test_function
