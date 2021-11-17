@@ -87,6 +87,64 @@ class RunJobTestCase(CommandBaseTestCase):
             ),
         )
 
+    def test_no_matching_job_for_series(self):
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--series", "bionic", "test")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError("No job definition for 'test' for bionic")
+                ],
+            ),
+        )
+
+    def test_ambiguous_job_definitions(self):
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    matrix:
+                        - run: make
+                        - run: tox
+                    series: focal
+                    architectures: amd64
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--series", "focal", "test")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError(
+                        "Ambiguous job definitions for 'test' for focal"
+                    )
+                ],
+            ),
+        )
+
     def test_no_run_definition(self):
         config = dedent(
             """
@@ -223,7 +281,7 @@ class RunPipelineTestCase(CommandBaseTestCase):
         config = dedent(
             """
             pipeline: []
-            jobs: []
+            jobs: {}
             """
         )
         Path(".launchpad.yaml").write_text(config)
@@ -249,7 +307,7 @@ class RunPipelineTestCase(CommandBaseTestCase):
             pipeline:
                 - test
 
-            jobs: []
+            jobs: {}
             """
         )
         Path(".launchpad.yaml").write_text(config)
@@ -265,11 +323,18 @@ class RunPipelineTestCase(CommandBaseTestCase):
         )
 
     @patch("lpcraft.commands.run.get_provider")
-    @patch("lpcraft.commands.run.get_host_architecture", return_value="i386")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="arm64")
     def test_job_not_defined_for_host_architecture(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider()
+        # Jobs not defined for the host architecture are skipped.  (It is
+        # assumed that the dispatcher won't dispatch anything for an
+        # architecture if it has no jobs at all.)
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
         config = dedent(
             """
             pipeline:
@@ -279,18 +344,28 @@ class RunPipelineTestCase(CommandBaseTestCase):
                 test:
                     series: focal
                     architectures: [amd64, arm64]
+                    run: tox
+                build-wheel:
+                    series: focal
+                    architectures: amd64
+                    run: pyproject-build
             """
         )
         Path(".launchpad.yaml").write_text(config)
 
         result = self.run_command("run")
 
-        self.assertThat(
-            result,
-            MatchesStructure.byEquality(
-                exit_code=1,
-                errors=[CommandError("Job 'test' not defined for i386")],
-            ),
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["lpcraft", "run", "--series", "focal", "test"],
+                    cwd=Path("/root/project"),
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
         )
 
     @patch("lpcraft.commands.run.get_provider")
@@ -378,6 +453,65 @@ class RunPipelineTestCase(CommandBaseTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(
             [
+                call(
+                    ["lpcraft", "run", "--series", "focal", "test"],
+                    cwd=Path("/root/project"),
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["lpcraft", "run", "--series", "bionic", "build-wheel"],
+                    cwd=Path("/root/project"),
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_expands_matrix(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - build-wheel
+
+            jobs:
+                test:
+                    matrix:
+                        - series: bionic
+                          architectures: amd64
+                        - series: focal
+                          architectures: [amd64, s390x]
+                    run: tox
+                build-wheel:
+                    series: bionic
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["lpcraft", "run", "--series", "bionic", "test"],
+                    cwd=Path("/root/project"),
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
                 call(
                     ["lpcraft", "run", "--series", "focal", "test"],
                     cwd=Path("/root/project"),
