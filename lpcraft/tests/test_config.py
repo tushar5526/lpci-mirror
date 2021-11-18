@@ -13,7 +13,7 @@ from testtools.matchers import (
     MatchesStructure,
 )
 
-from lpcraft.config import load
+from lpcraft.config import Config
 
 
 class TestConfig(TestCase):
@@ -42,7 +42,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = load(str(path))
+        config = Config.load(str(path))
         self.assertThat(
             config,
             MatchesStructure(
@@ -79,7 +79,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = load(str(path))
+        config = Config.load(str(path))
         self.assertEqual(["amd64"], config.jobs["test"][0].architectures)
 
     def test_expands_matrix(self):
@@ -102,7 +102,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = load(str(path))
+        config = Config.load(str(path))
         self.assertThat(
             config,
             MatchesStructure(

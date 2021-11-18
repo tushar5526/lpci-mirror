@@ -72,9 +72,9 @@ class Config(ModelConfigDefaults):
         }
         return expanded_values
 
-
-def load(filename: str) -> Config:
-    """Load config from the indicated file name."""
-    path = Path(filename)
-    content = load_yaml(path)
-    return Config.parse_obj(content)
+    @classmethod
+    def load(cls, filename: str) -> "Config":
+        """Load config from the indicated file name."""
+        path = Path(filename)
+        content = load_yaml(path)
+        return cls.parse_obj(content)

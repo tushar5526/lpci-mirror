@@ -9,7 +9,7 @@ from typing import List, Optional
 from craft_cli import EmitterMode, emit
 
 from lpcraft import env
-from lpcraft.config import Config, Job, load
+from lpcraft.config import Config, Job
 from lpcraft.errors import CommandError
 from lpcraft.providers import get_provider, replay_logs
 from lpcraft.utils import get_host_architecture
@@ -37,7 +37,7 @@ def _run_job(args: Namespace) -> None:
     if args.job_name is None:
         raise CommandError("Job name is required in managed mode")
 
-    config = load(".launchpad.yaml")
+    config = Config.load(".launchpad.yaml")
     jobs = _get_jobs(config, args.job_name, series=args.series)
     if len(jobs) > 1:
         raise CommandError(
@@ -58,7 +58,7 @@ def _run_job(args: Namespace) -> None:
 
 def _run_pipeline(args: Namespace) -> None:
     """Run a pipeline, launching managed environments as needed."""
-    config = load(".launchpad.yaml")
+    config = Config.load(".launchpad.yaml")
     host_architecture = get_host_architecture()
     cwd = Path.cwd()
 
