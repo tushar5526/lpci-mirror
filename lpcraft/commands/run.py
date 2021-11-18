@@ -37,7 +37,7 @@ def _run_job(args: Namespace) -> None:
     if args.job_name is None:
         raise CommandError("Job name is required in managed mode")
 
-    config = Config.load(".launchpad.yaml")
+    config = Config.load(Path(".launchpad.yaml"))
     jobs = _get_jobs(config, args.job_name, series=args.series)
     if len(jobs) > 1:
         raise CommandError(
@@ -58,7 +58,7 @@ def _run_job(args: Namespace) -> None:
 
 def _run_pipeline(args: Namespace) -> None:
     """Run a pipeline, launching managed environments as needed."""
-    config = Config.load(".launchpad.yaml")
+    config = Config.load(Path(".launchpad.yaml"))
     host_architecture = get_host_architecture()
     cwd = Path.cwd()
 

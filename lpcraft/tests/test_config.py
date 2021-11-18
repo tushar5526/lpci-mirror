@@ -42,7 +42,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = Config.load(str(path))
+        config = Config.load(path)
         self.assertThat(
             config,
             MatchesStructure(
@@ -79,7 +79,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = Config.load(str(path))
+        config = Config.load(path)
         self.assertEqual(["amd64"], config.jobs["test"][0].architectures)
 
     def test_expands_matrix(self):
@@ -102,7 +102,7 @@ class TestConfig(TestCase):
                 """
             )
         )
-        config = Config.load(str(path))
+        config = Config.load(path)
         self.assertThat(
             config,
             MatchesStructure(
