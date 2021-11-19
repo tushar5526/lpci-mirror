@@ -7,22 +7,6 @@ __all__ = [
 ]
 
 import importlib.metadata
-from configparser import ConfigParser
-from pathlib import Path
 
-
-def _get_version() -> str:
-    try:
-        return importlib.metadata.version("lpcraft")
-    except importlib.metadata.PackageNotFoundError:
-        setup_cfg_path = Path(__file__).parent.parent / "setup.cfg"
-        if setup_cfg_path.exists():
-            parser = ConfigParser()
-            parser.read(setup_cfg_path)
-            return parser.get("metadata", "version")
-        else:
-            raise RuntimeError("Cannot determine lpcraft version")
-
-
-version = _get_version()
+version = importlib.metadata.version("lpcraft")
 version_description = f"lpcraft, version {version}"
