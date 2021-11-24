@@ -29,10 +29,7 @@ class FakeLXDInstaller:
     is_ready: bool = True
 
     def install(self) -> str:
-        if self.can_install:
-            return "4.0"
-        else:
-            raise LXDInstallationError("Cannot install LXD")
+        raise LXDInstallationError("Cannot install LXD")
 
     def is_installed(self) -> bool:
         return self.already_installed
