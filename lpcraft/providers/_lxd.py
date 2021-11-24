@@ -67,15 +67,15 @@ class _RealLXDInstaller:
 
     def install(self) -> str:
         """Install LXD."""
-        return lxd.install()
+        return lxd.install()  # pragma: no cover
 
     def is_installed(self) -> bool:
         """Check if LXD is installed (and found on PATH)."""
-        return lxd.is_installed()
+        return lxd.is_installed()  # pragma: no cover
 
     def ensure_lxd_is_ready(self) -> None:
         """Ensure LXD is ready for use."""
-        return lxd.ensure_lxd_is_ready()
+        return lxd.ensure_lxd_is_ready()  # pragma: no cover
 
 
 class LXDProvider(Provider):
