@@ -339,6 +339,7 @@ class RunPipelineTestCase(CommandBaseTestCase):
             """
             pipeline:
                 - test
+                - build-wheel
 
             jobs:
                 test:
