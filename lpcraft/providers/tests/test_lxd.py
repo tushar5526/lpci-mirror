@@ -415,3 +415,24 @@ class TestLXDProvider(ProviderBaseTestCase):
                 pass
 
         self.assertIs(error, raised.exception.__cause__)
+
+    @patch("lpcraft.providers._lxd.lxd")
+    def test_launched_environment_configure_buildd_image_remote_lxd_error(
+        self, mock_lxd
+    ):  # noqa: E501
+        error = LXDError(brief="Boom")
+        mock_lxd.configure_buildd_image_remote.side_effect = error
+        # original behavior has to be restored as lxd is now a mock
+        mock_lxd.LXDError = LXDError
+        provider = self.makeLXDProvider()
+
+        with self.assertRaisesRegex(CommandError, r"Boom") as raised:
+            with provider.launched_environment(
+                project_name="my-project",
+                project_path=self.mock_path,
+                series="focal",
+                architecture="amd64",
+            ):
+                pass  # pragma: no cover
+
+        self.assertIs(error, raised.exception.__cause__)
