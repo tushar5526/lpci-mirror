@@ -72,12 +72,14 @@ def _run_pipeline(args: Namespace) -> None:
                 continue
 
             cmd = ["lpcraft"]
+            # XXX jugmac00 2021-11-25: coverage ignored for now
+            # but should be tested in future
             if emit.get_mode() == EmitterMode.QUIET:
-                cmd.append("--quiet")
+                cmd.append("--quiet")  # pragma: no cover
             elif emit.get_mode() == EmitterMode.VERBOSE:
-                cmd.append("--verbose")
+                cmd.append("--verbose")  # pragma: no cover
             elif emit.get_mode() == EmitterMode.TRACE:
-                cmd.append("--trace")
+                cmd.append("--trace")  # pragma: no cover
             cmd.extend(["run", "--series", job.series, job_name])
 
             emit.progress(
