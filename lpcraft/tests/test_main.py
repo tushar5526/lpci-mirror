@@ -76,3 +76,44 @@ class TestMain(TestCase):
             "call('error', CraftError('lpcraft internal error: RuntimeError()'))",  # noqa: E501
             str(emitter.recorder.interactions[0]),
         )
+
+    def test_quiet_mode(self):
+        # temporary test until cli API is set and a more meaningful test is
+        # possible
+        self.useFixture(MockPatch("sys.argv", ["lpcraft", "--version", "-q"]))
+
+        with RecordingEmitterFixture() as emitter:
+            main()
+
+        # result is something like "lpcraft, version 0.0.1"
+        self.assertIn(
+            "lpcraft, version", emitter.recorder.interactions[0].args[1]
+        )
+
+    def test_verbose_mode(self):
+        # temporary test until cli API is set and a more meaningful test is
+        # possible
+        self.useFixture(MockPatch("sys.argv", ["lpcraft", "--version", "-v"]))
+
+        with RecordingEmitterFixture() as emitter:
+            main()
+
+        # result is something like "lpcraft, version 0.0.1"
+        self.assertIn(
+            "lpcraft, version", emitter.recorder.interactions[0].args[1]
+        )
+
+    def test_trace_mode(self):
+        # temporary test until cli API is set and a more meaningful test is
+        # possible
+        self.useFixture(
+            MockPatch("sys.argv", ["lpcraft", "--version", "--trace"])
+        )
+
+        with RecordingEmitterFixture() as emitter:
+            main()
+
+        # result is something like "lpcraft, version 0.0.1"
+        self.assertIn(
+            "lpcraft, version", emitter.recorder.interactions[0].args[1]
+        )
