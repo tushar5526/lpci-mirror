@@ -3,7 +3,7 @@
 
 import os
 import subprocess
-from pathlib import Path
+from pathlib import Path, PosixPath
 from textwrap import dedent
 from typing import Optional
 from unittest.mock import ANY, Mock, call, patch
@@ -362,6 +362,7 @@ class RunPipelineTestCase(CommandBaseTestCase):
                 call(
                     ["lpcraft", "run", "--series", "focal", "test"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 )
@@ -416,6 +417,7 @@ class RunPipelineTestCase(CommandBaseTestCase):
         execute_run.assert_called_once_with(
             ["lpcraft", "run", "--series", "focal", "test"],
             cwd=Path("/root/project"),
+            env=None,
             stdout=ANY,
             stderr=ANY,
         )
@@ -457,12 +459,14 @@ class RunPipelineTestCase(CommandBaseTestCase):
                 call(
                     ["lpcraft", "run", "--series", "focal", "test"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["lpcraft", "run", "--series", "bionic", "build-wheel"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -510,21 +514,66 @@ class RunPipelineTestCase(CommandBaseTestCase):
                 call(
                     ["lpcraft", "run", "--series", "bionic", "test"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["lpcraft", "run", "--series", "focal", "test"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["lpcraft", "run", "--series", "bionic", "build-wheel"],
                     cwd=Path("/root/project"),
+                    env=None,
                     stdout=ANY,
                     stderr=ANY,
                 ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_pass_in_environment_variables(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    environment:
+                        TOX_SKIP_ENV: '^(?!lint-)'
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+        self.assertEqual(0, result.exit_code)
+
+        self.assertEqual(
+            [
+                call(
+                    ["lpcraft", "run", "--series", "focal", "test"],
+                    cwd=PosixPath("/root/project"),
+                    env={"TOX_SKIP_ENV": "^(?!lint-)"},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
             ],
             execute_run.call_args_list,
         )

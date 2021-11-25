@@ -127,3 +127,26 @@ class TestConfig(TestCase):
                 ),
             ),
         )
+
+    def test_load_environment(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        environment:
+                            ACTIVE: 1
+                            SKIP: 0
+
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual(
+            {"ACTIVE": "1", "SKIP": "0"}, config.jobs["test"][0].environment
+        )

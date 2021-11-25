@@ -96,6 +96,7 @@ def _run_pipeline(args: Namespace) -> None:
                     proc = instance.execute_run(
                         cmd,
                         cwd=env.get_managed_environment_project_path(),
+                        env=job.environment,
                         stdout=stream,
                         stderr=stream,
                     )
