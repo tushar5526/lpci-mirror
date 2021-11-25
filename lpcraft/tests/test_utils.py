@@ -137,6 +137,7 @@ class TestAskUser(TestCase):
             ("N", False),
             ("no", False),
             ("NO", False),
+            ("x", False),  # anything outside y/n should return default
         ):
             with self.subTest(user_input=user_input):
                 mock_input.return_value = user_input
