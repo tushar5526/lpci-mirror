@@ -68,7 +68,6 @@ class Provider(ABC):
     def get_command_environment(self) -> Dict[str, Optional[str]]:
         """Construct the required environment."""
         env = bases.buildd.default_command_environment()
-        env["LPCRAFT_MANAGED_MODE"] = "1"
 
         # Pass through host environment that target may need.
         for env_key in ("http_proxy", "https_proxy", "no_proxy"):

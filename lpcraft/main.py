@@ -8,7 +8,6 @@ from argparse import ArgumentParser
 
 from craft_cli import CraftError, EmitterMode, emit
 
-from lpcraft import env
 from lpcraft._version import version_description as lpcraft_version
 from lpcraft.commands.run import run
 from lpcraft.commands.version import version
@@ -62,13 +61,6 @@ def main() -> int:
     # alongside the individual subcommands rather than here.
 
     parser_run = subparsers.add_parser("run", help=run.__doc__)
-    if env.is_managed_mode():
-        parser_run.add_argument(
-            "--series", help="Only run jobs for this series."
-        )
-        parser_run.add_argument(
-            "job_name", nargs="?", help="Only run this job name."
-        )
     parser_run.set_defaults(func=run)
 
     parser_version = subparsers.add_parser("version", help=version.__doc__)

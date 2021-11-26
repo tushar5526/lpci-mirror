@@ -15,7 +15,6 @@ from typing import Any, Dict
 
 import yaml
 
-from lpcraft.env import is_managed_mode
 from lpcraft.errors import YAMLError
 
 
@@ -57,9 +56,6 @@ def ask_user(prompt: str, default: bool = False) -> bool:
     :return: True if answer starts with [yY], False if answer starts with
         [nN], otherwise the default.
     """
-    if is_managed_mode():
-        raise RuntimeError("confirmation not yet supported in managed mode")
-
     if not sys.stdin.isatty():
         return default
 

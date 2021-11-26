@@ -15,13 +15,10 @@ the CLI design is based on both those tools.
 Running
 =======
 
-``lpcraft`` is mainly intended to be consumed as a snap, and it currently
-needs to be a snap in order to be able to inject itself into the containers
-it starts (though this may be made more flexible in future).  Use
-``snapcraft`` to build the snap, which you can then install using ``snap
-install --classic --dangerous lpcraft_<version>_<architecture>.snap``.
-(Once ``lpcraft`` is more complete and stable, it will be made available
-from the snap store.)
+``lpcraft`` is mainly intended to be consumed as a snap.  Use ``snapcraft``
+to build the snap, which you can then install using ``snap install --classic
+--dangerous lpcraft_<version>_<architecture>.snap``.  (Once ``lpcraft`` is
+more complete and stable, it will be made available from the snap store.)
 
 You can run ``lpcraft`` from a directory containing ``.launchpad.yaml``,
 although it won't do very much useful yet.

@@ -9,11 +9,12 @@ from unittest.mock import Mock, call, patch
 
 from craft_providers.bases import BaseConfigurationError, BuilddBaseAlias
 from craft_providers.lxd import LXC, LXDError, launch
+from testtools import TestCase
 
 from lpcraft.errors import CommandError
 from lpcraft.providers._buildd import LPCraftBuilddBaseConfiguration
 from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
-from lpcraft.providers.tests import FakeLXDInstaller, ProviderBaseTestCase
+from lpcraft.providers.tests import FakeLXDInstaller
 from lpcraft.tests.fixtures import RecordingEmitterFixture
 
 _base_path = (
@@ -21,7 +22,7 @@ _base_path = (
 )
 
 
-class TestLXDProvider(ProviderBaseTestCase):
+class TestLXDProvider(TestCase):
     def setUp(self):
         super().setUp()
         self.mock_path = Mock(spec=Path)
@@ -242,13 +243,7 @@ class TestLXDProvider(ProviderBaseTestCase):
 
         env = provider.get_command_environment()
 
-        self.assertEqual(
-            {
-                "LPCRAFT_MANAGED_MODE": "1",
-                "PATH": _base_path,
-            },
-            env,
-        )
+        self.assertEqual({"PATH": _base_path}, env)
 
     @patch.dict(
         os.environ,
@@ -267,7 +262,6 @@ class TestLXDProvider(ProviderBaseTestCase):
 
         self.assertEqual(
             {
-                "LPCRAFT_MANAGED_MODE": "1",
                 "PATH": _base_path,
                 "http_proxy": "test-http-proxy",
                 "https_proxy": "test-https-proxy",
@@ -299,10 +293,7 @@ class TestLXDProvider(ProviderBaseTestCase):
                         name=expected_instance_name,
                         base_configuration=LPCraftBuilddBaseConfiguration(
                             alias=BuilddBaseAlias.FOCAL,
-                            environment={
-                                "LPCRAFT_MANAGED_MODE": "1",
-                                "PATH": _base_path,
-                            },
+                            environment={"PATH": _base_path},
                             hostname=expected_instance_name,
                         ),
                         image_name="focal",

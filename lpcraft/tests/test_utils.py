@@ -2,7 +2,6 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import io
-import os
 import re
 from pathlib import Path
 from unittest.mock import patch
@@ -146,7 +145,3 @@ class TestAskUser(TestCase):
 
                 mock_input.assert_called_once_with("prompt [y/N]: ")
                 mock_input.reset_mock()
-
-    @patch.dict(os.environ, {"LPCRAFT_MANAGED_MODE": "1"})
-    def test_errors_in_managed_mode(self):
-        self.assertRaises(RuntimeError, ask_user, "prompt")

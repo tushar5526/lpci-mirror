@@ -4,20 +4,6 @@
 from dataclasses import dataclass
 
 from craft_providers.lxd import LXDError, LXDInstallationError
-from fixtures import MockPatch
-from testtools import TestCase
-
-
-class ProviderBaseTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
-        # Patch out inherited setup steps.
-        self.useFixture(
-            MockPatch(
-                "craft_providers.bases.BuilddBase.setup",
-                lambda *args, **kwargs: None,
-            )
-        )
 
 
 @dataclass
