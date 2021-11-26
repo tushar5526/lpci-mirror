@@ -21,6 +21,8 @@ pydantic==1.8.2
     #   -r requirements.in
     #   craft-cli
     #   craft-providers
+python-dotenv==0.19.2
+    # via -r requirements.in
 pyyaml==6.0
     # via
     #   -r requirements.in

@@ -1,6 +1,8 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+from datetime import timedelta
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -20,6 +22,29 @@ class ModelConfigDefaults(
     """Define lpcraft's model defaults."""
 
 
+class OutputDistributeEnum(Enum):
+    """Valid values for `output.distribute.`"""
+
+    artifactory = "artifactory"
+
+
+class Output(ModelConfigDefaults):
+    """Job output properties."""
+
+    paths: Optional[List[StrictStr]]
+    distribute: Optional[OutputDistributeEnum]
+    channels: Optional[List[StrictStr]]
+    properties: Optional[Dict[StrictStr, StrictStr]]
+    dynamic_properties: Optional[Path]
+    expires: Optional[timedelta]
+
+    @pydantic.validator("expires")
+    def validate_expires(cls, v: timedelta) -> timedelta:
+        if v < timedelta(0):
+            raise ValueError("non-negative duration expected")
+        return v
+
+
 class Job(ModelConfigDefaults):
     """A job definition."""
 
@@ -27,6 +52,7 @@ class Job(ModelConfigDefaults):
     architectures: List[StrictStr]
     run: Optional[StrictStr]
     environment: Optional[Dict[str, Optional[str]]]
+    output: Optional[Output]
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(

@@ -1,10 +1,12 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
 
 from fixtures import TempDir
+from pydantic import ValidationError
 from testtools import TestCase
 from testtools.matchers import (
     Equals,
@@ -13,7 +15,7 @@ from testtools.matchers import (
     MatchesStructure,
 )
 
-from lpcraft.config import Config
+from lpcraft.config import Config, OutputDistributeEnum
 
 
 class TestConfig(TestCase):
@@ -149,4 +151,64 @@ class TestConfig(TestCase):
         config = Config.load(path)
         self.assertEqual(
             {"ACTIVE": "1", "SKIP": "0"}, config.jobs["test"][0].environment
+        )
+
+    def test_output(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - build
+
+                jobs:
+                    build:
+                        series: focal
+                        architectures: [amd64]
+                        run: pyproject-build
+                        output:
+                            paths: ["*.whl"]
+                            distribute: artifactory
+                            channels: [edge]
+                            properties:
+                                foo: bar
+                            dynamic-properties: properties
+                            expires: 1:00:00
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertThat(
+            config.jobs["build"][0].output,
+            MatchesStructure.byEquality(
+                paths=["*.whl"],
+                distribute=OutputDistributeEnum.artifactory,
+                channels=["edge"],
+                properties={"foo": "bar"},
+                dynamic_properties=Path("properties"),
+                expires=timedelta(hours=1),
+            ),
+        )
+
+    def test_output_negative_expires(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - build
+
+                jobs:
+                    build:
+                        series: focal
+                        architectures: [amd64]
+                        run: pyproject-build
+                        output:
+                            expires: -1:00:00
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            r"non-negative duration expected",
+            Config.load,
+            path,
         )

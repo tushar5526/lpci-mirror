@@ -5,6 +5,7 @@
 
 import logging
 from argparse import ArgumentParser
+from pathlib import Path
 
 from craft_cli import CraftError, EmitterMode, emit
 
@@ -61,6 +62,10 @@ def main() -> int:
     # alongside the individual subcommands rather than here.
 
     parser_run = subparsers.add_parser("run", help=run.__doc__)
+    parser_run.add_argument(
+        "--output", type=Path, help="Write output files to this directory."
+    )
+
     parser_run.set_defaults(func=run)
 
     parser_version = subparsers.add_parser("version", help=version.__doc__)

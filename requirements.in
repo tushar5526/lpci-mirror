@@ -1,4 +1,5 @@
 craft-providers
 pydantic
 PyYAML
+python-dotenv
 git+git://github.com/canonical/craft-cli.git@c172fa00f61dff8e510116d1c23258e79f710e38
