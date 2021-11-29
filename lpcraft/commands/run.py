@@ -201,6 +201,17 @@ def run(args: Namespace) -> int:
                             channel="stable",
                             classic=True,
                         )
+                if job.packages:
+                    packages_cmd = ["apt", "install", "-y"] + job.packages
+                    emit.progress("Installing system packages")
+                    with emit.open_stream(f"Running {packages_cmd}") as stream:
+                        proc = instance.execute_run(
+                            packages_cmd,
+                            cwd=remote_cwd,
+                            env=job.environment,
+                            stdout=stream,
+                            stderr=stream,
+                        )
                 run_cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
                 emit.progress("Running the job")
                 with emit.open_stream(f"Running {run_cmd}") as stream:

@@ -247,3 +247,38 @@ class TestConfig(TestCase):
         )
         config = Config.load(path)
         self.assertEqual(None, config.jobs["test"][0].snaps)
+
+    def test_load_package(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [nginx, apache2]
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual(["nginx", "apache2"], config.jobs["test"][0].packages)
+
+    def test_load_config_without_packages(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual(None, config.jobs["test"][0].packages)
