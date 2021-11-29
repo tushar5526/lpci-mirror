@@ -770,11 +770,14 @@ class TestRun(CommandBaseTestCase):
                     output:
                         properties:
                             version: "0.1"
+                            to-be-removed: "x"
                         dynamic-properties: properties
             """
         )
         Path(".launchpad.yaml").write_text(config)
-        Path("properties").write_text("version=0.2\n")
+        Path("properties").write_text(
+            "version=0.2\nto-be-removed\nalready-missing\n"
+        )
 
         result = self.run_command("run", "--output", str(target_path))
 

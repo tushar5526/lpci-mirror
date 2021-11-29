@@ -148,13 +148,11 @@ def _copy_output_properties(
                 ).stdout
             )
         )
-        properties.update(
-            {
-                key: value
-                for key, value in dynamic_properties.items()
-                if value is not None
-            }
-        )
+        for key, value in dynamic_properties.items():
+            if value is not None:
+                properties[key] = value
+            else:
+                properties.pop(key, None)
 
     with open(target_path / "properties", "w") as f:
         json.dump(properties, f)
