@@ -476,7 +476,7 @@ class TestRun(CommandBaseTestCase):
         def fake_pull_file(source: Path, destination: Path) -> None:
             destination.touch()
 
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -503,7 +503,7 @@ class TestRun(CommandBaseTestCase):
         Path("test_1.0.tar.gz").write_bytes(b"")
         Path("test_1.0.whl").write_bytes(b"")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
         self.assertEqual(
@@ -546,27 +546,27 @@ class TestRun(CommandBaseTestCase):
             ],
             execute_run.call_args_list,
         )
-        local_output = output_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "focal" / "amd64"
         self.assertEqual(
             [
                 call(
                     source=self.tmp_project_path / "test_1.0.tar.gz",
-                    destination=local_output / "files" / "test_1.0.tar.gz",
+                    destination=job_output / "files" / "test_1.0.tar.gz",
                 ),
                 call(
                     source=self.tmp_project_path / "test_1.0.whl",
-                    destination=local_output / "files" / "test_1.0.whl",
+                    destination=job_output / "files" / "test_1.0.whl",
                 ),
             ],
             launcher.return_value.pull_file.call_args_list,
         )
         self.assertEqual(
             ["files", "properties"],
-            sorted(path.name for path in local_output.iterdir()),
+            sorted(path.name for path in job_output.iterdir()),
         )
         self.assertEqual(
             ["test_1.0.tar.gz", "test_1.0.whl"],
-            sorted(path.name for path in (local_output / "files").iterdir()),
+            sorted(path.name for path in (job_output / "files").iterdir()),
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
@@ -578,7 +578,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -602,7 +602,7 @@ class TestRun(CommandBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -626,7 +626,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -651,7 +651,7 @@ class TestRun(CommandBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("symlink.txt").symlink_to("../target.txt")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -714,7 +714,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -742,7 +742,7 @@ class TestRun(CommandBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("test_1.0.whl").write_bytes(b"")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         self.assertThat(
             result,
@@ -760,7 +760,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -785,7 +785,7 @@ class TestRun(CommandBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
         self.assertEqual(
@@ -799,10 +799,10 @@ class TestRun(CommandBaseTestCase):
             ],
             execute_run.call_args_list,
         )
-        local_output = output_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "focal" / "amd64"
         self.assertEqual(
             {"foo": "bar"},
-            json.loads((local_output / "properties").read_text()),
+            json.loads((job_output / "properties").read_text()),
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
@@ -814,7 +814,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -839,7 +839,7 @@ class TestRun(CommandBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("properties").write_text("version=0.1\n")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
         self.assertEqual(
@@ -871,10 +871,10 @@ class TestRun(CommandBaseTestCase):
             ],
             execute_run.call_args_list,
         )
-        local_output = output_path / "test" / "focal" / "amd64"
+        job_output = target_path / "test" / "focal" / "amd64"
         self.assertEqual(
             {"version": "0.1"},
-            json.loads((local_output / "properties").read_text()),
+            json.loads((job_output / "properties").read_text()),
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
@@ -886,7 +886,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -913,13 +913,13 @@ class TestRun(CommandBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("properties").write_text("version=0.2\n")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
-        local_output = output_path / "test" / "focal" / "amd64"
+        job_output = target_path / "test" / "focal" / "amd64"
         self.assertEqual(
             {"version": "0.2"},
-            json.loads((local_output / "properties").read_text()),
+            json.loads((job_output / "properties").read_text()),
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
@@ -931,7 +931,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -955,7 +955,7 @@ class TestRun(CommandBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -979,7 +979,7 @@ class TestRun(CommandBaseTestCase):
         mock_get_provider,
         mock_get_project_path,
     ):
-        output_path = Path(self.useFixture(TempDir()).path)
+        target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -1004,7 +1004,7 @@ class TestRun(CommandBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("properties").symlink_to("../target")
 
-        result = self.run_command("run", "--output", str(output_path))
+        result = self.run_command("run", "--output", str(target_path))
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending

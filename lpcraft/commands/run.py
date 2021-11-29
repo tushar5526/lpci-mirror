@@ -20,7 +20,7 @@ from lpcraft.providers import get_provider
 from lpcraft.utils import get_host_architecture
 
 
-def _check_path_escape(path: PurePath, container: PurePath) -> PurePath:
+def _check_relative_path(path: PurePath, container: PurePath) -> PurePath:
     """Check that `path` does not escape `container`.
 
     Any symlinks in `path` must already have been resolved within the
@@ -36,7 +36,7 @@ def _check_path_escape(path: PurePath, container: PurePath) -> PurePath:
         raise CommandError(str(e), retcode=1)
 
 
-def _find_in_instance(instance: Executor, path: Path) -> List[PurePath]:
+def _list_files(instance: Executor, path: Path) -> List[PurePath]:
     """Find entries in `path` on `instance`.
 
     :param instance: Provider instance to search.
@@ -82,7 +82,7 @@ def _resolve_symlinks(
 
 
 def _copy_output_paths(
-    output: Output, remote_cwd: Path, instance: Executor, output_path: Path
+    output: Output, remote_cwd: Path, instance: Executor, target_path: Path
 ) -> None:
     """Copy designated output paths from a completed job."""
     if output.paths is None:
@@ -93,13 +93,13 @@ def _copy_output_paths(
         # pattern as a whole first produces clearer error messages.  We have
         # to use os.path for this, as pathlib doesn't expose any equivalent
         # of normpath.
-        _check_path_escape(
+        _check_relative_path(
             PurePath(os.path.normpath(remote_cwd / path_pattern)),
             remote_cwd,
         )
 
-    remote_paths = sorted(_find_in_instance(instance, remote_cwd))
-    output_files = output_path / "files"
+    remote_paths = sorted(_list_files(instance, remote_cwd))
+    output_files = target_path / "files"
 
     filtered_paths: Set[PurePath] = set()
     for path_pattern in output.paths:
@@ -116,7 +116,7 @@ def _copy_output_paths(
     )
 
     for path in sorted(resolved_paths):
-        relative_path = _check_path_escape(path, remote_cwd)
+        relative_path = _check_relative_path(path, remote_cwd)
         destination = output_files / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -128,7 +128,7 @@ def _copy_output_paths(
 
 
 def _copy_output_properties(
-    output: Output, remote_cwd: Path, instance: Executor, output_path: Path
+    output: Output, remote_cwd: Path, instance: Executor, target_path: Path
 ) -> None:
     """Copy designated output properties from a completed job."""
     properties = dict(output.properties or {})
@@ -138,7 +138,7 @@ def _copy_output_properties(
             instance,
             [remote_cwd / output.dynamic_properties],
         )
-        _check_path_escape(path, remote_cwd)
+        _check_relative_path(path, remote_cwd)
         dynamic_properties = dotenv_values(
             stream=io.StringIO(
                 instance.execute_run(
@@ -156,7 +156,7 @@ def _copy_output_properties(
             }
         )
 
-    with open(output_path / "properties", "w") as f:
+    with open(target_path / "properties", "w") as f:
         json.dump(properties, f)
 
 
@@ -212,15 +212,15 @@ def run(args: Namespace) -> int:
                     )
 
                 if job.output is not None and args.output is not None:
-                    output_path = (
+                    target_path = (
                         args.output / job_name / job.series / host_architecture
                     )
-                    output_path.mkdir(parents=True, exist_ok=True)
+                    target_path.mkdir(parents=True, exist_ok=True)
                     _copy_output_paths(
-                        job.output, remote_cwd, instance, output_path
+                        job.output, remote_cwd, instance, target_path
                     )
                     _copy_output_properties(
-                        job.output, remote_cwd, instance, output_path
+                        job.output, remote_cwd, instance, target_path
                     )
 
     return 0
