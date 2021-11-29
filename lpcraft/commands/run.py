@@ -209,7 +209,10 @@ def run(args: Namespace) -> int:
                         retcode=proc.returncode,
                     )
 
-                if job.output is not None and args.output is not None:
+                if (
+                    job.output is not None
+                    and getattr(args, "output", None) is not None
+                ):
                     target_path = (
                         args.output / job_name / job.series / host_architecture
                     )
