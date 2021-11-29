@@ -500,46 +500,6 @@ class TestRun(CommandBaseTestCase):
         result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
-        self.assertEqual(
-            [
-                call(
-                    ["bash", "--noprofile", "--norc", "-ec", "true\n"],
-                    cwd=self.tmp_project_path,
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "find",
-                        str(self.tmp_project_path),
-                        "-mindepth",
-                        "1",
-                        "!",
-                        "-type",
-                        "d",
-                        "-printf",
-                        "%P\\0",
-                    ],
-                    cwd=ANY,
-                    capture_output=True,
-                    check=True,
-                ),
-                call(
-                    [
-                        "readlink",
-                        "-f",
-                        "-z",
-                        "--",
-                        str(self.tmp_project_path / "test_1.0.tar.gz"),
-                        str(self.tmp_project_path / "test_1.0.whl"),
-                    ],
-                    cwd=ANY,
-                    capture_output=True,
-                    check=True,
-                ),
-            ],
-            execute_run.call_args_list,
-        )
         job_output = target_path / "build" / "focal" / "amd64"
         self.assertEqual(
             [
@@ -647,45 +607,6 @@ class TestRun(CommandBaseTestCase):
         self.assertEqual(1, result.exit_code)
         [error] = result.errors
         self.assertIn("/target.txt", str(error))
-        self.assertEqual(
-            [
-                call(
-                    ["bash", "--noprofile", "--norc", "-ec", "true\n"],
-                    cwd=self.tmp_project_path,
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "find",
-                        str(self.tmp_project_path),
-                        "-mindepth",
-                        "1",
-                        "!",
-                        "-type",
-                        "d",
-                        "-printf",
-                        "%P\\0",
-                    ],
-                    cwd=ANY,
-                    capture_output=True,
-                    check=True,
-                ),
-                call(
-                    [
-                        "readlink",
-                        "-f",
-                        "-z",
-                        "--",
-                        str(self.tmp_project_path / "symlink.txt"),
-                    ],
-                    cwd=ANY,
-                    capture_output=True,
-                    check=True,
-                ),
-            ],
-            execute_run.call_args_list,
-        )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
     @patch("lpcraft.commands.run.get_provider")
@@ -770,17 +691,6 @@ class TestRun(CommandBaseTestCase):
         result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
-        self.assertEqual(
-            [
-                call(
-                    ["bash", "--noprofile", "--norc", "-ec", "true\n"],
-                    cwd=self.tmp_project_path,
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-            ],
-            execute_run.call_args_list,
-        )
         job_output = target_path / "build" / "focal" / "amd64"
         self.assertEqual(
             {"foo": "bar"},
@@ -824,35 +734,6 @@ class TestRun(CommandBaseTestCase):
         result = self.run_command("run", "--output", str(target_path))
 
         self.assertEqual(0, result.exit_code)
-        self.assertEqual(
-            [
-                call(
-                    ["bash", "--noprofile", "--norc", "-ec", "true\n"],
-                    cwd=self.tmp_project_path,
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "readlink",
-                        "-f",
-                        "-z",
-                        "--",
-                        str(self.tmp_project_path / "properties"),
-                    ],
-                    cwd=ANY,
-                    capture_output=True,
-                    check=True,
-                ),
-                call(
-                    ["cat", str(self.tmp_project_path / "properties")],
-                    cwd=ANY,
-                    capture_output=True,
-                    text=True,
-                ),
-            ],
-            execute_run.call_args_list,
-        )
         job_output = target_path / "test" / "focal" / "amd64"
         self.assertEqual(
             {"version": "0.1"},
