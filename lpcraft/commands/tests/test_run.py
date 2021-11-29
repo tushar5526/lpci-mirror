@@ -872,3 +872,90 @@ class TestRun(CommandBaseTestCase):
         self.assertEqual(1, result.exit_code)
         [error] = result.errors
         self.assertIn("/target", str(error))
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps: [chromium, firefox]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    [
+                        "snap",
+                        "download",
+                        "chromium",
+                        "--channel=stable",
+                        "--basename=chromium",
+                        "--target-directory=/tmp",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "/tmp/chromium.snap",
+                        "--classic",
+                        "--dangerous",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "snap",
+                        "download",
+                        "firefox",
+                        "--channel=stable",
+                        "--basename=firefox",
+                        "--target-directory=/tmp",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "/tmp/firefox.snap",
+                        "--classic",
+                        "--dangerous",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/project"),
+                    env=None,
+                    stdout=27,
+                    stderr=27,
+                ),
+            ],
+            execute_run.call_args_list,
+        )

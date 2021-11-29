@@ -11,6 +11,7 @@ from typing import List, Set
 
 from craft_cli import emit
 from craft_providers import Executor
+from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
 
 from lpcraft import env
@@ -180,7 +181,6 @@ def run(args: Namespace) -> int:
                     f"does not set 'run'"
                 )
 
-            cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
             remote_cwd = env.get_managed_environment_project_path()
 
             emit.progress(
@@ -192,10 +192,20 @@ def run(args: Namespace) -> int:
                 series=job.series,
                 architecture=host_architecture,
             ) as instance:
+                if job.snaps:
+                    for snap in job.snaps:
+                        emit.progress(f"Running `snap install {snap}`")
+                        install_from_store(
+                            executor=instance,
+                            snap_name=snap,
+                            channel="stable",
+                            classic=True,
+                        )
+                run_cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
                 emit.progress("Running the job")
-                with emit.open_stream(f"Running {cmd}") as stream:
+                with emit.open_stream(f"Running {run_cmd}") as stream:
                     proc = instance.execute_run(
-                        cmd,
+                        run_cmd,
                         cwd=remote_cwd,
                         env=job.environment,
                         stdout=stream,

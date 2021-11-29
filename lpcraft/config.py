@@ -53,6 +53,7 @@ class Job(ModelConfigDefaults):
     run: Optional[StrictStr]
     environment: Optional[Dict[str, Optional[str]]]
     output: Optional[Output]
+    snaps: Optional[List[StrictStr]]
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(

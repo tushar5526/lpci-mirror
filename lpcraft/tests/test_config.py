@@ -212,3 +212,38 @@ class TestConfig(TestCase):
             Config.load,
             path,
         )
+
+    def test_load_snaps(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        snaps: [chromium, firefox]
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual(["chromium", "firefox"], config.jobs["test"][0].snaps)
+
+    def test_load_config_without_snaps(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual(None, config.jobs["test"][0].snaps)
