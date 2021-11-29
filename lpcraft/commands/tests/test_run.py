@@ -11,13 +11,7 @@ from unittest.mock import ANY, Mock, call, patch
 
 from craft_providers.lxd import LXC, launch
 from fixtures import TempDir
-from testtools.matchers import (
-    AfterPreprocessing,
-    Contains,
-    Equals,
-    MatchesListwise,
-    MatchesStructure,
-)
+from testtools.matchers import MatchesStructure
 
 from lpcraft.commands.tests import CommandBaseTestCase
 from lpcraft.errors import CommandError, YAMLError
@@ -607,15 +601,9 @@ class TestRun(CommandBaseTestCase):
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
         # path.
-        self.assertThat(
-            result,
-            MatchesStructure(
-                exit_code=Equals(1),
-                errors=MatchesListwise(
-                    [AfterPreprocessing(str, Contains("/etc/shadow"))]
-                ),
-            ),
-        )
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/etc/shadow", str(error))
 
     @patch("lpcraft.env.get_managed_environment_project_path")
     @patch("lpcraft.commands.run.get_provider")
@@ -656,15 +644,9 @@ class TestRun(CommandBaseTestCase):
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
         # path.
-        self.assertThat(
-            result,
-            MatchesStructure(
-                exit_code=Equals(1),
-                errors=MatchesListwise(
-                    [AfterPreprocessing(str, Contains("/target.txt"))]
-                ),
-            ),
-        )
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/target.txt", str(error))
         self.assertEqual(
             [
                 call(
@@ -960,15 +942,9 @@ class TestRun(CommandBaseTestCase):
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
         # path.
-        self.assertThat(
-            result,
-            MatchesStructure(
-                exit_code=Equals(1),
-                errors=MatchesListwise(
-                    [AfterPreprocessing(str, Contains("/properties"))]
-                ),
-            ),
-        )
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/properties", str(error))
 
     @patch("lpcraft.env.get_managed_environment_project_path")
     @patch("lpcraft.commands.run.get_provider")
@@ -1009,12 +985,6 @@ class TestRun(CommandBaseTestCase):
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
         # path.
-        self.assertThat(
-            result,
-            MatchesStructure(
-                exit_code=Equals(1),
-                errors=MatchesListwise(
-                    [AfterPreprocessing(str, Contains("/target"))]
-                ),
-            ),
-        )
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/target", str(error))
