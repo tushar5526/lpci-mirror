@@ -4,18 +4,18 @@
 #
 #    pip-compile
 #
-appdirs==1.4.4
-    # via craft-cli
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.7
     # via requests
-craft-cli @ git+git://github.com/canonical/craft-cli.git@c172fa00f61dff8e510116d1c23258e79f710e38
+craft-cli @ git+git://github.com/canonical/craft-cli.git@93db67c7bc357f0b6d9f5793b7c2381c306f9ca3
     # via -r requirements.in
 craft-providers==1.0.3
     # via -r requirements.in
 idna==3.3
     # via requests
+platformdirs==2.4.0
+    # via craft-cli
 pydantic==1.8.2
     # via
     #   -r requirements.in

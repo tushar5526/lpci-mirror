@@ -2,9 +2,9 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import sys
-from unittest.mock import patch
+from unittest.mock import call, patch
 
-from craft_cli import EmitterMode
+from craft_cli import CraftError, EmitterMode
 from fixtures import MockPatch
 from testtools import TestCase
 
@@ -54,11 +54,9 @@ class TestMain(TestCase):
             ret = main()
 
         self.assertEqual(1, ret)
-        # cannot compare the results directly but only the str representation
-        # see https://github.com/canonical/craft-cli/issues/40
         self.assertEqual(
-            "call('error', CraftError('Interrupted.'))",
-            str(emitter.recorder.interactions[0]),
+            call("error", CraftError("Interrupted.")),
+            emitter.recorder.interactions[0],
         )
 
     @patch("lpcraft.main.run")
@@ -70,11 +68,11 @@ class TestMain(TestCase):
             ret = main()
 
         self.assertEqual(1, ret)
-        # cannot compare the results directly but only the str representation
-        # see https://github.com/canonical/craft-cli/issues/40
         self.assertEqual(
-            "call('error', CraftError('lpcraft internal error: RuntimeError()'))",  # noqa: E501
-            str(emitter.recorder.interactions[0]),
+            call(
+                "error", CraftError("lpcraft internal error: RuntimeError()")
+            ),
+            emitter.recorder.interactions[0],
         )
 
     def test_quiet_mode(self):
