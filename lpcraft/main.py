@@ -6,6 +6,7 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import List, Optional
 
 from craft_cli import CraftError, EmitterMode, emit
 
@@ -28,7 +29,7 @@ def _configure_logger(name: str) -> None:
 _configure_logger("craft_providers")
 
 
-def main() -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     """lpcraft runs Launchpad CI jobs."""
     parser = ArgumentParser(description="Run Launchpad CI jobs.")
     parser.add_argument(
@@ -74,7 +75,7 @@ def main() -> int:
     emit.init(EmitterMode.NORMAL, "lpcraft", f"Starting {lpcraft_version}")
 
     try:
-        args = parser.parse_args()
+        args = parser.parse_args(argv)
     except SystemExit:
         emit.ended_ok()
         return 1
