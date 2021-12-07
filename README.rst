@@ -25,11 +25,3 @@ although it won't do very much useful yet.
 
 To save the output from a job, use ``lpcraft run --output
 /path/to/output/directory``.
-
-Developing
-==========
-
-Run tests using ``tox``.
-
-If you need to modify ``requirements.in``, run ``tox -e pip-compile``
-afterwards.
