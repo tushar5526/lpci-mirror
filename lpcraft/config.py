@@ -1,6 +1,7 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import re
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
@@ -10,6 +11,17 @@ import pydantic
 from pydantic import StrictStr
 
 from lpcraft.utils import load_yaml
+
+
+class _Identifier(pydantic.ConstrainedStr):
+    """A string with constrained syntax used as a short identifier.
+
+    Compare `lp.app.validators.name` in Launchpad, though we also permit
+    underscores here.
+    """
+
+    strict = True
+    regex = re.compile(r"^[a-z0-9][a-z0-9\+\._\-]+$")
 
 
 class ModelConfigDefaults(
@@ -48,8 +60,8 @@ class Output(ModelConfigDefaults):
 class Job(ModelConfigDefaults):
     """A job definition."""
 
-    series: StrictStr
-    architectures: List[StrictStr]
+    series: _Identifier
+    architectures: List[_Identifier]
     run: Optional[StrictStr]
     environment: Optional[Dict[str, Optional[str]]]
     output: Optional[Output]
@@ -58,8 +70,8 @@ class Job(ModelConfigDefaults):
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(
-        cls, v: Union[StrictStr, List[StrictStr]]
-    ) -> List[StrictStr]:
+        cls, v: Union[_Identifier, List[_Identifier]]
+    ) -> List[_Identifier]:
         if isinstance(v, str):
             v = [v]
         return v
@@ -84,7 +96,7 @@ def _expand_job_values(
 class Config(ModelConfigDefaults):
     """A .launchpad.yaml configuration file."""
 
-    pipeline: List[StrictStr]
+    pipeline: List[_Identifier]
     jobs: Dict[StrictStr, List[Job]]
 
     # XXX cjwatson 2021-11-17: This expansion strategy works, but it may

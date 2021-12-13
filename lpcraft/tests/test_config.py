@@ -84,6 +84,63 @@ class TestConfig(TestCase):
         config = Config.load(path)
         self.assertEqual(["amd64"], config.jobs["test"][0].architectures)
 
+    def test_bad_job_name(self):
+        # Job names must be identifiers.
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - foo:bar
+
+                jobs:
+                    'foo:bar':
+                        series: focal
+                        architectures: amd64
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError, r"string does not match regex", Config.load, path
+        )
+
+    def test_bad_series_name(self):
+        # Series names must be identifiers.
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: something/bad
+                        architectures: amd64
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError, r"string does not match regex", Config.load, path
+        )
+
+    def test_bad_architecture_name(self):
+        # Architecture names must be identifiers.
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: 'not this'
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError, r"string does not match regex", Config.load, path
+        )
+
     def test_expands_matrix(self):
         path = self.create_config(
             dedent(
