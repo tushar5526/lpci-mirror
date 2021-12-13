@@ -7,7 +7,7 @@ import json
 import os
 from argparse import Namespace
 from pathlib import Path, PurePath
-from typing import List, Set
+from typing import List, Optional, Set
 
 from craft_cli import emit
 from craft_providers import Executor
@@ -15,9 +15,9 @@ from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
 
 from lpcraft import env
-from lpcraft.config import Config, Output
+from lpcraft.config import Config, Job, Output
 from lpcraft.errors import CommandError
-from lpcraft.providers import get_provider
+from lpcraft.providers import Provider, get_provider
 from lpcraft.utils import get_host_architecture
 
 
@@ -159,11 +159,81 @@ def _copy_output_properties(
         json.dump(properties, f)
 
 
+def _run_job(
+    job_name: str, job: Job, provider: Provider, output: Optional[Path]
+) -> None:
+    """Run a single job."""
+    host_architecture = get_host_architecture()
+    if host_architecture not in job.architectures:
+        return
+    if job.run is None:
+        raise CommandError(
+            f"Job {job_name!r} for {job.series}/{host_architecture} "
+            f"does not set 'run'"
+        )
+
+    cwd = Path.cwd()
+    remote_cwd = env.get_managed_environment_project_path()
+
+    emit.progress(
+        f"Launching environment for {job.series}/{host_architecture}"
+    )
+    with provider.launched_environment(
+        project_name=cwd.name,
+        project_path=cwd,
+        series=job.series,
+        architecture=host_architecture,
+    ) as instance:
+        if job.snaps:
+            for snap in job.snaps:
+                emit.progress(f"Running `snap install {snap}`")
+                install_from_store(
+                    executor=instance,
+                    snap_name=snap,
+                    channel="stable",
+                    classic=True,
+                )
+        if job.packages:
+            packages_cmd = ["apt", "install", "-y"] + job.packages
+            emit.progress("Installing system packages")
+            with emit.open_stream(f"Running {packages_cmd}") as stream:
+                proc = instance.execute_run(
+                    packages_cmd,
+                    cwd=remote_cwd,
+                    env=job.environment,
+                    stdout=stream,
+                    stderr=stream,
+                )
+        run_cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
+        emit.progress("Running the job")
+        with emit.open_stream(f"Running {run_cmd}") as stream:
+            proc = instance.execute_run(
+                run_cmd,
+                cwd=remote_cwd,
+                env=job.environment,
+                stdout=stream,
+                stderr=stream,
+            )
+        if proc.returncode != 0:
+            raise CommandError(
+                f"Job {job_name!r} for "
+                f"{job.series}/{host_architecture} failed with "
+                f"exit status {proc.returncode}.",
+                retcode=proc.returncode,
+            )
+
+        if job.output is not None and output is not None:
+            target_path = output / job_name / job.series / host_architecture
+            target_path.mkdir(parents=True, exist_ok=True)
+            _copy_output_paths(job.output, remote_cwd, instance, target_path)
+            _copy_output_properties(
+                job.output, remote_cwd, instance, target_path
+            )
+
+
 def run(args: Namespace) -> int:
     """Run a pipeline, launching managed environments as needed."""
     config = Config.load(Path(".launchpad.yaml"))
-    host_architecture = get_host_architecture()
-    cwd = Path.cwd()
 
     provider = get_provider()
     provider.ensure_provider_is_available()
@@ -173,76 +243,27 @@ def run(args: Namespace) -> int:
         if not jobs:
             raise CommandError(f"No job definition for {job_name!r}")
         for job in jobs:
-            if host_architecture not in job.architectures:
-                continue
-            if job.run is None:
-                raise CommandError(
-                    f"Job {job_name!r} for {job.series}/{host_architecture} "
-                    f"does not set 'run'"
-                )
+            _run_job(job_name, job, provider, getattr(args, "output", None))
 
-            remote_cwd = env.get_managed_environment_project_path()
+    return 0
 
-            emit.progress(
-                f"Launching environment for {job.series}/{host_architecture}"
-            )
-            with provider.launched_environment(
-                project_name=cwd.name,
-                project_path=cwd,
-                series=job.series,
-                architecture=host_architecture,
-            ) as instance:
-                if job.snaps:
-                    for snap in job.snaps:
-                        emit.progress(f"Running `snap install {snap}`")
-                        install_from_store(
-                            executor=instance,
-                            snap_name=snap,
-                            channel="stable",
-                            classic=True,
-                        )
-                if job.packages:
-                    packages_cmd = ["apt", "install", "-y"] + job.packages
-                    emit.progress("Installing system packages")
-                    with emit.open_stream(f"Running {packages_cmd}") as stream:
-                        proc = instance.execute_run(
-                            packages_cmd,
-                            cwd=remote_cwd,
-                            env=job.environment,
-                            stdout=stream,
-                            stderr=stream,
-                        )
-                run_cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
-                emit.progress("Running the job")
-                with emit.open_stream(f"Running {run_cmd}") as stream:
-                    proc = instance.execute_run(
-                        run_cmd,
-                        cwd=remote_cwd,
-                        env=job.environment,
-                        stdout=stream,
-                        stderr=stream,
-                    )
-                if proc.returncode != 0:
-                    raise CommandError(
-                        f"Job {job_name!r} for "
-                        f"{job.series}/{host_architecture} failed with "
-                        f"exit status {proc.returncode}.",
-                        retcode=proc.returncode,
-                    )
 
-                if (
-                    job.output is not None
-                    and getattr(args, "output", None) is not None
-                ):
-                    target_path = (
-                        args.output / job_name / job.series / host_architecture
-                    )
-                    target_path.mkdir(parents=True, exist_ok=True)
-                    _copy_output_paths(
-                        job.output, remote_cwd, instance, target_path
-                    )
-                    _copy_output_properties(
-                        job.output, remote_cwd, instance, target_path
-                    )
+def run_one(args: Namespace) -> int:
+    """Select and run a single job from a pipeline."""
+    config = Config.load(Path(".launchpad.yaml"))
+
+    jobs = config.jobs.get(args.job, [])
+    if not jobs:
+        raise CommandError(f"No job definition for {args.job!r}")
+    if args.index >= len(jobs):
+        raise CommandError(
+            f"No job definition with index {args.index} for {args.job!r}"
+        )
+    job = jobs[args.index]
+
+    provider = get_provider()
+    provider.ensure_provider_is_available()
+
+    _run_job(args.job, job, provider, getattr(args, "output", None))
 
     return 0

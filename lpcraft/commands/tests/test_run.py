@@ -55,7 +55,9 @@ class LocalExecuteRun:
         return subprocess.run(command, **run_kwargs)
 
 
-class TestRun(CommandBaseTestCase):
+class RunBaseTestCase(CommandBaseTestCase):
+    """Common code for run and run-one tests."""
+
     def setUp(self):
         super().setUp()
         self.tmp_project_path = Path(
@@ -82,6 +84,8 @@ class TestRun(CommandBaseTestCase):
             lxd_launcher=lxd_launcher,
         )
 
+
+class TestRun(RunBaseTestCase):
     def test_missing_config_file(self):
         result = self.run_command("run")
 
@@ -1012,4 +1016,174 @@ class TestRun(CommandBaseTestCase):
                 ),
             ],
             execute_run.call_args_list,
+        )
+
+
+class TestRunOne(RunBaseTestCase):
+    def test_missing_config_file(self):
+        result = self.run_command("run-one", "test", "0")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    YAMLError("Couldn't find config file '.launchpad.yaml'")
+                ],
+            ),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_job_not_defined(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        mock_get_provider.return_value = self.makeLXDProvider()
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs: {}
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "test", "0")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[CommandError("No job definition for 'test'")],
+            ),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_job_index_not_defined(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        mock_get_provider.return_value = self.makeLXDProvider()
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "test", "1")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError("No job definition with index 1 for 'test'")
+                ],
+            ),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_job_fails(self, mock_get_host_architecture, mock_get_provider):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 2)
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - build-wheel
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                build-wheel:
+                    series: focal
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "build-wheel", "0")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=2,
+                errors=[
+                    CommandError(
+                        "Job 'build-wheel' for focal/amd64 failed with exit "
+                        "status 2.",
+                        retcode=2,
+                    )
+                ],
+            ),
+        )
+        execute_run.assert_called_once_with(
+            ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
+            cwd=Path("/root/project"),
+            env=None,
+            stdout=ANY,
+            stderr=ANY,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_expands_matrix(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - build-wheel
+
+            jobs:
+                test:
+                    matrix:
+                        - series: bionic
+                          architectures: amd64
+                        - series: focal
+                          architectures: [amd64, s390x]
+                    run: tox
+                build-wheel:
+                    series: bionic
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "test", "1")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            ["focal"],
+            [c.kwargs["image_name"] for c in launcher.call_args_list],
+        )
+        execute_run.assert_called_once_with(
+            ["bash", "--noprofile", "--norc", "-ec", "tox"],
+            cwd=Path("/root/project"),
+            env=None,
+            stdout=ANY,
+            stderr=ANY,
         )

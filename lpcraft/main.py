@@ -11,7 +11,7 @@ from typing import List, Optional
 from craft_cli import CraftError, EmitterMode, emit
 
 from lpcraft._version import version_description as lpcraft_version
-from lpcraft.commands.run import run
+from lpcraft.commands.run import run, run_one
 from lpcraft.commands.version import version
 from lpcraft.errors import CommandError
 
@@ -66,8 +66,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser_run.add_argument(
         "--output", type=Path, help="Write output files to this directory."
     )
-
     parser_run.set_defaults(func=run)
+
+    parser_run_one = subparsers.add_parser("run-one", help=run_one.__doc__)
+    parser_run_one.add_argument(
+        "--output", type=Path, help="Write output files to this directory."
+    )
+    parser_run_one.add_argument("job", help="Run only this job name.")
+    parser_run_one.add_argument(
+        "index",
+        type=int,
+        metavar="N",
+        help="Run only the Nth job with the given name (indexing from 0).",
+    )
+    parser_run_one.set_defaults(func=run_one)
 
     parser_version = subparsers.add_parser("version", help=version.__doc__)
     parser_version.set_defaults(func=version)
