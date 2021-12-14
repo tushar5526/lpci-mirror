@@ -339,3 +339,24 @@ class TestConfig(TestCase):
         )
         config = Config.load(path)
         self.assertEqual(None, config.jobs["test"][0].packages)
+
+    def test_load_plugin(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [nginx, apache2]
+                        plugin: tox
+                """
+            )
+        )
+
+        config = Config.load(path)
+
+        self.assertEqual("tox", config.jobs["test"][0].plugin)

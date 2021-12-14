@@ -3,6 +3,7 @@
 
 import fnmatch
 import io
+import itertools
 import json
 import os
 from argparse import Namespace
@@ -17,6 +18,7 @@ from dotenv import dotenv_values
 from lpcraft import env
 from lpcraft.config import Config, Job, Output
 from lpcraft.errors import CommandError
+from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.providers import Provider, get_provider
 from lpcraft.utils import get_host_architecture
 
@@ -193,8 +195,10 @@ def _run_job(
                     channel="stable",
                     classic=True,
                 )
-        if job.packages:
-            packages_cmd = ["apt", "install", "-y"] + job.packages
+        pm = get_plugin_manager(job)
+        packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
+        if packages:
+            packages_cmd = ["apt", "install", "-y"] + packages
             emit.progress("Installing system packages")
             with emit.open_stream(f"Running {packages_cmd}") as stream:
                 proc = instance.execute_run(

@@ -3,3 +3,4 @@ pydantic
 PyYAML
 python-dotenv
 git+git://github.com/canonical/craft-cli.git@93db67c7bc357f0b6d9f5793b7c2381c306f9ca3
+pluggy

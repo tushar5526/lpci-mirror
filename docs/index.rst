@@ -46,4 +46,5 @@ Example configuration
 
     self
     configuration
+    plugins
     CONTRIBUTING

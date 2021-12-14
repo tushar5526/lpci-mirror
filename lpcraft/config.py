@@ -67,6 +67,7 @@ class Job(ModelConfigDefaults):
     output: Optional[Output]
     snaps: Optional[List[StrictStr]]
     packages: Optional[List[StrictStr]]
+    plugin: Optional[StrictStr]
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(

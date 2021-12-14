@@ -16,6 +16,8 @@ idna==3.3
     # via requests
 platformdirs==2.4.0
     # via craft-cli
+pluggy==1.0.0
+    # via -r requirements.in
 pydantic==1.8.2
     # via
     #   -r requirements.in
