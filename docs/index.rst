@@ -45,4 +45,5 @@ Example configuration
     :maxdepth: 2
 
     self
+    configuration
     CONTRIBUTING
