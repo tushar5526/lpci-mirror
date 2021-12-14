@@ -8,6 +8,16 @@ The following documentation makes reference to various behaviours of
 Launchpad.  At the time of writing these have been designed but not yet
 implemented.
 
+.. _identifiers:
+
+Identifiers
+-----------
+
+Several configuration file keys accept *identifiers*: these must begin with
+an ASCII lower-case letter or number, must be at least two characters long,
+and may only contain ASCII lower-case letters or numbers, ``+``, ``.``,
+``_``, or ``-``.
+
 Top-level configuration
 -----------------------
 
@@ -17,8 +27,11 @@ Top-level configuration
      parallel.  Stages are executed in series, and subsequent stages only
      execute if previous stages succeeded.
 
+     Job names are :ref:`identifiers <identifiers>`.
+
 ``jobs`` (required)
-     Mapping of job names to job definitions.
+     Mapping of job names (:ref:`identifiers <identifiers>`) to job
+     definitions.
 
 Job definitions
 ---------------
@@ -26,9 +39,13 @@ Job definitions
 ``series`` (required)
      The name of the Ubuntu series used to run the job.
 
+     Series names are :ref:`identifiers <identifiers>`.
+
 ``architectures`` (required)
      An architecture or list of architectures on which to run the job.  If a
      list, this multiplies the job into one copy per architecture.
+
+     Architecture names are :ref:`identifiers <identifiers>`.
 
 ``packages`` (optional)
     Packages to install using ``apt`` as dependencies of this job.
