@@ -1176,9 +1176,10 @@ class TestRunOne(RunBaseTestCase):
         result = self.run_command("run-one", "test", "1")
 
         self.assertEqual(0, result.exit_code)
+        # We selected only one job, which ran on focal.
+        launcher.assert_called_once()
         self.assertEqual(
-            ["focal"],
-            [c.kwargs["image_name"] for c in launcher.call_args_list],
+            "focal", launcher.call_args_list[0].kwargs["image_name"]
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
