@@ -249,7 +249,10 @@ def run(args: Namespace) -> int:
 
 
 def run_one(args: Namespace) -> int:
-    """Select and run a single job from a pipeline."""
+    """Select and run a single job from a pipeline.
+
+    (This command is for use by Launchpad, and is subject to change.)
+    """
     config = Config.load(Path(".launchpad.yaml"))
 
     jobs = config.jobs.get(args.job, [])
