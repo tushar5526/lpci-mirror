@@ -5,8 +5,10 @@ from __future__ import annotations
 
 from lpcraft.config import Job
 from lpcraft.plugin import hookimpl
+from lpcraft.plugins import register
 
 
+@register(name="tox")
 class ToxPlugin:
     # XXX jugmac00 2021-12-16: this plugin is not yet fully implemented
     def __init__(self, config: Job) -> None:
