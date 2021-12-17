@@ -21,3 +21,11 @@ def lpcraft_install_snaps() -> list[str]:
 @hookspec  # type: ignore
 def lpcraft_execute_run() -> str:
     """command to be executed"""
+
+
+@hookspec  # type: ignore
+def lpcraft_set_environment() -> dict[str, str | None]:
+    """environment variables to be set"""
+    # Please note: when there is the same environment variable provided by
+    # the plugin and the configuration file, the one in the configuration
+    # file will be taken into account

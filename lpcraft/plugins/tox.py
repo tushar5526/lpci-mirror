@@ -19,3 +19,10 @@ class ToxPlugin:
     @hookimpl  # type: ignore
     def lpcraft_execute_run(self) -> str:
         return "tox"
+
+    @hookimpl  # type: ignore
+    def lpcraft_set_environment(self) -> dict[str, str | None]:
+        # XXX jugmac00 2021-12-17: this was added to raise coverage and is not
+        # necessary. Let's remove this once we have a plugin which actually
+        # needs to set environment variables.
+        return {"PLUGIN": "tox"}

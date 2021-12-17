@@ -193,7 +193,7 @@ class TestRun(RunBaseTestCase):
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 )
@@ -281,7 +281,7 @@ class TestRun(RunBaseTestCase):
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
             cwd=Path("/root/project"),
-            env=None,
+            env={},
             stdout=ANY,
             stderr=ANY,
         )
@@ -327,7 +327,7 @@ class TestRun(RunBaseTestCase):
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -340,7 +340,7 @@ class TestRun(RunBaseTestCase):
                         "pyproject-build",
                     ],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -392,14 +392,14 @@ class TestRun(RunBaseTestCase):
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -412,7 +412,7 @@ class TestRun(RunBaseTestCase):
                         "pyproject-build",
                     ],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -956,7 +956,7 @@ class TestRun(RunBaseTestCase):
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=27,
                     stderr=27,
                 ),
@@ -1003,14 +1003,14 @@ class TestRun(RunBaseTestCase):
                         "apache2",
                     ],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/project"),
-                    env=None,
+                    env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
@@ -1136,7 +1136,7 @@ class TestRunOne(RunBaseTestCase):
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
             cwd=Path("/root/project"),
-            env=None,
+            env={},
             stdout=ANY,
             stderr=ANY,
         )
@@ -1184,7 +1184,7 @@ class TestRunOne(RunBaseTestCase):
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
             cwd=Path("/root/project"),
-            env=None,
+            env={},
             stdout=ANY,
             stderr=ANY,
         )

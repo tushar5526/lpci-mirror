@@ -61,14 +61,14 @@ class TestPlugins(CommandBaseTestCase):
                 call(
                     ["apt", "install", "-y", "tox", "nginx", "apache2"],
                     cwd=PosixPath("/root/project"),
-                    env=None,
+                    env={"PLUGIN": "tox"},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=PosixPath("/root/project"),
-                    env=None,
+                    env={"PLUGIN": "tox"},
                     stdout=ANY,
                     stderr=ANY,
                 ),

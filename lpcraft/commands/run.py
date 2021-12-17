@@ -169,6 +169,7 @@ def _run_job(
     if host_architecture not in job.architectures:
         return
     pm = get_plugin_manager(job)
+    # XXX jugmac00 2021-12-17: extract infering run_command
     run_from_plugin = pm.hook.lpcraft_execute_run()
     run_from_configuration = job.run
     if run_from_configuration is not None:
@@ -191,6 +192,19 @@ def _run_job(
         )
 
     run_command = run_commands[0]
+
+    # XXX jugmac00 2021-12-17: extract infering environment variables
+    rv = pm.hook.lpcraft_set_environment()
+    if rv:
+        # XXX jugmac00 2021-12-17: check for length or reduce?
+        env_from_plugin = rv[0]
+    else:
+        env_from_plugin = {}
+
+    env_from_configuration = job.environment
+    if env_from_configuration is not None:
+        env_from_plugin.update(env_from_configuration)
+    environment = env_from_plugin
 
     cwd = Path.cwd()
     remote_cwd = env.get_managed_environment_project_path()
@@ -221,7 +235,7 @@ def _run_job(
                 proc = instance.execute_run(
                     packages_cmd,
                     cwd=remote_cwd,
-                    env=job.environment,
+                    env=environment,
                     stdout=stream,
                     stderr=stream,
                 )
@@ -231,7 +245,7 @@ def _run_job(
             proc = instance.execute_run(
                 full_run_cmd,
                 cwd=remote_cwd,
-                env=job.environment,
+                env=environment,
                 stdout=stream,
                 stderr=stream,
             )
