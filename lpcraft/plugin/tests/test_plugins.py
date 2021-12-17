@@ -9,7 +9,7 @@ from unittest.mock import ANY, Mock, call, patch
 from craft_providers.lxd import LXC, launch
 
 from lpcraft.commands.tests import CommandBaseTestCase
-from lpcraft.errors import CommandError, YAMLError
+from lpcraft.errors import YAMLError
 from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
 from lpcraft.providers.tests import FakeLXDInstaller
 
@@ -109,11 +109,9 @@ class TestPlugins(CommandBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_defining_two_run_commands_errors(
+    def test_run_command_from_configuration_takes_precedence(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        # defining a run command both in the configuration file and
-        # in a plugin results in an error
         launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
@@ -129,22 +127,30 @@ class TestPlugins(CommandBaseTestCase):
                     series: focal
                     architectures: amd64
                     packages: [nginx, apache2]
-                    run: tox
+                    run: ls
                     plugin: tox
             """
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run")
+        self.run_command("run")
 
-        self.assertEqual(1, result.exit_code)
         self.assertEqual(
-            result.errors,
             [
-                CommandError(
-                    "Job 'test' for focal/amd64 sets more than one 'run' "
-                    "command. Maybe you have set a run command both in the "
-                    "configuration and in a plugin?"
-                )
+                call(
+                    ["apt", "install", "-y", "tox", "nginx", "apache2"],
+                    cwd=PosixPath("/root/project"),
+                    env={"PLUGIN": "tox"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "ls"],
+                    cwd=PosixPath("/root/project"),
+                    env={"PLUGIN": "tox"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
             ],
+            execute_run.call_args_list,
         )

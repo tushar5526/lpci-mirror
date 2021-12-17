@@ -21,6 +21,9 @@ def lpcraft_install_snaps() -> list[str]:
 @hookspec  # type: ignore
 def lpcraft_execute_run() -> str:
     """command to be executed"""
+    # Please note: when both a plugin and the configuration file are
+    # providing a `run` command, the one from the configuration file will be
+    # used
 
 
 @hookspec  # type: ignore

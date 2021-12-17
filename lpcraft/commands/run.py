@@ -170,28 +170,20 @@ def _run_job(
         return
     pm = get_plugin_manager(job)
     # XXX jugmac00 2021-12-17: extract infering run_command
-    run_from_plugin = pm.hook.lpcraft_execute_run()
+    run_command = None
+
     run_from_configuration = job.run
     if run_from_configuration is not None:
-        run_commands = run_from_plugin + [run_from_configuration]
+        run_command = run_from_configuration
     else:
-        run_commands = run_from_plugin
+        rv = pm.hook.lpcraft_execute_run()
+        run_command = rv and rv[0] or None
 
-    if len(run_commands) == 0:
+    if not run_command:
         raise CommandError(
             f"Job {job_name!r} for {job.series}/{host_architecture} "
             f"does not set 'run'"
         )
-
-    if len(run_commands) > 1:
-        raise CommandError(
-            f"Job {job_name!r} for {job.series}/{host_architecture} "
-            f"sets more than one 'run' command. "
-            f"Maybe you have set a run command both in the configuration "
-            f"and in a plugin?"
-        )
-
-    run_command = run_commands[0]
 
     # XXX jugmac00 2021-12-17: extract infering environment variables
     rv = pm.hook.lpcraft_set_environment()
