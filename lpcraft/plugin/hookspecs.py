@@ -11,3 +11,8 @@ hookspec = pluggy.HookspecMarker("lpcraft")
 @hookspec  # type: ignore
 def lpcraft_install_packages() -> list[str]:
     """system packages to be installed"""
+
+
+@hookspec  # type: ignore
+def lpcraft_install_snaps() -> list[str]:
+    """snaps to be installed"""

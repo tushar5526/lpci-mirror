@@ -23,3 +23,9 @@ class InternalPlugins:
         if self.config.packages:
             return self.config.packages
         return []
+
+    @hookimpl  # type: ignore
+    def lpcraft_install_snaps(self) -> list[str]:
+        if self.config.snaps:
+            return self.config.snaps
+        return []

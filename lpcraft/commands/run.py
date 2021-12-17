@@ -186,16 +186,16 @@ def _run_job(
         series=job.series,
         architecture=host_architecture,
     ) as instance:
-        if job.snaps:
-            for snap in job.snaps:
-                emit.progress(f"Running `snap install {snap}`")
-                install_from_store(
-                    executor=instance,
-                    snap_name=snap,
-                    channel="stable",
-                    classic=True,
-                )
         pm = get_plugin_manager(job)
+        snaps = list(itertools.chain(*pm.hook.lpcraft_install_snaps()))
+        for snap in snaps:
+            emit.progress(f"Running `snap install {snap}`")
+            install_from_store(
+                executor=instance,
+                snap_name=snap,
+                channel="stable",
+                classic=True,
+            )
         packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
         if packages:
             packages_cmd = ["apt", "install", "-y"] + packages

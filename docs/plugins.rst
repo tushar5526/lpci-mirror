@@ -20,3 +20,8 @@ Plugin discovery
 
 As currently only builtin plugins are supported,
 you need to define a plugin in ``lpcraft/plugins/<plugin>``.
+
+
+.. comments
+
+    XXX jugmac00 2021-12-17: render all available hooks via plugin
