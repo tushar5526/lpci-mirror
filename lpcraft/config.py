@@ -60,6 +60,10 @@ class Output(ModelConfigDefaults):
 class Job(ModelConfigDefaults):
     """A job definition."""
 
+    # XXX jugmac00 2012-12-17: working with Job's attributes could be
+    # simplified if they would not be optional, but rather return e.g.
+    # an empty list
+
     series: _Identifier
     architectures: List[_Identifier]
     run: Optional[StrictStr]
