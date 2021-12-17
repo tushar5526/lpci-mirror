@@ -168,11 +168,29 @@ def _run_job(
     host_architecture = get_host_architecture()
     if host_architecture not in job.architectures:
         return
-    if job.run is None:
+    pm = get_plugin_manager(job)
+    run_from_plugin = pm.hook.lpcraft_execute_run()
+    run_from_configuration = job.run
+    if run_from_configuration is not None:
+        run_commands = run_from_plugin + [run_from_configuration]
+    else:
+        run_commands = run_from_plugin
+
+    if len(run_commands) == 0:
         raise CommandError(
             f"Job {job_name!r} for {job.series}/{host_architecture} "
             f"does not set 'run'"
         )
+
+    if len(run_commands) > 1:
+        raise CommandError(
+            f"Job {job_name!r} for {job.series}/{host_architecture} "
+            f"sets more than one 'run' command. "
+            f"Maybe you have set a run command both in the configuration "
+            f"and in a plugin?"
+        )
+
+    run_command = run_commands[0]
 
     cwd = Path.cwd()
     remote_cwd = env.get_managed_environment_project_path()
@@ -186,7 +204,6 @@ def _run_job(
         series=job.series,
         architecture=host_architecture,
     ) as instance:
-        pm = get_plugin_manager(job)
         snaps = list(itertools.chain(*pm.hook.lpcraft_install_snaps()))
         for snap in snaps:
             emit.progress(f"Running `snap install {snap}`")
@@ -208,11 +225,11 @@ def _run_job(
                     stdout=stream,
                     stderr=stream,
                 )
-        run_cmd = ["bash", "--noprofile", "--norc", "-ec", job.run]
+        full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", run_command]
         emit.progress("Running the job")
-        with emit.open_stream(f"Running {run_cmd}") as stream:
+        with emit.open_stream(f"Running {full_run_cmd}") as stream:
             proc = instance.execute_run(
-                run_cmd,
+                full_run_cmd,
                 cwd=remote_cwd,
                 env=job.environment,
                 stdout=stream,

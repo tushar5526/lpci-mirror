@@ -15,3 +15,7 @@ class ToxPlugin:
     @hookimpl  # type: ignore
     def lpcraft_install_packages(self) -> list[str]:
         return ["tox"]
+
+    @hookimpl  # type: ignore
+    def lpcraft_execute_run(self) -> str:
+        return "tox"

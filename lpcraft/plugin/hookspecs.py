@@ -16,3 +16,8 @@ def lpcraft_install_packages() -> list[str]:
 @hookspec  # type: ignore
 def lpcraft_install_snaps() -> list[str]:
     """snaps to be installed"""
+
+
+@hookspec  # type: ignore
+def lpcraft_execute_run() -> str:
+    """command to be executed"""
