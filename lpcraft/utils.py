@@ -15,23 +15,25 @@ from typing import Any, Dict
 
 import yaml
 
-from lpcraft.errors import YAMLError
+from lpcraft.errors import ConfigurationError
 
 
 def load_yaml(path: Path) -> Dict[Any, Any]:
     """Return the content of a YAML file."""
     if not path.is_file():
-        raise YAMLError(f"Couldn't find config file {str(path)!r}")
+        raise ConfigurationError(f"Couldn't find config file {str(path)!r}")
     try:
         with path.open("rb") as f:
             loaded = yaml.safe_load(f)
         if not isinstance(loaded, dict):
-            raise YAMLError(
+            raise ConfigurationError(
                 f"Config file {str(path)!r} does not define a mapping"
             )
         return loaded
     except (yaml.error.YAMLError, OSError) as e:
-        raise YAMLError(f"Failed to read/parse config file {str(path)!r}: {e}")
+        raise ConfigurationError(
+            f"Failed to read/parse config file {str(path)!r}: {e}"
+        )
 
 
 @lru_cache

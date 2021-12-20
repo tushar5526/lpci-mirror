@@ -9,7 +9,7 @@ from unittest.mock import ANY, Mock, call, patch
 from craft_providers.lxd import LXC, launch
 
 from lpcraft.commands.tests import CommandBaseTestCase
-from lpcraft.errors import YAMLError
+from lpcraft.errors import ConfigurationError
 from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
 from lpcraft.providers.tests import FakeLXDInstaller
 
@@ -105,7 +105,7 @@ class TestPlugins(CommandBaseTestCase):
         result = self.run_command("run")
 
         self.assertEqual(1, result.exit_code)
-        self.assertEqual([YAMLError("Unknown plugin")], result.errors)
+        self.assertEqual([ConfigurationError("Unknown plugin")], result.errors)
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")

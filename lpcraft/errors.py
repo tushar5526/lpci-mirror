@@ -5,7 +5,7 @@
 
 __all__ = [
     "CommandError",
-    "YAMLError",
+    "ConfigurationError",
 ]
 
 from typing import Any
@@ -25,5 +25,5 @@ class CommandError(CraftError):
         return str(self) == str(other) and self.retcode == other.retcode
 
 
-class YAMLError(CommandError):
+class ConfigurationError(CommandError):
     """Error reading YAML file."""

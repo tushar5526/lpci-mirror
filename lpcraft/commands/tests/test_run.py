@@ -14,7 +14,7 @@ from fixtures import TempDir
 from testtools.matchers import MatchesStructure
 
 from lpcraft.commands.tests import CommandBaseTestCase
-from lpcraft.errors import CommandError, YAMLError
+from lpcraft.errors import CommandError, ConfigurationError
 from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
 from lpcraft.providers.tests import FakeLXDInstaller
 
@@ -94,7 +94,9 @@ class TestRun(RunBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=1,
                 errors=[
-                    YAMLError("Couldn't find config file '.launchpad.yaml'")
+                    ConfigurationError(
+                        "Couldn't find config file '.launchpad.yaml'"
+                    )
                 ],
             ),
         )
@@ -1028,7 +1030,9 @@ class TestRunOne(RunBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=1,
                 errors=[
-                    YAMLError("Couldn't find config file '.launchpad.yaml'")
+                    ConfigurationError(
+                        "Couldn't find config file '.launchpad.yaml'"
+                    )
                 ],
             ),
         )

@@ -10,7 +10,7 @@ from fixtures import TempDir
 from systemfixtures import FakeProcesses
 from testtools import TestCase
 
-from lpcraft.errors import YAMLError
+from lpcraft.errors import ConfigurationError
 from lpcraft.utils import ask_user, get_host_architecture, load_yaml
 
 
@@ -27,7 +27,7 @@ class TestLoadYAML(TestCase):
     def test_no_file(self):
         path = self.tempdir / "testfile.yaml"
         self.assertRaisesRegex(
-            YAMLError,
+            ConfigurationError,
             re.escape(f"Couldn't find config file {str(path)!r}"),
             load_yaml,
             path,
@@ -37,7 +37,7 @@ class TestLoadYAML(TestCase):
         path = self.tempdir / "testfile.yaml"
         path.mkdir()
         self.assertRaisesRegex(
-            YAMLError,
+            ConfigurationError,
             re.escape(f"Couldn't find config file {str(path)!r}"),
             load_yaml,
             path,
@@ -47,7 +47,7 @@ class TestLoadYAML(TestCase):
         path = self.tempdir / "testfile.yaml"
         path.write_text("foo: [1, 2\n")
         self.assertRaisesRegex(
-            YAMLError,
+            ConfigurationError,
             re.escape(
                 f"Failed to read/parse config file {str(path)!r}: "
                 "while parsing a flow sequence"
@@ -60,7 +60,7 @@ class TestLoadYAML(TestCase):
         path = self.tempdir / "testfile.yaml"
         path.write_text("- foo\n")
         self.assertRaisesRegex(
-            YAMLError,
+            ConfigurationError,
             re.escape(f"Config file {str(path)!r} does not define a mapping"),
             load_yaml,
             path,
