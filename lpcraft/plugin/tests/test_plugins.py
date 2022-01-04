@@ -1,12 +1,14 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import os
 import subprocess
 from pathlib import Path, PosixPath
 from textwrap import dedent
 from unittest.mock import ANY, Mock, call, patch
 
 from craft_providers.lxd import LXC, launch
+from fixtures import TempDir
 
 from lpcraft.commands.tests import CommandBaseTestCase
 from lpcraft.errors import ConfigurationError
@@ -15,6 +17,13 @@ from lpcraft.providers.tests import FakeLXDInstaller
 
 
 class TestPlugins(CommandBaseTestCase):
+    def setUp(self):
+        super().setUp()
+        tempdir = Path(self.useFixture(TempDir()).path)
+        cwd = Path.cwd()
+        os.chdir(tempdir)
+        self.addCleanup(os.chdir, cwd)
+
     def makeLXDProvider(
         self,
         is_ready=True,
