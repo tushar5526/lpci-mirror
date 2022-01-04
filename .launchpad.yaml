@@ -1,0 +1,9 @@
+pipeline:
+    - test
+
+jobs:
+    test:
+        series: focal
+        architectures: amd64
+        packages: [git]
+        plugin: tox
