@@ -2,13 +2,13 @@ import pluggy
 
 from lpcraft.config import Job
 from lpcraft.errors import ConfigurationError
-from lpcraft.plugin import hookspecs
+from lpcraft.plugin import NAME, hookspecs
 from lpcraft.plugin.lib import InternalPlugins
 from lpcraft.plugins import PLUGINS
 
 
 def get_plugin_manager(job: Job) -> pluggy.PluginManager:
-    pm = pluggy.PluginManager("lpcraft")
+    pm = pluggy.PluginManager(NAME)
     pm.add_hookspecs(hookspecs)
 
     # register internal plugins

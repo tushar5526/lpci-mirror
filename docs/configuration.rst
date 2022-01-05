@@ -57,6 +57,9 @@ Job definitions
     A mapping of environment variable names to values, to be set while
     running the job.
 
+``plugin`` (optional)
+    A plugin which will be used for this job. See :doc:`../plugins`
+
 ``run`` (optional)
     A string (possibly multi-line) containing shell commands to run for this
     job.

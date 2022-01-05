@@ -3,9 +3,18 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "lpcraft_install_packages",
+    "lpcraft_install_snaps",
+    "lpcraft_execute_run",
+    "lpcraft_set_environment",
+]
+
 import pluggy
 
-hookspec = pluggy.HookspecMarker("lpcraft")
+from lpcraft.plugin import NAME
+
+hookspec = pluggy.HookspecMarker(NAME)
 
 
 @hookspec  # type: ignore

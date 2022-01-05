@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+__all__ = ["ToxPlugin"]
+
 from lpcraft.config import Job
 from lpcraft.plugin import hookimpl
 from lpcraft.plugins import register
@@ -10,6 +12,13 @@ from lpcraft.plugins import register
 
 @register(name="tox")
 class ToxPlugin:
+    """Installs `tox` and executes the configured environments.
+
+    Usage:
+        In `.launchpad.yaml` create a key/value pair with `plugin` and `tox`
+        within the job definition.
+    """
+
     # XXX jugmac00 2021-12-16: this plugin is not yet fully implemented
     def __init__(self, config: Job) -> None:
         self.config = config

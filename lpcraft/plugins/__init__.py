@@ -1,6 +1,6 @@
 from typing import Any, Callable, Type, TypeVar
 
-PLUGINS = dict()
+PLUGINS = dict()  #: Collection of builtin plugins
 
 
 TypeT = TypeVar("TypeT", bound=Type[Any])
