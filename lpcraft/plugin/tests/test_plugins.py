@@ -68,14 +68,27 @@ class TestPlugins(CommandBaseTestCase):
         self.assertEqual(
             [
                 call(
-                    ["apt", "install", "-y", "tox", "nginx", "apache2"],
+                    [
+                        "apt",
+                        "install",
+                        "-y",
+                        "python3-pip",
+                        "nginx",
+                        "apache2",
+                    ],
                     cwd=PosixPath("/root/project"),
                     env={"PLUGIN": "tox"},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
-                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        "python3 -m pip install tox==3.24.5;tox",
+                    ],
                     cwd=PosixPath("/root/project"),
                     env={"PLUGIN": "tox"},
                     stdout=ANY,
@@ -147,7 +160,14 @@ class TestPlugins(CommandBaseTestCase):
         self.assertEqual(
             [
                 call(
-                    ["apt", "install", "-y", "tox", "nginx", "apache2"],
+                    [
+                        "apt",
+                        "install",
+                        "-y",
+                        "python3-pip",
+                        "nginx",
+                        "apache2",
+                    ],
                     cwd=PosixPath("/root/project"),
                     env={"PLUGIN": "tox"},
                     stdout=ANY,

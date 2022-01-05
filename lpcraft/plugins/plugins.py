@@ -19,17 +19,16 @@ class ToxPlugin:
         within the job definition.
     """
 
-    # XXX jugmac00 2021-12-16: this plugin is not yet fully implemented
     def __init__(self, config: Job) -> None:
         self.config = config
 
     @hookimpl  # type: ignore
     def lpcraft_install_packages(self) -> list[str]:
-        return ["tox"]
+        return ["python3-pip"]
 
     @hookimpl  # type: ignore
     def lpcraft_execute_run(self) -> str:
-        return "tox"
+        return "python3 -m pip install tox==3.24.5; tox"
 
     @hookimpl  # type: ignore
     def lpcraft_set_environment(self) -> dict[str, str | None]:
