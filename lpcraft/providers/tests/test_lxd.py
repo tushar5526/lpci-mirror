@@ -1,7 +1,6 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-import os
 import re
 from pathlib import Path
 from typing import Optional
@@ -235,9 +234,7 @@ class TestLXDProvider(TestCase):
             ),
         )
 
-    @patch.dict(
-        os.environ, {"IGNORE": "sentinel", "PATH": "not-using-host-path"}
-    )
+    @patch("os.environ", {"IGNORE": "sentinel", "PATH": "not-using-host-path"})
     def test_get_command_environment_minimal(self):
         provider = self.makeLXDProvider()
 
@@ -245,8 +242,8 @@ class TestLXDProvider(TestCase):
 
         self.assertEqual({"PATH": _base_path}, env)
 
-    @patch.dict(
-        os.environ,
+    @patch(
+        "os.environ",
         {
             "IGNORE": "sentinel",
             "PATH": "not-using-host-path",
@@ -270,6 +267,7 @@ class TestLXDProvider(TestCase):
             env,
         )
 
+    @patch("os.environ", {"PATH": "not-using-host-path"})
     def test_launched_environment(self):
         expected_instance_name = "lpcraft-my-project-12345-focal-amd64"
         mock_lxc = Mock(spec=LXC)
