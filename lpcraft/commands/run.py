@@ -10,7 +10,7 @@ from argparse import Namespace
 from pathlib import Path, PurePath
 from typing import List, Optional, Set
 
-from craft_cli import emit
+from craft_cli import EmitterMode, emit
 from craft_providers import Executor
 from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
@@ -233,6 +233,9 @@ def _run_job(
                 )
         full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", run_command]
         emit.progress("Running the job")
+        original_mode = emit.get_mode()
+        if original_mode == EmitterMode.NORMAL:
+            emit.set_mode(EmitterMode.VERBOSE)
         with emit.open_stream(f"Running {full_run_cmd}") as stream:
             proc = instance.execute_run(
                 full_run_cmd,
@@ -241,6 +244,8 @@ def _run_job(
                 stdout=stream,
                 stderr=stream,
             )
+        if original_mode == EmitterMode.NORMAL:
+            emit.set_mode(original_mode)
         if proc.returncode != 0:
             raise CommandError(
                 f"Job {job_name!r} for "

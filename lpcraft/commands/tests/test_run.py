@@ -1,8 +1,10 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import io
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from textwrap import dedent
@@ -1018,6 +1020,89 @@ class TestRun(RunBaseTestCase):
                 ),
             ],
             execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("sys.stderr", new_callable=io.StringIO)
+    def test_quiet(
+        self, mock_stderr, mock_get_host_architecture, mock_get_provider
+    ):
+        def execute_run(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[AnyStr]":
+            os.write(kwargs["stdout"], b"test\n")
+            return subprocess.CompletedProcess([], 0)
+
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        launcher.return_value.execute_run.side_effect = execute_run
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("-q", "run")
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual("", mock_stderr.getvalue())
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("sys.stderr", new_callable=io.StringIO)
+    def test_normal(
+        self, mock_stderr, mock_get_host_architecture, mock_get_provider
+    ):
+        def execute_run(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[AnyStr]":
+            os.write(kwargs["stdout"], b"test\n")
+            return subprocess.CompletedProcess([], 0)
+
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        launcher.return_value.execute_run.side_effect = execute_run
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+        self.assertEqual(0, result.exit_code)
+        stderr_lines = [
+            re.sub(
+                r"^(?P<date>.+?) (?P<time>.+?) (?P<text>.*?) *$",
+                r"\g<text>",
+                line,
+            )
+            for line in mock_stderr.getvalue().splitlines()
+        ]
+        self.assertEqual(
+            [
+                "Running ['bash', '--noprofile', '--norc', '-ec', "
+                "'echo test']",
+                ":: test",
+            ],
+            stderr_lines[-2:],
         )
 
 
