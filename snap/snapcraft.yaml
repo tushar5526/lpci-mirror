@@ -25,7 +25,7 @@ apps:
       GIT_TEMPLATE_DIR: $SNAP/git/templates
       GIT_EXEC_PATH: $SNAP/git/git-core
 
-grade: devel
+grade: stable
 confinement: classic
 
 parts:
