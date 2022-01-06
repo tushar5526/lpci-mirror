@@ -87,7 +87,7 @@ class TestPlugins(CommandBaseTestCase):
                         "--noprofile",
                         "--norc",
                         "-ec",
-                        "python3 -m pip install tox==3.24.5;tox",
+                        "python3 -m pip install tox==3.24.5; tox",
                     ],
                     cwd=PosixPath("/root/project"),
                     env={"PLUGIN": "tox"},
