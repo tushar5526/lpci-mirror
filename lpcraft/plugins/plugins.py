@@ -28,6 +28,8 @@ class ToxPlugin:
 
     @hookimpl  # type: ignore
     def lpcraft_execute_run(self) -> str:
+        # XXX jugmac00 2022-01-07: we should consider using a requirements.txt
+        # as this allows updating via `pip-tools`
         return "python3 -m pip install tox==3.24.5; tox"
 
     @hookimpl  # type: ignore
