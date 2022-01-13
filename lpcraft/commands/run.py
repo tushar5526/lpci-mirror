@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.  This software is licensed under the
+# Copyright 2021-2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
 import fnmatch
@@ -270,12 +270,29 @@ def run(args: Namespace) -> int:
     provider = get_provider()
     provider.ensure_provider_is_available()
 
-    for job_name in config.pipeline:
-        jobs = config.jobs.get(job_name, [])
-        if not jobs:
-            raise CommandError(f"No job definition for {job_name!r}")
-        for job in jobs:
-            _run_job(job_name, job, provider, getattr(args, "output", None))
+    for stage in config.pipeline:
+        stage_failed = False
+        for job_name in stage:
+            try:
+                jobs = config.jobs.get(job_name, [])
+                if not jobs:
+                    raise CommandError(f"No job definition for {job_name!r}")
+                for job in jobs:
+                    _run_job(
+                        job_name, job, provider, getattr(args, "output", None)
+                    )
+            except CommandError as e:
+                if len(stage) == 1:
+                    # Single-job stage, so just reraise this in order to get
+                    # simpler error messages.
+                    raise
+                else:
+                    emit.error(e)
+                    stage_failed = True
+        if stage_failed:
+            raise CommandError(
+                f"Some jobs in {stage} failed; stopping.", retcode=1
+            )
 
     return 0
 

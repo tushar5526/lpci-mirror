@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.  This software is licensed under the
+# Copyright 2021-2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
 from datetime import timedelta
@@ -33,7 +33,7 @@ class TestConfig(TestCase):
             dedent(
                 """
                 pipeline:
-                    - test
+                    - [test]
 
                 jobs:
                     test:
@@ -48,7 +48,7 @@ class TestConfig(TestCase):
         self.assertThat(
             config,
             MatchesStructure(
-                pipeline=Equals(["test"]),
+                pipeline=Equals([["test"]]),
                 jobs=MatchesDict(
                     {
                         "test": MatchesListwise(
@@ -64,6 +64,25 @@ class TestConfig(TestCase):
                 ),
             ),
         )
+
+    def test_load_single_pipeline(self):
+        # A single pipeline element can be written as a string, and is
+        # automatically wrapped in a list.
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: [amd64]
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertEqual([["test"]], config.pipeline)
 
     def test_load_single_architecture(self):
         # A single architecture can be written as a string, and is
@@ -165,7 +184,7 @@ class TestConfig(TestCase):
         self.assertThat(
             config,
             MatchesStructure(
-                pipeline=Equals(["test"]),
+                pipeline=Equals([["test"]]),
                 jobs=MatchesDict(
                     {
                         "test": MatchesListwise(

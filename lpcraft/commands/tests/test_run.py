@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.  This software is licensed under the
+# Copyright 2021-2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
 import io
@@ -348,6 +348,140 @@ class TestRun(RunBaseTestCase):
                     stdout=ANY,
                     stderr=ANY,
                 ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_parallel_jobs_some_fail(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # Right now "parallel" jobs are not in fact executed in parallel,
+        # but we act if they are for the purpose of error handling: even if
+        # one job in a stage fails, we run all the jobs in that stage before
+        # stopping.
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.side_effect = iter(
+            [subprocess.CompletedProcess([], ret) for ret in (2, 0, 0)]
+        )
+        config = dedent(
+            """
+            pipeline:
+                - [lint, test]
+                - build-wheel
+
+            jobs:
+                lint:
+                    series: focal
+                    architectures: amd64
+                    run: flake8
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                build-wheel:
+                    series: bionic
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError(
+                        "Job 'lint' for focal/amd64 failed with exit status "
+                        "2.",
+                        retcode=2,
+                    ),
+                    CommandError(
+                        "Some jobs in ['lint', 'test'] failed; stopping."
+                    ),
+                ],
+            ),
+        )
+        self.assertEqual(
+            ["focal", "focal"],
+            [c.kwargs["image_name"] for c in launcher.call_args_list],
+        )
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", command],
+                    cwd=Path("/root/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+                for command in ("flake8", "tox")
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_parallel_jobs_all_succeed(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # Right now "parallel" jobs are not in fact executed in parallel,
+        # but we do at least wait for all of them to succeed before
+        # proceeding to the next stage in the pipeline.
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.side_effect = iter(
+            [subprocess.CompletedProcess([], ret) for ret in (0, 0, 0)]
+        )
+        config = dedent(
+            """
+            pipeline:
+                - [lint, test]
+                - build-wheel
+
+            jobs:
+                lint:
+                    series: focal
+                    architectures: amd64
+                    run: flake8
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                build-wheel:
+                    series: bionic
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            ["focal", "focal", "bionic"],
+            [c.kwargs["image_name"] for c in launcher.call_args_list],
+        )
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", command],
+                    cwd=Path("/root/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+                for command in ("flake8", "tox", "pyproject-build")
             ],
             execute_run.call_args_list,
         )

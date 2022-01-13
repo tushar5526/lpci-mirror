@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.  This software is licensed under the
+# Copyright 2021-2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
 import re
@@ -101,8 +101,14 @@ def _expand_job_values(
 class Config(ModelConfigDefaults):
     """A .launchpad.yaml configuration file."""
 
-    pipeline: List[_Identifier]
+    pipeline: List[List[_Identifier]]
     jobs: Dict[StrictStr, List[Job]]
+
+    @pydantic.validator("pipeline", pre=True)
+    def validate_pipeline(
+        cls, v: List[Union[_Identifier, List[_Identifier]]]
+    ) -> List[List[_Identifier]]:
+        return [[stage] if isinstance(stage, str) else stage for stage in v]
 
     # XXX cjwatson 2021-11-17: This expansion strategy works, but it may
     # produce suboptimal error messages, and doesn't have a good way to do
