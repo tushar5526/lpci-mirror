@@ -1,5 +1,6 @@
 pipeline:
     - test
+    - build
 
 jobs:
     test:
@@ -7,3 +8,7 @@ jobs:
         architectures: amd64
         packages: [git]
         plugin: tox
+    build:
+        series: focal
+        architectures: amd64
+        plugin: pyproject-build
