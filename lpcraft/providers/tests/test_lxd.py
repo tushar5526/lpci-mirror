@@ -234,6 +234,20 @@ class TestLXDProvider(TestCase):
             ),
         )
 
+    def test_get_sanitized_instance_name(self):
+        # e.g. underscores are not allowed
+        provider = self.makeLXDProvider()
+
+        self.assertEqual(
+            "lpcraft-my-project-12345-focal-amd64",
+            provider.get_instance_name(
+                project_name="my_project",
+                project_path=self.mock_path,
+                series="focal",
+                architecture="amd64",
+            ),
+        )
+
     @patch("os.environ", {"IGNORE": "sentinel", "PATH": "not-using-host-path"})
     def test_get_command_environment_minimal(self):
         provider = self.makeLXDProvider()

@@ -8,12 +8,25 @@ __all__ = [
 ]
 
 import os
+import re
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, Generator, List, Optional
 
 from craft_providers import bases, lxd
+
+
+def sanitize_lxd_instance_name(name: str) -> str:
+    """LXD instance names need to follow a certain pattern
+
+    Make sure we follow this pattern:
+    https://linuxcontainers.org/lxd/docs/master/instances/
+    """
+    # There is no need to check for all edge cases, as e.g. we control how
+    # the string starts and ends anyway.
+    name = re.sub(r"[^A-Za-z0-9-]", "-", name)
+    return name[:63]
 
 
 class Provider(ABC):
@@ -60,10 +73,11 @@ class Provider(ABC):
         :param series: Distribution series name.
         :param architecture: Targeted architecture name.
         """
-        return (
+        name = (
             f"lpcraft-{project_name}-{project_path.stat().st_ino}"
             f"-{series}-{architecture}"
         )
+        return sanitize_lxd_instance_name(name)
 
     def get_command_environment(self) -> Dict[str, Optional[str]]:
         """Construct the required environment."""
