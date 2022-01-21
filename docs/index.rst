@@ -48,3 +48,4 @@ Example configuration
     configuration
     plugins
     CONTRIBUTING
+    release-process

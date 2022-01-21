@@ -1,0 +1,24 @@
+Release process
+===============
+
+The lpcraft snap is automatically built for all supported architectures and
+released to the ``edge`` channel in the snap store using a `Launchpad recipe
+<https://launchpad.net/~launchpad/lpcraft/+snap/lpcraft>`_.  Builds run
+shortly after pushes to the ``main`` Git branch; members of the Launchpad
+team can use the "Request builds" button on that recipe if they need updated
+builds urgently.
+
+Most users, as well as default CI builds in Launchpad, should use the
+``stable`` channel rather than the auto-built ``edge`` channel.  People with
+publishing access to the snap in the store can promote revisions to
+``stable`` (ask Colin Watson for access if you need it).  The easiest way to
+do this across all architectures is to use the store's `Releases page
+<https://snapcraft.io/lpcraft/releases>`_: click on the cog icon next to
+"latest/edge" and select "Promote to: latest/stable".
+
+We don't yet have a defined QA process for making new releases to
+``stable``, although it's a good idea to smoke-test that the snap isn't
+obviously broken.
+
+We don't yet use channels other than ``stable`` and ``edge``, though there's
+no particular reason not to do so if they become useful.
