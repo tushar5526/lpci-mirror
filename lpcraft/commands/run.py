@@ -169,7 +169,7 @@ def _run_job(
     if host_architecture not in job.architectures:
         return
     pm = get_plugin_manager(job)
-    # XXX jugmac00 2021-12-17: extract infering run_command
+    # XXX jugmac00 2021-12-17: extract inferring run_command
     run_command = None
 
     run_from_configuration = job.run
