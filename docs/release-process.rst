@@ -26,7 +26,10 @@ user-visible changes.
 
 We don't yet have a defined QA process for making new releases to
 ``stable``, although it's a good idea to smoke-test that the snap isn't
-obviously broken.
+obviously broken.  Use ``snap refresh --edge lpcraft`` to ensure that you're
+running the latest revision from the ``edge`` channel in the store, and then
+do whatever testing you need to do; for example, you might run lpcraft's own
+tests using ``lpcraft -v``.
 
 We don't yet use channels other than ``stable`` and ``edge``, though there's
 no particular reason not to do so if they become useful.
