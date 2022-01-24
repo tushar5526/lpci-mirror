@@ -21,7 +21,7 @@ by the store and is what matters to ``snapd``), and there's nothing to stop
 multiple revisions of a snap having the same version number, though of
 course it's less confusing if substantially different revisions have
 substantially different version numbers as well.  Use `semver
-<https://semver.org/>_`, and update ``NEWS.rst`` when making significant
+<https://semver.org/>`_, and update ``NEWS.rst`` when making significant
 user-visible changes.  Make sure there's a git tag for the old version
 number before you bump to a new version number.
 
