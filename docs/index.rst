@@ -49,3 +49,4 @@ Example configuration
     plugins
     CONTRIBUTING
     release-process
+    NEWS

@@ -16,6 +16,14 @@ do this across all architectures is to use the store's `Releases page
 <https://snapcraft.io/lpcraft/releases>`_: click on the cog icon next to
 "latest/edge" and select "Promote to: latest/stable".
 
+Version numbers in snaps are for human consumption (the revision is assigned
+by the store and is what matters to ``snapd``), and there's nothing to stop
+multiple revisions of a snap having the same version number, though of
+course it's less confusing if substantially different revisions have
+substantially different version numbers as well.  Use `semver
+<https://semver.org/>_`, and update ``NEWS.rst`` when making significant
+user-visible changes.
+
 We don't yet have a defined QA process for making new releases to
 ``stable``, although it's a good idea to smoke-test that the snap isn't
 obviously broken.
