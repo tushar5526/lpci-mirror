@@ -8,14 +8,18 @@ __all__ = [
 ]
 
 import re
+import subprocess
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List, Protocol
+from typing import Any, Generator, List, Protocol
 
 from craft_cli import emit
 from craft_providers import Base, bases, lxd
 
-from lpcraft.env import get_managed_environment_project_path
+from lpcraft.env import (
+    get_managed_environment_home_path,
+    get_managed_environment_project_path,
+)
 from lpcraft.errors import CommandError
 from lpcraft.providers._base import Provider
 from lpcraft.providers._buildd import (
@@ -189,6 +193,40 @@ class LXDProvider(Provider):
         """
         return self.lxd_installer.is_installed()
 
+    def _internal_execute_run(
+        self,
+        instance: lxd.LXDInstance,
+        instance_name: str,
+        command: List[str],
+        **kwargs: Any,
+    ) -> Any:  # LXC.exec has no return type annotation
+        """Execute an internal command using subprocess.run().
+
+        This is like LXDInstance.execute_run(), but we drop down to
+        LXC.exec() for easier testability: this approach means that we don't
+        have to cause all our (many) tests that look at
+        LXDInstance.execute_run's call list to make assertions about
+        internal details of the provider.
+
+        :param instance: Instance to execute in.
+        :param instance_name: Name of instance to execute in.
+        :param command: Command to execute.
+        :param kwargs: Keyword args to pass to subprocess.run().
+
+        :returns: Completed process.
+
+        :raises subprocess.CalledProcessError: if command fails and check is
+            True.
+        """
+        return instance.lxc.exec(
+            instance_name=instance_name,
+            command=command,
+            project=self.lxd_project,
+            remote=self.lxd_remote,
+            runner=subprocess.run,
+            **kwargs,
+        )
+
     @contextmanager
     def launched_environment(
         self,
@@ -238,15 +276,51 @@ class LXDProvider(Provider):
         except (bases.BaseConfigurationError, lxd.LXDError) as error:
             raise CommandError(str(error)) from error
 
-        instance.mount(
-            host_source=project_path,
-            target=get_managed_environment_project_path(),
-        )
-
         try:
+            tmp_project_path = (
+                get_managed_environment_home_path() / "tmp-project"
+            )
+            instance.mount(host_source=project_path, target=tmp_project_path)
+            try:
+                self._internal_execute_run(
+                    instance,
+                    instance_name,
+                    [
+                        "rm",
+                        "-rf",
+                        get_managed_environment_project_path().as_posix(),
+                    ],
+                    check=True,
+                )
+                self._internal_execute_run(
+                    instance,
+                    instance_name,
+                    [
+                        "cp",
+                        "-a",
+                        tmp_project_path.as_posix(),
+                        get_managed_environment_project_path().as_posix(),
+                    ],
+                    check=True,
+                )
+            except subprocess.CalledProcessError as error:
+                raise CommandError(str(error)) from error
+            finally:
+                instance.unmount(target=tmp_project_path)
+
             yield instance
         finally:
             try:
+                self._internal_execute_run(
+                    instance,
+                    instance_name,
+                    [
+                        "rm",
+                        "-rf",
+                        get_managed_environment_project_path().as_posix(),
+                    ],
+                    check=True,
+                )
                 instance.unmount_all()
                 instance.stop()
             except lxd.LXDError as error:

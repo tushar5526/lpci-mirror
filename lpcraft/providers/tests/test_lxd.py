@@ -2,9 +2,10 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import re
+import subprocess
 from pathlib import Path
-from typing import Optional
-from unittest.mock import Mock, call, patch
+from typing import Any, AnyStr, List, Optional
+from unittest.mock import ANY, Mock, call, patch
 
 from craft_providers.bases import BaseConfigurationError, BuilddBaseAlias
 from craft_providers.lxd import LXC, LXDError, launch
@@ -320,15 +321,48 @@ class TestLXDProvider(TestCase):
                     ),
                     call().mount(
                         host_source=self.mock_path,
-                        target=Path("/root/project"),
+                        target=Path("/root/tmp-project"),
                     ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=["rm", "-rf", "/root/project"],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=[
+                            "cp",
+                            "-a",
+                            "/root/tmp-project",
+                            "/root/project",
+                        ],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().unmount(target=Path("/root/tmp-project")),
                 ],
                 mock_launcher.mock_calls,
             )
             mock_launcher.reset_mock()
 
         self.assertEqual(
-            [call().unmount_all(), call().stop()],
+            [
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["rm", "-rf", "/root/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().unmount_all(),
+                call().stop(),
+            ],
             mock_launcher.mock_calls,
         )
 
@@ -367,7 +401,70 @@ class TestLXDProvider(TestCase):
 
         self.assertIs(error, raised.exception.__cause__)
 
+    def test_launched_environment_unmounts_and_stops_after_copy_error(self):
+        def execute(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[AnyStr]":
+            if command[0] == "cp":
+                raise subprocess.CalledProcessError(1, command)
+            else:
+                return subprocess.CompletedProcess([], 0)
+
+        expected_instance_name = "lpcraft-my-project-12345-focal-amd64"
+        mock_launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
+        mock_launcher.return_value.lxc.exec.side_effect = execute
+        with self.assertRaisesRegex(
+            CommandError, r"returned non-zero exit status 1"
+        ):
+            with provider.launched_environment(
+                project_name="my-project",
+                project_path=self.mock_path,
+                series="focal",
+                architecture="amd64",
+            ):
+                pass  # pragma: no cover
+
+        self.assertEqual(
+            [
+                ANY,
+                call().mount(
+                    host_source=self.mock_path,
+                    target=Path("/root/tmp-project"),
+                ),
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["rm", "-rf", "/root/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["cp", "-a", "/root/tmp-project", "/root/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().unmount(target=Path("/root/tmp-project")),
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["rm", "-rf", "/root/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().unmount_all(),
+                call().stop(),
+            ],
+            mock_launcher.mock_calls,
+        )
+
     def test_launched_environment_unmounts_and_stops_after_error(self):
+        expected_instance_name = "lpcraft-my-project-12345-focal-amd64"
         mock_launcher = Mock(spec=launch)
         provider = self.makeLXDProvider(lxd_launcher=mock_launcher)
         with self.assertRaisesRegex(RuntimeError, r"Boom"):
@@ -381,7 +478,18 @@ class TestLXDProvider(TestCase):
                 raise RuntimeError("Boom")
 
         self.assertEqual(
-            [call().unmount_all(), call().stop()],
+            [
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["rm", "-rf", "/root/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().unmount_all(),
+                call().stop(),
+            ],
             mock_launcher.mock_calls,
         )
 
