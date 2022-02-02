@@ -66,6 +66,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser_run.add_argument(
         "--output", type=Path, help="Write output files to this directory."
     )
+    parser_run.add_argument(
+        "-c" "--config",
+        type=Path,
+        help="Read the configuration file from this path.",
+    )
     parser_run.set_defaults(func=run)
 
     parser_run_one = subparsers.add_parser("run-one", help=run_one.__doc__)

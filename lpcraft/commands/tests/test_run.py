@@ -66,8 +66,13 @@ class RunBaseTestCase(CommandBaseTestCase):
             self.useFixture(TempDir()).join("test-project")
         )
         self.tmp_project_path.mkdir()
+
         cwd = Path.cwd()
         os.chdir(self.tmp_project_path)
+        self.tmp_config_path = os.path.join(
+            self.tmp_project_path, "test-config"
+        )
+        Path(self.tmp_config_path).mkdir(parents=True, exist_ok=True)
         self.addCleanup(os.chdir, cwd)
 
     def makeLXDProvider(
@@ -101,6 +106,66 @@ class TestRun(RunBaseTestCase):
                     )
                 ],
             ),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_path_config_file(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        mock_get_provider.return_value = self.makeLXDProvider(is_ready=False)
+        config = dedent(
+            """
+            pipeline: []
+            jobs: {}
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        # When no config path is passed in ensure we default to
+        # .launchpad.yaml
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[CommandError("LXD is broken")],
+            ),
+        )
+
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - build-wheel
+
+            jobs:
+                build-wheel:
+                    series: focal
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+
+        # When a custom location / config file ensure we
+        # pick it up instead of defaulting to .launchpad.yaml.
+        path = "%s/default-lpcraft-configuration.yaml" % self.tmp_config_path
+        Path(path).write_text(config)
+
+        result = self.run_command("run", "-c", path)
+
+        execute_run.assert_called_once_with(
+            ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
+            cwd=Path("/root/project"),
+            env={},
+            stdout=ANY,
+            stderr=ANY,
         )
 
     @patch("lpcraft.commands.run.get_provider")
