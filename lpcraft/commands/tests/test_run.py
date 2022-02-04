@@ -1345,7 +1345,7 @@ class TestRunOne(RunBaseTestCase):
     def test_path_config_file(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        # When a custom location / config file ensure we
+        # When a custom location / config file is provided, ensure we
         # pick it up instead of defaulting to .launchpad.yaml.
         self.tmp_config_path = os.path.join(
             self.tmp_project_path, "test-config"
