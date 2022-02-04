@@ -185,7 +185,7 @@ def _run_job(
             f"does not set 'run'"
         )
 
-    # XXX jugmac00 2021-12-17: extract infering environment variables
+    # XXX jugmac00 2021-12-17: extract inferring environment variables
     rv = pm.hook.lpcraft_set_environment()
     if rv:
         # XXX jugmac00 2021-12-17: check for length or reduce?
