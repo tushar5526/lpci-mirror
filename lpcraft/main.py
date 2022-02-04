@@ -67,7 +67,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--output", type=Path, help="Write output files to this directory."
     )
     parser_run.add_argument(
-        '-c', '--config',
+        "-c",
+        "--config",
         type=Path,
         default=".launchpad.yaml",
         help="Read the configuration file from this path.",
@@ -79,7 +80,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--output", type=Path, help="Write output files to this directory."
     )
     parser_run_one.add_argument(
-        '-c', '--config',
+        "-c",
+        "--config",
         type=Path,
         default=".launchpad.yaml",
         help="Read the configuration file from this path.",
