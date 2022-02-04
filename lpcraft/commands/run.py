@@ -265,7 +265,10 @@ def _run_job(
 
 def run(args: Namespace) -> int:
     """Run a pipeline, launching managed environments as needed."""
-    config = Config.load(args.config)
+    # XXX jugmac00 2022-02-04: this fallback may become obsolete once we
+    # use craft-cli's command dispatcher
+    config_path = getattr(args, "config", Path(".launchpad.yaml"))
+    config = Config.load(config_path)
 
     provider = get_provider()
     provider.ensure_provider_is_available()

@@ -396,6 +396,48 @@ class TestRun(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_default_to_run_command(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # calling `lpcraft` with no arguments triggers the run command
+        # and is functionally equivalent to `lpcraft run`
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command()
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     def test_parallel_jobs_some_fail(
         self, mock_get_host_architecture, mock_get_provider
     ):
