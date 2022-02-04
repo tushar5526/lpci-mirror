@@ -265,11 +265,7 @@ def _run_job(
 
 def run(args: Namespace) -> int:
     """Run a pipeline, launching managed environments as needed."""
-    file = getattr(args, "c__config")
-    if file is None:
-        config = Config.load(Path(".launchpad.yaml"))
-    else:
-        config = Config.load(Path(file))
+    config = Config.load(args.config)
 
     provider = get_provider()
     provider.ensure_provider_is_available()
@@ -306,7 +302,7 @@ def run_one(args: Namespace) -> int:
 
     (This command is for use by Launchpad, and is subject to change.)
     """
-    config = Config.load(Path(".launchpad.yaml"))
+    config = Config.load(args.config)
 
     jobs = config.jobs.get(args.job, [])
     if not jobs:

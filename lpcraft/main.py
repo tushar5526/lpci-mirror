@@ -67,8 +67,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--output", type=Path, help="Write output files to this directory."
     )
     parser_run.add_argument(
-        "-c" "--config",
+        '-c', '--config',
         type=Path,
+        default=".launchpad.yaml",
         help="Read the configuration file from this path.",
     )
     parser_run.set_defaults(func=run)
@@ -76,6 +77,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser_run_one = subparsers.add_parser("run-one", help=run_one.__doc__)
     parser_run_one.add_argument(
         "--output", type=Path, help="Write output files to this directory."
+    )
+    parser_run_one.add_argument(
+        '-c', '--config',
+        type=Path,
+        default=".launchpad.yaml",
+        help="Read the configuration file from this path.",
     )
     parser_run_one.add_argument("job", help="Run only this job name.")
     parser_run_one.add_argument(
