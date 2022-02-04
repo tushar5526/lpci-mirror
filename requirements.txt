@@ -8,7 +8,7 @@ certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.7
     # via requests
-craft-cli==0.1.0
+craft-cli==0.2.0
     # via -r requirements.in
 craft-providers==1.0.3
     # via -r requirements.in
