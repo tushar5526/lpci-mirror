@@ -14,7 +14,7 @@ publishing access to the snap in the store can promote revisions to
 ``stable`` (ask Colin Watson for access if you need it).  The easiest way to
 do this across all architectures is to use the store's `Releases page
 <https://snapcraft.io/lpcraft/releases>`_: click on the cog icon next to
-"latest/edge" and select "Promote to: latest/stable".
+"latest/edge", select "Promote/close" and then "Promote to: latest/stable".
 
 Version numbers in snaps are for human consumption (the revision is assigned
 by the store and is what matters to ``snapd``), and there's nothing to stop
