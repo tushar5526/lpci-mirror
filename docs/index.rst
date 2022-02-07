@@ -35,7 +35,7 @@ Example configuration
             output:
                 paths: [output]
 
-    $ lpcraft run --output out
+    $ lpcraft run --output-directory out
     Running the job
     $ cat out/test/focal/amd64/files/output
     hello world

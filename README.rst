@@ -23,5 +23,5 @@ more complete and stable, it will be made available from the snap store.)
 You can run ``lpcraft`` from a directory containing ``.launchpad.yaml``,
 although it won't do very much useful yet.
 
-To save the output from a job, use ``lpcraft run --output
+To save the output from a job, use ``lpcraft run --output-directory
 /path/to/output/directory``.

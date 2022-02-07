@@ -722,8 +722,9 @@ class TestRun(RunBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("test_1.0.tar.gz").write_bytes(b"")
         Path("test_1.0.whl").write_bytes(b"")
-
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         self.assertEqual(0, result.exit_code)
         job_output = target_path / "build" / "focal" / "amd64"
@@ -782,7 +783,9 @@ class TestRun(RunBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -825,7 +828,9 @@ class TestRun(RunBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("symlink.txt").symlink_to("../target.txt")
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -871,7 +876,9 @@ class TestRun(RunBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("test_1.0.whl").write_bytes(b"")
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         self.assertThat(
             result,
@@ -914,7 +921,9 @@ class TestRun(RunBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         self.assertEqual(0, result.exit_code)
         job_output = target_path / "build" / "focal" / "amd64"
@@ -957,7 +966,9 @@ class TestRun(RunBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("properties").write_text("version=0.1\n")
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         self.assertEqual(0, result.exit_code)
         job_output = target_path / "test" / "focal" / "amd64"
@@ -1005,7 +1016,9 @@ class TestRun(RunBaseTestCase):
             "version=0.2\nto-be-removed\nalready-missing\n"
         )
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         self.assertEqual(0, result.exit_code)
         job_output = target_path / "test" / "focal" / "amd64"
@@ -1047,7 +1060,9 @@ class TestRun(RunBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending
@@ -1090,7 +1105,9 @@ class TestRun(RunBaseTestCase):
         Path(".launchpad.yaml").write_text(config)
         Path("properties").symlink_to("../target")
 
-        result = self.run_command("run", "--output", str(target_path))
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
 
         # The exact error message differs between Python 3.8 and 3.9, so
         # don't test it in detail, but make sure it includes the offending

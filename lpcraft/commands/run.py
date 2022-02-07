@@ -282,7 +282,10 @@ def run(args: Namespace) -> int:
                     raise CommandError(f"No job definition for {job_name!r}")
                 for job in jobs:
                     _run_job(
-                        job_name, job, provider, getattr(args, "output", None)
+                        job_name,
+                        job,
+                        provider,
+                        getattr(args, "output_directory", None),
                     )
             except CommandError as e:
                 if len(stage) == 1:

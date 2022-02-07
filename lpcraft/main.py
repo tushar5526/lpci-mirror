@@ -64,7 +64,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     parser_run = subparsers.add_parser("run", help=run.__doc__)
     parser_run.add_argument(
-        "--output", type=Path, help="Write output files to this directory."
+        "--output-directory",
+        type=Path,
+        help="Write output files to this directory.",
     )
     parser_run.add_argument(
         "-c",
@@ -77,7 +79,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     parser_run_one = subparsers.add_parser("run-one", help=run_one.__doc__)
     parser_run_one.add_argument(
-        "--output", type=Path, help="Write output files to this directory."
+        "--output-directory",
+        type=Path,
+        help="Write output files to this directory.",
     )
     parser_run_one.add_argument(
         "-c",
