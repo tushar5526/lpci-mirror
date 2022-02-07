@@ -15,6 +15,7 @@ publishing access to the snap in the store can promote revisions to
 do this across all architectures is to use the store's `Releases page
 <https://snapcraft.io/lpcraft/releases>`_: click on the cog icon next to
 "latest/edge", select "Promote/close" and then "Promote to: latest/stable".
+Finally, hit the "Save" button in the top right corner to apply the changes.
 
 Version numbers in snaps are for human consumption (the revision is assigned
 by the store and is what matters to ``snapd``), and there's nothing to stop
