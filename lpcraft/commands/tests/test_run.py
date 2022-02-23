@@ -1259,6 +1259,47 @@ class TestRun(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_installing_unknown_system_package_fails(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 100)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [unknown_package]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(100, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "install", "-y", "unknown_package"],
+                    cwd=Path("/root/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     @patch("sys.stderr", new_callable=io.StringIO)
     def test_quiet(
         self, mock_stderr, mock_get_host_architecture, mock_get_provider

@@ -6,6 +6,7 @@ import io
 import itertools
 import json
 import os
+import shlex
 from argparse import Namespace
 from pathlib import Path, PurePath
 from typing import List, Optional, Set
@@ -230,6 +231,14 @@ def _run_job(
                     env=environment,
                     stdout=stream,
                     stderr=stream,
+                )
+            if proc.returncode != 0:
+                raise CommandError(
+                    f"Job {job_name!r} for "
+                    f"{job.series}/{host_architecture} failed with "
+                    f"exit status {proc.returncode} "
+                    f"while running `{shlex.join(packages_cmd)}`.",
+                    retcode=proc.returncode,
                 )
         full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", run_command]
         emit.progress("Running the job")
