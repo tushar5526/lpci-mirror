@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.4   (unreleased)
+====================
+
+- Add note that containers will not be deleted automatically.
+
 0.0.3   (2022-02-23)
 ====================
 
