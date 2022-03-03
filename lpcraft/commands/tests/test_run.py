@@ -890,6 +890,53 @@ class TestRun(RunBaseTestCase):
     @patch("lpcraft.env.get_managed_environment_project_path")
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_shows_error_message_when_no_output_files(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+                    output:
+                        paths: ["*.whl"]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError("*.whl has not matched any output files.")
+                ],
+            ),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     def test_reads_properties(
         self,
         mock_get_host_architecture,

@@ -107,13 +107,15 @@ def _copy_output_paths(
 
     filtered_paths: Set[PurePath] = set()
     for path_pattern in output.paths:
-        filtered_paths.update(
-            PurePath(name)
-            for name in fnmatch.filter(
-                [str(path) for path in remote_paths],
-                path_pattern,
+        paths = [str(path) for path in remote_paths]
+        result = fnmatch.filter(paths, path_pattern)
+        if not result:
+            raise CommandError(
+                f"{path_pattern} has not matched any output files."
             )
-        )
+        for name in result:
+            filtered_paths.add(PurePath(name))
+
     resolved_paths = _resolve_symlinks(
         instance,
         [remote_cwd / path for path in sorted(filtered_paths)],

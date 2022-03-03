@@ -7,6 +7,9 @@ Version history
 
 - Add note that containers will not be deleted automatically.
 
+- Show error message when there are no matching output files,
+  see https://bugs.launchpad.net/lpcraft/+bug/1962774
+
 0.0.3   (2022-02-23)
 ====================
 
