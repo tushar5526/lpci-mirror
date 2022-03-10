@@ -11,6 +11,7 @@ from typing import List, Optional
 from craft_cli import CraftError, EmitterMode, emit
 
 from lpcraft._version import version_description as lpcraft_version
+from lpcraft.commands.clean import clean
 from lpcraft.commands.run import run, run_one
 from lpcraft.commands.version import version
 from lpcraft.errors import CommandError
@@ -61,8 +62,21 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # XXX cjwatson 2021-11-15: Subcommand arguments should be defined
     # alongside the individual subcommands rather than here.
+    parser_clean = subparsers.add_parser(
+        "clean", description=clean.__doc__, help=clean.__doc__
+    )
+    parser_clean.add_argument(
+        "-c",
+        "--config",
+        type=Path,
+        default=".launchpad.yaml",
+        help="Read the configuration file from this path.",
+    )
+    parser_clean.set_defaults(func=clean)
 
-    parser_run = subparsers.add_parser("run", help=run.__doc__)
+    parser_run = subparsers.add_parser(
+        "run", description=run.__doc__, help=run.__doc__
+    )
     parser_run.add_argument(
         "--output-directory",
         type=Path,
@@ -74,10 +88,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=Path,
         default=".launchpad.yaml",
         help="Read the configuration file from this path.",
+    )
+    parser_run.add_argument(
+        "--clean",
+        action="store_true",
+        help=(
+            "Clean the managed environments created "
+            "for the pipeline after the running it."
+        ),
     )
     parser_run.set_defaults(func=run)
 
-    parser_run_one = subparsers.add_parser("run-one", help=run_one.__doc__)
+    parser_run_one = subparsers.add_parser(
+        "run-one", description=run_one.__doc__, help=run_one.__doc__
+    )
     parser_run_one.add_argument(
         "--output-directory",
         type=Path,
@@ -89,6 +113,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=Path,
         default=".launchpad.yaml",
         help="Read the configuration file from this path.",
+    )
+    parser_run_one.add_argument(
+        "--clean",
+        action="store_true",
+        help=(
+            "Clean the managed environment created for the job "
+            "after running it."
+        ),
     )
     parser_run_one.add_argument("job", help="Run only this job name.")
     parser_run_one.add_argument(
@@ -99,7 +131,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser_run_one.set_defaults(func=run_one)
 
-    parser_version = subparsers.add_parser("version", help=version.__doc__)
+    parser_version = subparsers.add_parser(
+        "version", description=version.__doc__, help=version.__doc__
+    )
     parser_version.set_defaults(func=version)
 
     emit.init(EmitterMode.NORMAL, "lpcraft", f"Starting {lpcraft_version}")

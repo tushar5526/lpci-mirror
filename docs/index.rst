@@ -41,20 +41,6 @@ Example configuration
     hello world
 
 
-.. note::
-
-    `lpcraft` does not delete the container it creates.
-
-    Also, `lpcraft` currently does not expose a command to do this manually.
-
-    In order to delete all `lpcraft` related containers,
-    you need to run the following command:
-
-    .. code-block:: bash
-
-        lxc --project lpcraft list -f csv -c n | xargs lxc delete -f
-
-
 .. toctree::
     :maxdepth: 2
 

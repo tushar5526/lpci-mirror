@@ -274,6 +274,17 @@ def _run_job(
             )
 
 
+def _get_job_instance_name(provider: Provider, job: Job) -> str:
+    """Return the instance name for the given provider and job."""
+    cwd = Path.cwd()
+    return provider.get_instance_name(
+        project_name=cwd.name,
+        project_path=cwd,
+        series=job.series,
+        architecture=get_host_architecture(),
+    )
+
+
 def run(args: Namespace) -> int:
     """Run a pipeline, launching managed environments as needed."""
     # XXX jugmac00 2022-02-04: this fallback may become obsolete once we
@@ -283,34 +294,50 @@ def run(args: Namespace) -> int:
 
     provider = get_provider()
     provider.ensure_provider_is_available()
+    launched_instances = []
 
-    for stage in config.pipeline:
-        stage_failed = False
-        for job_name in stage:
-            try:
-                jobs = config.jobs.get(job_name, [])
-                if not jobs:
-                    raise CommandError(f"No job definition for {job_name!r}")
-                for job in jobs:
-                    _run_job(
-                        job_name,
-                        job,
-                        provider,
-                        getattr(args, "output_directory", None),
-                    )
-            except CommandError as e:
-                if len(stage) == 1:
-                    # Single-job stage, so just reraise this in order to get
-                    # simpler error messages.
-                    raise
-                else:
-                    emit.error(e)
-                    stage_failed = True
-        if stage_failed:
-            raise CommandError(
-                f"Some jobs in {stage} failed; stopping.", retcode=1
+    try:
+        for stage in config.pipeline:
+            stage_failed = False
+            for job_name in stage:
+                try:
+                    jobs = config.jobs.get(job_name, [])
+                    if not jobs:
+                        raise CommandError(
+                            f"No job definition for {job_name!r}"
+                        )
+                    for job in jobs:
+                        launched_instances.append(
+                            _get_job_instance_name(provider, job)
+                        )
+                        _run_job(
+                            job_name,
+                            job,
+                            provider,
+                            getattr(args, "output_directory", None),
+                        )
+                except CommandError as e:
+                    if len(stage) == 1:
+                        # Single-job stage, so just reraise this
+                        # in order to get simpler error messages.
+                        raise
+                    else:
+                        emit.error(e)
+                        stage_failed = True
+            if stage_failed:
+                raise CommandError(
+                    f"Some jobs in {stage} failed; stopping.", retcode=1
+                )
+    finally:
+        should_clean_environment = getattr(args, "clean", False)
+
+        if should_clean_environment:
+            cwd = Path.cwd()
+            provider.clean_project_environments(
+                project_name=cwd.name,
+                project_path=cwd,
+                instances=launched_instances,
             )
-
     return 0
 
 
@@ -333,6 +360,17 @@ def run_one(args: Namespace) -> int:
     provider = get_provider()
     provider.ensure_provider_is_available()
 
-    _run_job(args.job, job, provider, getattr(args, "output", None))
+    try:
+        _run_job(args.job, job, provider, getattr(args, "output", None))
+    finally:
+        should_clean_environment = getattr(args, "clean", False)
+
+        if should_clean_environment:
+            cwd = Path.cwd()
+            provider.clean_project_environments(
+                project_name=cwd.name,
+                project_path=cwd,
+                instances=[_get_job_instance_name(provider, job)],
+            )
 
     return 0

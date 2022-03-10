@@ -11,10 +11,11 @@ import re
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, List, Protocol
+from typing import Any, Generator, List, Optional, Protocol
 
 from craft_cli import emit
 from craft_providers import Base, bases, lxd
+from pydantic import StrictStr
 
 from lpcraft.env import (
     get_managed_environment_home_path,
@@ -110,14 +111,22 @@ class LXDProvider(Provider):
         self.lxd_remote = lxd_remote
 
     def clean_project_environments(
-        self, *, project_name: str, project_path: Path
+        self,
+        *,
+        project_name: str,
+        project_path: Path,
+        instances: Optional[List[StrictStr]] = None,
     ) -> List[str]:
-        """Clean up any environments created for a project.
+        """Clean up the environments created for a project.
 
         :param project_name: Name of project.
         :param project_path: Path to project.
+        :param instances: The list of instance names to delete, optional.
 
         :return: List of containers deleted.
+
+        All the environments created for the project will be deleted if
+        the `instances` parameter is not passed.
         """
         deleted: List[str] = []
 
@@ -126,32 +135,33 @@ class LXDProvider(Provider):
 
         inode = str(project_path.stat().st_ino)
 
-        try:
-            names = self.lxc.list_names(
-                project=self.lxd_project, remote=self.lxd_remote
-            )
-        except lxd.LXDError as error:
-            raise CommandError(str(error)) from error
+        if not instances:
+            try:
+                instances = self.lxc.list_names(
+                    project=self.lxd_project, remote=self.lxd_remote
+                )
+            except lxd.LXDError as error:
+                raise CommandError(str(error)) from error
 
-        for name in names:
+        for instance in instances:
             if re.match(
                 fr"^lpcraft-{re.escape(project_name)}-{re.escape(inode)}"
                 fr"-.+-.+$",
-                name,
+                instance,
             ):
-                emit.trace(f"Deleting container {name!r}.")
+                emit.trace(f"Deleting container {instance!r}.")
                 try:
                     self.lxc.delete(
-                        instance_name=name,
+                        instance_name=instance,
                         force=True,
                         project=self.lxd_project,
                         remote=self.lxd_remote,
                     )
                 except lxd.LXDError as error:
                     raise CommandError(str(error)) from error
-                deleted.append(name)
+                deleted.append(instance)
             else:
-                emit.trace(f"Not deleting container {name!r}.")
+                emit.trace(f"Not deleting container {instance!r}.")
 
         return deleted
 

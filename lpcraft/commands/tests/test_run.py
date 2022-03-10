@@ -11,14 +11,13 @@ from textwrap import dedent
 from typing import Any, AnyStr, Dict, List, Optional
 from unittest.mock import ANY, Mock, call, patch
 
-from craft_providers.lxd import LXC, launch
+from craft_providers.lxd import launch
 from fixtures import TempDir
 from testtools.matchers import MatchesStructure
 
 from lpcraft.commands.tests import CommandBaseTestCase
 from lpcraft.errors import CommandError, ConfigurationError
-from lpcraft.providers._lxd import LXDProvider, _LXDLauncher
-from lpcraft.providers.tests import FakeLXDInstaller
+from lpcraft.providers.tests import makeLXDProvider
 
 
 class LocalExecuteRun:
@@ -71,21 +70,16 @@ class RunBaseTestCase(CommandBaseTestCase):
 
         self.addCleanup(os.chdir, cwd)
 
-    def makeLXDProvider(
-        self,
-        is_ready: bool = True,
-        lxd_launcher: Optional[_LXDLauncher] = None,
-    ) -> LXDProvider:
-        lxc = Mock(spec=LXC)
-        lxc.remote_list.return_value = {}
-        lxd_installer = FakeLXDInstaller(is_ready=is_ready)
-        if lxd_launcher is None:
-            lxd_launcher = Mock(spec=launch)
-        return LXDProvider(
-            lxc=lxc,
-            lxd_installer=lxd_installer,
-            lxd_launcher=lxd_launcher,
-        )
+    def get_instance_names(self, provider, series, architecture="amd64"):
+        return [
+            provider.get_instance_name(
+                project_name=self.tmp_project_path.name,
+                project_path=self.tmp_project_path,
+                series=series_name,
+                architecture=architecture,
+            )
+            for series_name in series
+        ]
 
 
 class TestRun(RunBaseTestCase):
@@ -116,7 +110,7 @@ class TestRun(RunBaseTestCase):
         )
         Path(self.tmp_config_path).mkdir(parents=True, exist_ok=True)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -150,7 +144,7 @@ class TestRun(RunBaseTestCase):
     def test_lxd_not_ready(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider(is_ready=False)
+        mock_get_provider.return_value = makeLXDProvider(is_ready=False)
         config = dedent(
             """
             pipeline: []
@@ -174,7 +168,7 @@ class TestRun(RunBaseTestCase):
     def test_job_not_defined(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider()
+        mock_get_provider.return_value = makeLXDProvider()
         config = dedent(
             """
             pipeline:
@@ -204,7 +198,7 @@ class TestRun(RunBaseTestCase):
         # assumed that the dispatcher won't dispatch anything for an
         # architecture if it has no jobs at all.)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -252,7 +246,7 @@ class TestRun(RunBaseTestCase):
     def test_no_run_definition(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider()
+        mock_get_provider.return_value = makeLXDProvider()
         config = dedent(
             """
             pipeline:
@@ -286,7 +280,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 2)
@@ -338,7 +332,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -402,7 +396,7 @@ class TestRun(RunBaseTestCase):
         # calling `lpcraft` with no arguments triggers the run command
         # and is functionally equivalent to `lpcraft run`
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -446,7 +440,7 @@ class TestRun(RunBaseTestCase):
         # one job in a stage fails, we run all the jobs in that stage before
         # stopping.
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.side_effect = iter(
@@ -520,7 +514,7 @@ class TestRun(RunBaseTestCase):
         # but we do at least wait for all of them to succeed before
         # proceeding to the next stage in the pipeline.
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.side_effect = iter(
@@ -576,7 +570,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -648,7 +642,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -698,7 +692,7 @@ class TestRun(RunBaseTestCase):
 
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -761,7 +755,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -805,7 +799,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -850,7 +844,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -898,7 +892,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -945,7 +939,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -990,7 +984,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -1035,7 +1029,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -1085,7 +1079,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -1129,7 +1123,7 @@ class TestRun(RunBaseTestCase):
     ):
         target_path = Path(self.useFixture(TempDir()).path)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = LocalExecuteRun(self.tmp_project_path)
         launcher.return_value.execute_run = execute_run
@@ -1169,7 +1163,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -1256,7 +1250,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -1310,7 +1304,7 @@ class TestRun(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 100)
@@ -1358,7 +1352,7 @@ class TestRun(RunBaseTestCase):
             return subprocess.CompletedProcess([], 0)
 
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         launcher.return_value.execute_run.side_effect = execute_run
         config = dedent(
@@ -1392,7 +1386,7 @@ class TestRun(RunBaseTestCase):
             return subprocess.CompletedProcess([], 0)
 
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         launcher.return_value.execute_run.side_effect = execute_run
         config = dedent(
@@ -1428,6 +1422,212 @@ class TestRun(RunBaseTestCase):
             stderr_lines[-2:],
         )
 
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_cleans_up_the_managed_environment(
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        def execute_run(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[AnyStr]":
+            os.write(kwargs["stdout"], b"test\n")
+            return subprocess.CompletedProcess([], 0)
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        launcher.return_value.execute_run.side_effect = execute_run
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - test2
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+                test2:
+                    series: bionic
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--clean")
+
+        self.assertEqual(0, result.exit_code)
+        expected_instance_names = self.get_instance_names(
+            provider, ("focal", "bionic")
+        )
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=expected_instance_names,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_clean_flag_cleans_up_even_when_there_are_errors(
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        mock_get_provider.return_value = makeLXDProvider()
+        # There are no jobs defined. So there will be an error.
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs: {}
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--clean")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[CommandError("No job definition for 'test'")],
+            ),
+        )
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=[],
+        )
+
+    @patch("lpcraft.commands.run._run_job")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_cleans_up_only_the_instances_created_for_the_current_run(
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_run_job,
+    ):
+        mock_get_provider.return_value = makeLXDProvider()
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: xenial
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        self.run_command("run")
+
+        updated_config = dedent(
+            """
+            pipeline:
+                - test
+                - test2
+                - test3
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+                test2:
+                    series: bionic
+                    architectures: amd64
+                    run: echo test
+                test3:
+                    series: jammy
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(updated_config)
+
+        result = self.run_command("run", "--clean")
+
+        self.assertEqual(0, result.exit_code)
+        expected_instance_names = self.get_instance_names(
+            provider, ("focal", "bionic", "jammy")
+        )
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=expected_instance_names,
+        )
+
+    @patch("lpcraft.commands.run._run_job")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_cleans_up_only_the_instances_created_in_the_current_run_when_a_job_errors_out(  # noqa: E501
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_run_job,
+    ):
+        mock_get_provider.return_value = makeLXDProvider()
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        mock_run_job.side_effect = [None, CommandError("Mock error")]
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - test2
+                - test3
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+                test2:
+                    series: bionic
+                    architectures: amd64
+                    run: echo test
+                test3:
+                    series: jammy
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--clean")
+
+        self.assertEqual(1, result.exit_code)
+        expected_instance_names = self.get_instance_names(
+            provider,
+            ("focal", "bionic"),
+        )
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=expected_instance_names,
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_missing_config_file(self):
@@ -1457,7 +1657,7 @@ class TestRunOne(RunBaseTestCase):
         )
         Path(self.tmp_config_path).mkdir(parents=True, exist_ok=True)
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -1499,7 +1699,7 @@ class TestRunOne(RunBaseTestCase):
     def test_job_not_defined(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider()
+        mock_get_provider.return_value = makeLXDProvider()
         config = dedent(
             """
             pipeline:
@@ -1525,7 +1725,7 @@ class TestRunOne(RunBaseTestCase):
     def test_job_index_not_defined(
         self, mock_get_host_architecture, mock_get_provider
     ):
-        mock_get_provider.return_value = self.makeLXDProvider()
+        mock_get_provider.return_value = makeLXDProvider()
         config = dedent(
             """
             pipeline:
@@ -1556,7 +1756,7 @@ class TestRunOne(RunBaseTestCase):
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     def test_job_fails(self, mock_get_host_architecture, mock_get_provider):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 2)
@@ -1608,7 +1808,7 @@ class TestRunOne(RunBaseTestCase):
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
-        provider = self.makeLXDProvider(lxd_launcher=launcher)
+        provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
@@ -1648,4 +1848,118 @@ class TestRunOne(RunBaseTestCase):
             env={},
             stdout=ANY,
             stderr=ANY,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_run_one_clean_flag_cleans_up_even_when_there_are_errors(
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 2)
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - build-wheel
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                build-wheel:
+                    series: focal
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "--clean", "build-wheel", "0")
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=2,
+                errors=[
+                    CommandError(
+                        "Job 'build-wheel' for focal/amd64 failed with exit "
+                        "status 2.",
+                        retcode=2,
+                    )
+                ],
+            ),
+        )
+        instance_names = self.get_instance_names(
+            provider,
+            ("focal",),
+        )
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=instance_names,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
+    def test_run_one_clean_flag_cleans_up_the_managed_environment(
+        self,
+        mock_clean_project_environments,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+                - build-wheel
+
+            jobs:
+                test:
+                    matrix:
+                        - series: bionic
+                          architectures: amd64
+                        - series: focal
+                          architectures: [amd64, s390x]
+                    run: tox
+                build-wheel:
+                    series: bionic
+                    architectures: amd64
+                    run: pyproject-build
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "--clean", "test", "1")
+
+        self.assertEqual(0, result.exit_code)
+        instance_names = self.get_instance_names(provider, ("focal",))
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=instance_names,
+        )
+
+        result = self.run_command("run-one", "--clean", "test", "0")
+
+        self.assertEqual(0, result.exit_code)
+        instance_names = self.get_instance_names(provider, ("bionic",))
+        mock_clean_project_environments.assert_called_with(
+            project_name=self.tmp_project_path.name,
+            project_path=self.tmp_project_path,
+            instances=instance_names,
         )

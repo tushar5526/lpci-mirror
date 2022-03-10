@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, Generator, List, Optional
 
 from craft_providers import bases, lxd
+from pydantic import StrictStr
 
 
 def sanitize_lxd_instance_name(name: str) -> str:
@@ -34,14 +35,22 @@ class Provider(ABC):
 
     @abstractmethod
     def clean_project_environments(
-        self, *, project_name: str, project_path: Path
+        self,
+        *,
+        project_name: str,
+        project_path: Path,
+        instances: Optional[List[StrictStr]] = None,
     ) -> List[str]:
         """Clean up any environments created for a project.
 
         :param project_name: Name of project.
         :param project_path: Path to project.
+        :param instances: List of instance names to clean, optional.
 
         :return: List of containers deleted.
+
+        All the environments created for the project will be deleted if
+        the `instances` parameter is not passed.
         """
 
     @abstractmethod
