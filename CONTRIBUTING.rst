@@ -6,8 +6,6 @@ Prerequisites
 
 * Python 3.8+
 * `tox <https://tox.wiki/en/latest/>`_
-* `pyenv <https://github.com/pyenv/pyenv>`_, if you want to use and test against
-  multiple versions of Python
 
 Usage
 -----
@@ -23,20 +21,23 @@ List the ``tox`` environments available for this project.
 
   .. code:: bash
 
-    $ tox -l
-    lint
-    mypy
-    py38
-    py39
-    py310
+    $ tox -lv
+    default environments:
+    lint     -> run linters
+    mypy     -> run static type checker
+    py38     -> run test suite
+    py39     -> run test suite
+    py310    -> run test suite
+    coverage -> generate coverage report
 
 Run the project's tests.
 
   .. code:: bash
 
-    $ tox -e py38  #  Replace with the installed Python version, if 3.8 is unavailable.
+    $ tox -e py38  #  You can replace ``py38`` with another Python version.
 
-Since ``tox`` uses ``pytest`` under the hood to run the tests, arguments can be passed to pytest.
+Since ``tox`` uses `pytest <https://docs.pytest.org/>`_ under the hood to run
+the tests, arguments can be passed to ``pytest``.
 
   .. code:: bash
 
@@ -50,14 +51,15 @@ Run the tests with coverage.
 
     $ tox -e coverage
 
-Run the linter.
+Run the linters.
 
   .. code:: bash
 
     $ tox -e lint
 
-Alternatively, you can run ``pre-commit install`` to install the git pre-commit hooks,
-which run the linter.
+We also support running linters via `pre-commit <https://pre-commit.com/>`_.
+If you want ``pre-commit`` to run automatically on ``git commit``,
+you need to run ``pre-commit install`` once.
 
 Run the ``mypy`` static type checker.
 
@@ -72,12 +74,18 @@ Update the requirements and regenerate ``requirements.txt``.
     $ <modify requirements.in>
     $ tox -e pip-compile
 
-If any of the ``tox`` environments use a version of Python that is not installed, edit
-``tox.ini`` and replace the value for the ``basepython`` key under that environment.
+Build the documentation locally.
 
-To update the `project's documentation
-<https://lpcraft.readthedocs.io/en/latest/>`_, you need to trigger a manual
-build on the project's dashboard on https://readthedocs.org.
+  .. code:: bash
+
+    $ tox -e docs
+
+.. note::
+
+    In order to update the `project's documentation
+    <https://lpcraft.readthedocs.io/en/latest/>`_ online,
+    after having pushed your changes to the repository, you need to trigger a
+    manual build on the project's dashboard on https://readthedocs.org.
 
 Getting help
 ------------
