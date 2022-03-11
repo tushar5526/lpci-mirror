@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.5   (unreleased)
+====================
+
+- Add the tox usage details to CONTRIBUTING.rst
+
 0.0.4   (2022-03-03)
 ====================
 
