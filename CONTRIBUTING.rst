@@ -5,9 +5,9 @@ Prerequisites
 -------------
 
 * Python 3.8+
-* `tox <https://tox.readthedocs.io/en/latest/>`_.
+* `tox <https://tox.wiki/en/latest/>`_
 * `pyenv <https://github.com/pyenv/pyenv>`_, if you want to use and test against
-  multiple versions of Python.
+  multiple versions of Python
 
 Usage
 -----
@@ -34,7 +34,7 @@ Run the project's tests.
 
   .. code:: bash
 
-    $ tox -e py38  #  Replace with the installed python version, if 3.8 is unavailable.
+    $ tox -e py38  #  Replace with the installed Python version, if 3.8 is unavailable.
 
 Since ``tox`` uses ``pytest`` under the hood to run the tests, arguments can be passed to pytest.
 
