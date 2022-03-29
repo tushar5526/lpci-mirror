@@ -19,17 +19,17 @@ hookspec = pluggy.HookspecMarker(NAME)
 
 @hookspec  # type: ignore
 def lpcraft_install_packages() -> list[str]:
-    """system packages to be installed"""
+    """System packages to be installed."""
 
 
 @hookspec  # type: ignore
 def lpcraft_install_snaps() -> list[str]:
-    """snaps to be installed"""
+    """Snaps to be installed."""
 
 
 @hookspec  # type: ignore
 def lpcraft_execute_run() -> str:
-    """command to be executed"""
+    """Command to be executed."""
     # Please note: when both a plugin and the configuration file are
     # providing a `run` command, the one from the configuration file will be
     # used
@@ -37,7 +37,7 @@ def lpcraft_execute_run() -> str:
 
 @hookspec  # type: ignore
 def lpcraft_set_environment() -> dict[str, str | None]:
-    """environment variables to be set"""
+    """Environment variables to be set."""
     # Please note: when there is the same environment variable provided by
     # the plugin and the configuration file, the one in the configuration
     # file will be taken into account

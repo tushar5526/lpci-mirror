@@ -38,8 +38,7 @@ def makeLXDProvider(
     lxd_project: str = "test-project",
     lxd_remote: str = "test-remote",
 ) -> LXDProvider:
-    """A helper function to allow creating a custom LXDProvider for tests."""
-
+    """Create a custom LXDProvider for tests."""
     if lxc is None:
         lxc = Mock(spec=LXC)
         lxc.remote_list.return_value = {}

@@ -7,6 +7,10 @@ Version history
 
 - Sphinx: Turn warnings into errors.
 
+- pre-commit: Update the ``black`` hook to fix an incompatibility with
+  ``click==8.1.0``.
+
+- pre-commit: Add the ``pydocstyle`` hook to lint the docstrings.
 
 0.0.5   (2022-03-30)
 ====================

@@ -19,7 +19,7 @@ from pydantic import StrictStr
 
 
 def sanitize_lxd_instance_name(name: str) -> str:
-    """LXD instance names need to follow a certain pattern
+    """LXD instance names need to follow a certain pattern.
 
     Make sure we follow this pattern:
     https://linuxcontainers.org/lxd/docs/master/instances/

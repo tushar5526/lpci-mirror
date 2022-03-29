@@ -35,7 +35,7 @@ class ModelConfigDefaults(
 
 
 class OutputDistributeEnum(Enum):
-    """Valid values for `output.distribute.`"""
+    """Valid values for `output.distribute`."""
 
     artifactory = "artifactory"
 

@@ -31,7 +31,7 @@ _configure_logger("craft_providers")
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """lpcraft runs Launchpad CI jobs."""
+    """`lpcraft` runs Launchpad CI jobs."""
     parser = ArgumentParser(description="Run Launchpad CI jobs.")
     parser.add_argument(
         "--version",

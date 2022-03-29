@@ -15,6 +15,12 @@ repos:
     rev: 4.0.1
     hooks:
     -   id: flake8
+-   repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.1.1
+    hooks:
+    -   id: pydocstyle
+        additional_dependencies:
+        -   toml==0.10.2
 -   repo: https://github.com/PyCQA/isort
     rev: 5.10.0
     hooks:
