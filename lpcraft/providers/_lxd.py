@@ -145,8 +145,8 @@ class LXDProvider(Provider):
 
         for instance in instances:
             if re.match(
-                fr"^lpcraft-{re.escape(project_name)}-{re.escape(inode)}"
-                fr"-.+-.+$",
+                rf"^lpcraft-{re.escape(project_name)}-{re.escape(inode)}"
+                rf"-.+-.+$",
                 instance,
             ):
                 emit.trace(f"Deleting container {instance!r}.")
