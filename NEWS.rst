@@ -5,7 +5,8 @@ Version history
 0.0.6   (unreleased)
 ====================
 
-- Nothing yet.
+- Sphinx: Turn warnings into errors.
+
 
 0.0.5   (2022-03-30)
 ====================
