@@ -8,7 +8,7 @@ Version history
 - Add the tox usage details to CONTRIBUTING.rst
 
 - Add a ``clean`` command to allow cleaning a project's managed environments.
-  Also add a ``--clean`` flag to the ``run`` and ``run-one` commands
+  Also add a ``--clean`` flag to the ``run`` and ``run-one`` commands
   to automatically clean the managed environments created during a run.
 
 0.0.4   (2022-03-03)
