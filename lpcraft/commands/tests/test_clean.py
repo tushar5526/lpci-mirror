@@ -24,6 +24,35 @@ class TestClean(CommandBaseTestCase):
         os.chdir(self.tmp_project_path)
         self.addCleanup(os.chdir, cwd)
 
+    def test_config_file_not_under_project_directory(self):
+        paths = [
+            "/",
+            "/etc/init.d",
+            "../../foo",
+            "a/b/c/../../../../d",
+        ]
+
+        for path in paths:
+            config_file = f"{path}/config.yaml"
+            result = self.run_command(
+                "clean",
+                "-c",
+                config_file,
+            )
+            config_file_path = Path(config_file).resolve()
+            self.assertThat(
+                result,
+                MatchesStructure.byEquality(
+                    exit_code=1,
+                    errors=[
+                        ConfigurationError(
+                            f"'{config_file_path}' is not in the subpath of "
+                            f"'{self.tmp_project_path}'."
+                        )
+                    ],
+                ),
+            )
+
     def test_missing_config_file(self):
         result = self.run_command("clean")
 

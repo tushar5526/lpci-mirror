@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 import pydantic
 from pydantic import StrictStr
 
+from lpcraft.errors import ConfigurationError
 from lpcraft.utils import load_yaml
 
 
@@ -127,5 +128,21 @@ class Config(ModelConfigDefaults):
     @classmethod
     def load(cls, path: Path) -> "Config":
         """Load config from the indicated file name."""
+        # XXX lgp171188 2022-03-31: it is not a good idea to evaluate
+        # `Path.cwd()` in multiple places to determine the project directory.
+        # This could be made available as an attribute on the `Config` class
+        # instead.
+        project_dir = Path.cwd()
+        resolved_path = path.resolve()
+        try:
+            # XXX lgp171188 2022-04-04: There is a new method,
+            # Path.is_relative_to() in Python 3.9+, which does
+            # exactly what we need. Once we drop support
+            # for Python 3.8, we should switch to that instead.
+            resolved_path.relative_to(project_dir)
+        except ValueError:
+            raise ConfigurationError(
+                f"'{resolved_path}' is not in the subpath of '{project_dir}'."
+            )
         content = load_yaml(path)
         return cls.parse_obj(content)

@@ -40,7 +40,7 @@ class LocalExecuteRun:
         *,
         cwd: Optional[Path] = None,
         env: Optional[Dict[str, Optional[str]]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> "subprocess.CompletedProcess[AnyStr]":
         run_kwargs = kwargs.copy()
         run_kwargs["cwd"] = self.override_cwd
@@ -83,6 +83,35 @@ class RunBaseTestCase(CommandBaseTestCase):
 
 
 class TestRun(RunBaseTestCase):
+    def test_config_file_not_under_project_directory(self):
+        paths = [
+            "/",
+            "/etc/init.d",
+            "../../foo",
+            "a/b/c/../../../../d",
+        ]
+
+        for path in paths:
+            config_file = f"{path}/config.yaml"
+            result = self.run_command(
+                "run",
+                "-c",
+                config_file,
+            )
+            config_file_path = Path(config_file).resolve()
+            self.assertThat(
+                result,
+                MatchesStructure.byEquality(
+                    exit_code=1,
+                    errors=[
+                        ConfigurationError(
+                            f"'{config_file_path}' is not in the subpath of "
+                            f"'{self.tmp_project_path}'."
+                        )
+                    ],
+                ),
+            )
+
     def test_missing_config_file(self):
         result = self.run_command("run")
 
@@ -1630,6 +1659,37 @@ class TestRun(RunBaseTestCase):
 
 
 class TestRunOne(RunBaseTestCase):
+    def test_config_file_not_under_project_directory(self):
+        paths = [
+            "/",
+            "/etc/init.d",
+            "../../foo",
+            "a/b/c/../../../../d",
+        ]
+
+        for path in paths:
+            config_file = f"{path}/config.yaml"
+            result = self.run_command(
+                "run-one",
+                "-c",
+                config_file,
+                "test",
+                "0",
+            )
+            config_file_path = Path(config_file).resolve()
+            self.assertThat(
+                result,
+                MatchesStructure.byEquality(
+                    exit_code=1,
+                    errors=[
+                        ConfigurationError(
+                            f"'{config_file_path}' is not in the subpath of "
+                            f"'{self.tmp_project_path}'."
+                        )
+                    ],
+                ),
+            )
+
     def test_missing_config_file(self):
         result = self.run_command("run-one", "test", "0")
 

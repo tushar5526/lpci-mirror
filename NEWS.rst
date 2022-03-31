@@ -14,6 +14,8 @@ Version history
 
 - tox: The ``pip-compile`` env now upgrades the project's dependencies.
 
+- Require the configuration file to be present under the project directory.
+
 0.0.5   (2022-03-30)
 ====================
 

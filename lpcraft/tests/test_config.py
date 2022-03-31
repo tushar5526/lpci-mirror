@@ -1,6 +1,7 @@
 # Copyright 2021-2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
+import os
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
@@ -16,17 +17,36 @@ from testtools.matchers import (
 )
 
 from lpcraft.config import Config, OutputDistributeEnum
+from lpcraft.errors import CommandError
 
 
 class TestConfig(TestCase):
     def setUp(self):
         super().setUp()
         self.tempdir = Path(self.useFixture(TempDir()).path)
+        # `Path.cwd()` is assumed as the project directory.
+        # So switch to the created project directory.
+        os.chdir(self.tempdir)
 
     def create_config(self, text):
         path = self.tempdir / ".launchpad.yaml"
         path.write_text(text)
         return path
+
+    def test_load_config_not_under_project_dir(self):
+        paths_outside_project_dir = [
+            "/",
+            "/etc/init.d",
+            "../../foo",
+            "a/b/c/../../../../d",
+        ]
+        for path in paths_outside_project_dir:
+            config_file = Path(path) / "config.yaml"
+            self.assertRaises(
+                CommandError,
+                Config.load,
+                config_file,
+            )
 
     def test_load(self):
         path = self.create_config(
