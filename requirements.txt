@@ -6,37 +6,35 @@
 #
 certifi==2021.10.8
     # via requests
-charset-normalizer==2.0.7
+charset-normalizer==2.0.12
     # via requests
-craft-cli==0.2.0
+craft-cli==0.4.0
     # via -r requirements.in
-craft-providers==1.0.3
+craft-providers==1.1.1
     # via -r requirements.in
 idna==3.3
     # via requests
-platformdirs==2.4.0
+platformdirs==2.5.1
     # via craft-cli
 pluggy==1.0.0
     # via -r requirements.in
-pydantic==1.8.2
+pydantic==1.9.0
     # via
     #   -r requirements.in
     #   craft-cli
     #   craft-providers
-python-dotenv==0.19.2
+python-dotenv==0.20.0
     # via -r requirements.in
 pyyaml==6.0
     # via
     #   -r requirements.in
     #   craft-cli
     #   craft-providers
-requests==2.26.0
+requests==2.27.1
     # via requests-unixsocket
-requests-unixsocket==0.2.0
+requests-unixsocket==0.3.0
     # via craft-providers
-typing-extensions==3.10.0.2
+typing-extensions==4.1.1
     # via pydantic
-urllib3==1.26.7
-    # via
-    #   requests
-    #   requests-unixsocket
+urllib3==1.26.9
+    # via requests
