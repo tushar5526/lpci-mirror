@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.7   (unreleased)
+0.0.7   (2022-04-08)
 ====================
 
 - tox plugin: Work around https://github.com/tox-dev/tox/issues/2372 by
