@@ -34,10 +34,10 @@ class ToxPlugin:
 
     @hookimpl  # type: ignore
     def lpcraft_set_environment(self) -> dict[str, str | None]:
-        # XXX jugmac00 2021-12-17: this was added to raise coverage and is not
-        # necessary. Let's remove this once we have a plugin which actually
-        # needs to set environment variables.
-        return {"PLUGIN": "tox"}
+        # Work around https://github.com/tox-dev/tox/issues/2372: without
+        # this, tox won't pass through the lower-case proxy environment
+        # variables set by launchpad-buildd.
+        return {"TOX_TESTENV_PASSENV": "http_proxy https_proxy"}
 
 
 @register(name="pyproject-build")

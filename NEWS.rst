@@ -5,7 +5,9 @@ Version history
 0.0.7   (unreleased)
 ====================
 
-- Nothing yet.
+- tox plugin: Work around https://github.com/tox-dev/tox/issues/2372 by
+  telling ``tox`` to pass through lower-case ``http_proxy`` and
+  ``https_proxy`` environment variables.
 
 0.0.6   (2022-04-05)
 ====================
