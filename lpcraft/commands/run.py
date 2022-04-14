@@ -40,6 +40,26 @@ def _check_relative_path(path: PurePath, container: PurePath) -> PurePath:
         raise CommandError(str(e), retcode=1)
 
 
+def _remove_prefix_if_possible(path: PurePath, prefix: str) -> PurePath:
+    """Remove an initial prefix from `path` if possible.
+
+    This is useful for paths that are normally within the build tree, but
+    may optionally escape to the parent directory of the build tree (and no
+    further).  For the purpose of copying files to the output directory,
+    paths within the build tree should be made relative to the build tree
+    and preserve any subdirectory structure there, but paths in the parent
+    directory should be relative to the parent directory.
+
+    `_copy_output_paths` recursively lists files within the parent directory
+    of the build tree, and uses this to ensure that those paths which are
+    within the build tree itself are made relative to the build tree.
+    """
+    try:
+        return path.relative_to(prefix)
+    except ValueError:
+        return path
+
+
 def _list_files(instance: Executor, path: Path) -> List[PurePath]:
     """Find entries in `path` on `instance`.
 
@@ -129,15 +149,9 @@ def _copy_output_paths(
     )
 
     for path in sorted(resolved_paths):
-        relative_path = _check_relative_path(path, remote_cwd.parent)
-        # Paths in the parent directory of the build tree can stay as they
-        # are, but everything else should be made relative to the build tree
-        # and preserve any subdirectory structure there within the output
-        # directory.
-        try:
-            relative_path = relative_path.relative_to(remote_cwd.name)
-        except ValueError:
-            pass
+        relative_path = _remove_prefix_if_possible(
+            _check_relative_path(path, remote_cwd.parent), remote_cwd.name
+        )
         destination = output_files / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
