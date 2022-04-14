@@ -99,15 +99,22 @@ def _copy_output_paths(
         # of normpath.
         _check_relative_path(
             PurePath(os.path.normpath(remote_cwd / path_pattern)),
-            remote_cwd,
+            remote_cwd.parent,
         )
 
-    remote_paths = sorted(_list_files(instance, remote_cwd))
+    remote_paths = sorted(_list_files(instance, remote_cwd.parent))
     output_files = target_path / "files"
 
     filtered_paths: Set[PurePath] = set()
     for path_pattern in output.paths:
-        paths = [str(path) for path in remote_paths]
+        # We listed the parent of the build tree in order to allow
+        # output.paths to reference the parent directory.  The patterns are
+        # still relative to the build tree, though, so make our paths
+        # relative to the build tree again so that they can be matched
+        # properly.
+        paths = [
+            os.path.relpath(path, remote_cwd.name) for path in remote_paths
+        ]
         result = fnmatch.filter(paths, path_pattern)
         if not result:
             raise CommandError(
@@ -122,7 +129,15 @@ def _copy_output_paths(
     )
 
     for path in sorted(resolved_paths):
-        relative_path = _check_relative_path(path, remote_cwd)
+        relative_path = _check_relative_path(path, remote_cwd.parent)
+        # Paths in the parent directory of the build tree can stay as they
+        # are, but everything else should be made relative to the build tree
+        # and preserve any subdirectory structure there within the output
+        # directory.
+        try:
+            relative_path = relative_path.relative_to(remote_cwd.name)
+        except ValueError:
+            pass
         destination = output_files / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:

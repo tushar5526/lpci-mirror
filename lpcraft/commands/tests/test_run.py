@@ -162,7 +162,7 @@ class TestRun(RunBaseTestCase):
 
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
-            cwd=Path("/root/project"),
+            cwd=Path("/root/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -261,7 +261,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -349,7 +349,7 @@ class TestRun(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/project"),
+            cwd=Path("/root/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -395,7 +395,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -408,7 +408,7 @@ class TestRun(RunBaseTestCase):
                         "-ec",
                         "pyproject-build",
                     ],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -450,7 +450,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -524,7 +524,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", command],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -583,7 +583,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", command],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -636,14 +636,14 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -656,7 +656,7 @@ class TestRun(RunBaseTestCase):
                         "-ec",
                         "pyproject-build",
                     ],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -698,7 +698,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={"TOX_SKIP_ENV": "^(?!lint-)"},
                     stdout=ANY,
                     stderr=ANY,
@@ -770,6 +770,66 @@ class TestRun(RunBaseTestCase):
         )
         self.assertEqual(
             ["test_1.0.tar.gz", "test_1.0.whl"],
+            sorted(path.name for path in (job_output / "files").iterdir()),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_output_path_in_immediate_parent(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.touch()
+
+        target_path = Path(self.useFixture(TempDir()).path) / "build"
+        target_path.mkdir()
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: touch ../test_1.0_all.deb
+                    output:
+                        paths: ["../*.deb"]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "focal" / "amd64"
+        self.assertEqual(
+            [
+                call(
+                    source=self.tmp_project_path.parent / "test_1.0_all.deb",
+                    destination=job_output / "files" / "test_1.0_all.deb",
+                ),
+            ],
+            launcher.return_value.pull_file.call_args_list,
+        )
+        self.assertEqual(
+            ["files", "properties"],
+            sorted(path.name for path in job_output.iterdir()),
+        )
+        self.assertEqual(
+            ["test_1.0_all.deb"],
             sorted(path.name for path in (job_output / "files").iterdir()),
         )
 
@@ -849,7 +909,7 @@ class TestRun(RunBaseTestCase):
             """
         )
         Path(".launchpad.yaml").write_text(config)
-        Path("symlink.txt").symlink_to("../target.txt")
+        Path("symlink.txt").symlink_to("../../target.txt")
 
         result = self.run_command(
             "run", "--output-directory", str(target_path)
@@ -1264,7 +1324,7 @@ class TestRun(RunBaseTestCase):
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1311,14 +1371,14 @@ class TestRun(RunBaseTestCase):
                         "nginx",
                         "apache2",
                     ],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1359,7 +1419,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "install", "-y", "unknown_package"],
-                    cwd=Path("/root/project"),
+                    cwd=Path("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1748,7 +1808,7 @@ class TestRunOne(RunBaseTestCase):
 
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/project"),
+            cwd=Path("/root/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -1856,7 +1916,7 @@ class TestRunOne(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
-            cwd=Path("/root/project"),
+            cwd=Path("/root/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -1904,7 +1964,7 @@ class TestRunOne(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/project"),
+            cwd=Path("/root/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,

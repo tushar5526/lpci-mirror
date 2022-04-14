@@ -13,4 +13,4 @@ def get_managed_environment_home_path() -> Path:
 
 def get_managed_environment_project_path() -> Path:
     """Path for project when running in managed environment."""
-    return get_managed_environment_home_path() / "project"
+    return get_managed_environment_home_path() / "lpcraft" / "project"

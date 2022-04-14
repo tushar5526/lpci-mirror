@@ -84,7 +84,10 @@ Output properties
     <https://docs.python.org/3/library/pathlib.html#pathlib.Path.glob>`_
     patterns; any files matching these patterns at the end of a successful
     build will be gathered by the build manager and attached to the build in
-    Launchpad.  Paths may not escape the build tree.
+    Launchpad.  Paths may not escape the parent directory of the build tree.
+    (The parent directory is allowed in order to make life easier for build
+    systems such as ``dpkg-buildpackage`` that write output files to their
+    parent directory.)
 
 ``distribute`` (optional)
     If ``artifactory``, then these artifacts may be distributed via

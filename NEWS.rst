@@ -5,7 +5,9 @@ Version history
 0.0.9   (unreleased)
 ====================
 
-- nothing yet
+- Allow ``output.paths`` to reference the parent directory of the build
+  tree, in order to make life easier for build systems such as
+  ``dpkg-buildpackage`` that write output files to their parent directory.
 
 0.0.8   (2022-04-13)
 ====================
