@@ -9,6 +9,9 @@ Version history
   tree, in order to make life easier for build systems such as
   ``dpkg-buildpackage`` that write output files to their parent directory.
 
+- Fix handling of the ``--output-directory`` option to the ``run-one``
+  command.
+
 0.0.8   (2022-04-13)
 ====================
 

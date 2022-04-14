@@ -390,7 +390,9 @@ def run_one(args: Namespace) -> int:
     provider.ensure_provider_is_available()
 
     try:
-        _run_job(args.job, job, provider, getattr(args, "output", None))
+        _run_job(
+            args.job, job, provider, getattr(args, "output_directory", None)
+        )
     finally:
         should_clean_environment = getattr(args, "clean", False)
 
