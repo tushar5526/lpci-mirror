@@ -286,6 +286,7 @@ class LXDProvider(Provider):
         except (bases.BaseConfigurationError, lxd.LXDError) as error:
             raise CommandError(str(error)) from error
 
+        managed_project_path = get_managed_environment_project_path()
         try:
             tmp_project_path = (
                 get_managed_environment_home_path() / "tmp-project"
@@ -295,11 +296,13 @@ class LXDProvider(Provider):
                 self._internal_execute_run(
                     instance,
                     instance_name,
-                    [
-                        "rm",
-                        "-rf",
-                        get_managed_environment_project_path().as_posix(),
-                    ],
+                    ["rm", "-rf", managed_project_path.as_posix()],
+                    check=True,
+                )
+                self._internal_execute_run(
+                    instance,
+                    instance_name,
+                    ["mkdir", "-p", managed_project_path.parent.as_posix()],
                     check=True,
                 )
                 self._internal_execute_run(
@@ -309,7 +312,7 @@ class LXDProvider(Provider):
                         "cp",
                         "-a",
                         tmp_project_path.as_posix(),
-                        get_managed_environment_project_path().as_posix(),
+                        managed_project_path.as_posix(),
                     ],
                     check=True,
                 )
@@ -324,11 +327,7 @@ class LXDProvider(Provider):
                 self._internal_execute_run(
                     instance,
                     instance_name,
-                    [
-                        "rm",
-                        "-rf",
-                        get_managed_environment_project_path().as_posix(),
-                    ],
+                    ["rm", "-rf", managed_project_path.as_posix()],
                     check=True,
                 )
                 instance.unmount_all()
