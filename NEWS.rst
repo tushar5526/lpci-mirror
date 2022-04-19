@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.9   (unreleased)
+0.0.9   (2022-04-19)
 ====================
 
 - Allow ``output.paths`` to reference the parent directory of the build
