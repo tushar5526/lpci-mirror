@@ -97,6 +97,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             "for the pipeline after the running it."
         ),
     )
+    parser_run.add_argument(
+        "--apt-replace-repositories",
+        action="append",
+        help="Overwrite /etc/apt/sources.list.",
+    )
     parser_run.set_defaults(func=run)
 
     parser_run_one = subparsers.add_parser(
@@ -128,6 +133,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=int,
         metavar="N",
         help="Run only the Nth job with the given name (indexing from 0).",
+    )
+    parser_run_one.add_argument(
+        "--apt-replace-repositories",
+        action="append",
+        help="Overwrite /etc/apt/sources.list.",
     )
     parser_run_one.set_defaults(func=run_one)
 

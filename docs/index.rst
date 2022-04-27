@@ -46,6 +46,7 @@ Example configuration
 
     self
     configuration
+    cli-interface
     plugins
     CONTRIBUTING
     release-process

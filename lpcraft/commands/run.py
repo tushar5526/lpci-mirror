@@ -194,9 +194,15 @@ def _copy_output_properties(
 
 
 def _run_job(
-    job_name: str, job: Job, provider: Provider, output: Optional[Path]
+    job_name: str,
+    job: Job,
+    provider: Provider,
+    output: Optional[Path],
+    apt_replacement_repositories: Optional[List[str]] = None,
 ) -> None:
     """Run a single job."""
+    # XXX jugmac00 2022-04-27: we should create a configuration object to be
+    # passed in and not so many arguments
     host_architecture = get_host_architecture()
     if host_architecture not in job.architectures:
         return
@@ -253,6 +259,37 @@ def _run_job(
             )
         packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
         if packages:
+            if apt_replacement_repositories:
+                # replace sources.list
+                lines = "\n".join(apt_replacement_repositories) + "\n"
+                with emit.open_stream(
+                    "Replacing /etc/apt/sources.list"
+                ) as stream:
+                    instance.push_file_io(
+                        destination=PurePath("/etc/apt/sources.list"),
+                        content=io.BytesIO(lines.encode()),
+                        file_mode="0644",
+                        group="root",
+                        user="root",
+                    )
+                # update local repository information
+                apt_update = ["apt", "update"]
+                with emit.open_stream(f"Running {apt_update}") as stream:
+                    proc = instance.execute_run(
+                        apt_update,
+                        cwd=remote_cwd,
+                        env=environment,
+                        stdout=stream,
+                        stderr=stream,
+                    )
+                if proc.returncode != 0:
+                    raise CommandError(
+                        f"Job {job_name!r} for "
+                        f"{job.series}/{host_architecture} failed with "
+                        f"exit status {proc.returncode} "
+                        f"while running `{shlex.join(apt_update)}`.",
+                        retcode=proc.returncode,
+                    )
             packages_cmd = ["apt", "install", "-y"] + packages
             emit.progress("Installing system packages")
             with emit.open_stream(f"Running {packages_cmd}") as stream:
@@ -344,6 +381,9 @@ def run(args: Namespace) -> int:
                             job,
                             provider,
                             getattr(args, "output_directory", None),
+                            apt_replacement_repositories=getattr(
+                                args, "apt_replace_repositories", None
+                            ),
                         )
                 except CommandError as e:
                     if len(stage) == 1:
@@ -391,7 +431,13 @@ def run_one(args: Namespace) -> int:
 
     try:
         _run_job(
-            args.job, job, provider, getattr(args, "output_directory", None)
+            args.job,
+            job,
+            provider,
+            getattr(args, "output_directory", None),
+            apt_replacement_repositories=getattr(
+                args, "apt_replace_repositories", None
+            ),
         )
     finally:
         should_clean_environment = getattr(args, "clean", False)

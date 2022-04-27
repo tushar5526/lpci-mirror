@@ -419,6 +419,114 @@ class TestRun(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_apt_replace_repositories(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--apt-replace-repositories", "repo info"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["apt", "install", "-y", "git"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+        mock_info = launcher.return_value.push_file_io.call_args_list[0][1]
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info["destination"]
+        )
+        self.assertEqual("repo info\n", mock_info["content"].read().decode())
+        self.assertEqual("0644", mock_info["file_mode"])
+        self.assertEqual("root", mock_info["group"])
+        self.assertEqual("root", mock_info["user"])
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_updating_package_info_fails(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 100)
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--apt-replace-repositories", "repo info"
+        )
+
+        self.assertEqual(100, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     def test_default_to_run_command(
         self, mock_get_host_architecture, mock_get_provider
     ):
@@ -2149,3 +2257,69 @@ class TestRunOne(RunBaseTestCase):
             project_path=self.tmp_project_path,
             instances=instance_names,
         )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_apt_replace_repositories(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one", "--apt-replace-repositories", "repo info", "test", "0"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["apt", "install", "-y", "git"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+        mock_info = launcher.return_value.push_file_io.call_args_list[0][1]
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info["destination"]
+        )
+        self.assertEqual("repo info\n", mock_info["content"].read().decode())
+        self.assertEqual("0644", mock_info["file_mode"])
+        self.assertEqual("root", mock_info["group"])
+        self.assertEqual("root", mock_info["user"])

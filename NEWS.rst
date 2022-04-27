@@ -5,7 +5,10 @@ Version history
 0.0.11 (unreleased)
 ===================
 
-- Nothing yet.
+- Add new optional and repeatable argument ``--apt-replace-repositories`` which
+  overwrites ``/etc/apt/sources.list``.
+
+- Add minimal CLI interface documentation.
 
 0.0.10  (2022-04-27)
 ====================
