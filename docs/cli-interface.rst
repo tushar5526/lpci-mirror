@@ -23,6 +23,9 @@ lpcraft run optional arguments
   ``lpcraft run --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``.
   Please note that the option is repeatable.
 
+- ``--set-env KEY=VALUE``, e.g.
+  ``lpcraft run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
+
 lpcraft run-one
 ---------------
 
@@ -40,3 +43,6 @@ lpcraft run-one optional arguments
 - ``--apt-replace-repositories SOURCE_LINE``, e.g.
   ``lpcraft run-one --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``.
   Please note that the option is repeatable.
+
+- ``--set-env KEY=VALUE``, e.g.
+  ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``.

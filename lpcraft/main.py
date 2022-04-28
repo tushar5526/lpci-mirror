@@ -102,6 +102,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="append",
         help="Overwrite /etc/apt/sources.list.",
     )
+    parser_run.add_argument(
+        "--set-env",
+        action="append",
+        help="Set an environment variable.",
+    )
     parser_run.set_defaults(func=run)
 
     parser_run_one = subparsers.add_parser(
@@ -138,6 +143,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--apt-replace-repositories",
         action="append",
         help="Overwrite /etc/apt/sources.list.",
+    )
+    parser_run_one.add_argument(
+        "--set-env",
+        action="append",
+        help="Set an environment variable.",
     )
     parser_run_one.set_defaults(func=run_one)
 

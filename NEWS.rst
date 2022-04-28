@@ -10,6 +10,9 @@ Version history
 
 - Add minimal CLI interface documentation.
 
+- Add new optional and repeatable argument ``--set-env`` which allows passing
+  in environment variables.
+
 0.0.10  (2022-04-27)
 ====================
 

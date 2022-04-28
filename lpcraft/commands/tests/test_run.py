@@ -775,7 +775,7 @@ class TestRun(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_pass_in_environment_variables(
+    def test_set_environment_variables_via_configuration(
         self, mock_get_host_architecture, mock_get_provider
     ):
         launcher = Mock(spec=launch)
@@ -808,6 +808,48 @@ class TestRun(RunBaseTestCase):
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
                     cwd=Path("/root/lpcraft/project"),
                     env={"TOX_SKIP_ENV": "^(?!lint-)"},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--set-env", "PIP_INDEX_URL=http://pypi.example.com/simple"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={"PIP_INDEX_URL": "http://pypi.example.com/simple"},
                     stdout=ANY,
                     stderr=ANY,
                 )
@@ -1825,6 +1867,100 @@ class TestRun(RunBaseTestCase):
             instances=expected_instance_names,
         )
 
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli_copes_with_equal_sign_in_value(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run",
+            "--set-env",
+            "DOUBLE_EQUAL=value_with=another_equal_sign",
+        )
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={
+                        "DOUBLE_EQUAL": "value_with=another_equal_sign",
+                    },
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli_ensure_merge_order(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # env from CLI wins over env from configuration
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    environment:
+                        PIP_INDEX_URL: http://pypi.example.com/simple
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run",
+            "--set-env",
+            "PIP_INDEX_URL=http://local-pypi.example.com/simple",
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={
+                        "PIP_INDEX_URL": "http://local-pypi.example.com/simple"
+                    },
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_config_file_not_under_project_directory(self):
@@ -2323,3 +2459,147 @@ class TestRunOne(RunBaseTestCase):
         self.assertEqual("0644", mock_info["file_mode"])
         self.assertEqual("root", mock_info["group"])
         self.assertEqual("root", mock_info["user"])
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one",
+            "--set-env",
+            "PIP_INDEX_URL=http://pypi.example.com/simple",
+            "test",
+            "0",
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={"PIP_INDEX_URL": "http://pypi.example.com/simple"},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli_copes_with_equal_sign_in_value(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one",
+            "--set-env",
+            "DOUBLE_EQUAL=value_with=another_equal_sign",
+            "test",
+            "0",
+        )
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={
+                        "DOUBLE_EQUAL": "value_with=another_equal_sign",
+                    },
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_set_environment_variables_via_cli_ensure_merge_order(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # env from CLI wins over env from configuration
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    environment:
+                        PIP_INDEX_URL: http://pypi.example.com/simple
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one",
+            "--set-env",
+            "PIP_INDEX_URL=http://local-pypi.example.com/simple",
+            "test",
+            "0",
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={
+                        "PIP_INDEX_URL": "http://local-pypi.example.com/simple"
+                    },
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )

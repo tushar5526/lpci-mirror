@@ -199,6 +199,7 @@ def _run_job(
     provider: Provider,
     output: Optional[Path],
     apt_replacement_repositories: Optional[List[str]] = None,
+    env_from_cli: Optional[List[str]] = None,
 ) -> None:
     """Run a single job."""
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
@@ -235,6 +236,11 @@ def _run_job(
     if env_from_configuration is not None:
         env_from_plugin.update(env_from_configuration)
     environment = env_from_plugin
+    if env_from_cli:
+        pairs_from_cli = dict(
+            pair.split("=", maxsplit=1) for pair in env_from_cli
+        )
+        environment.update(pairs_from_cli)
 
     cwd = Path.cwd()
     remote_cwd = env.get_managed_environment_project_path()
@@ -384,6 +390,7 @@ def run(args: Namespace) -> int:
                             apt_replacement_repositories=getattr(
                                 args, "apt_replace_repositories", None
                             ),
+                            env_from_cli=getattr(args, "set_env", None),
                         )
                 except CommandError as e:
                     if len(stage) == 1:
@@ -438,6 +445,7 @@ def run_one(args: Namespace) -> int:
             apt_replacement_repositories=getattr(
                 args, "apt_replace_repositories", None
             ),
+            env_from_cli=getattr(args, "set_env", None),
         )
     finally:
         should_clean_environment = getattr(args, "clean", False)
