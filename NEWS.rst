@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.11 (unreleased)
+0.0.11 (2022-04-29)
 ===================
 
 - Add new optional and repeatable argument ``--apt-replace-repositories`` which
