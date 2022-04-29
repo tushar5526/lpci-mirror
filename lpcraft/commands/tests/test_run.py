@@ -11,6 +11,7 @@ from textwrap import dedent
 from typing import Any, AnyStr, Dict, List, Optional
 from unittest.mock import ANY, Mock, call, patch
 
+import responses
 from craft_providers.lxd import launch
 from fixtures import TempDir
 from testtools.matchers import MatchesStructure
@@ -1396,6 +1397,7 @@ class TestRun(RunBaseTestCase):
         [error] = result.errors
         self.assertIn("/target", str(error))
 
+    @responses.activate
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     def test_install_snaps(
@@ -1406,6 +1408,20 @@ class TestRun(RunBaseTestCase):
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
         execute_run.return_value = subprocess.CompletedProcess([], 0)
+        responses.add(
+            "GET",
+            "http+unix://%2Frun%2Fsnapd.socket/v2/find?name=chromium",
+            json={
+                "result": [{"channels": {"latest/stable": {"revision": "1"}}}]
+            },
+        )
+        responses.add(
+            "GET",
+            "http+unix://%2Frun%2Fsnapd.socket/v2/find?name=firefox",
+            json={
+                "result": [{"channels": {"latest/stable": {"revision": "1"}}}]
+            },
+        )
         config = dedent(
             """
             pipeline:
@@ -1431,7 +1447,7 @@ class TestRun(RunBaseTestCase):
                         "snap",
                         "download",
                         "chromium",
-                        "--channel=stable",
+                        "--channel=latest/stable",
                         "--basename=chromium",
                         "--target-directory=/tmp",
                     ],
@@ -1454,7 +1470,7 @@ class TestRun(RunBaseTestCase):
                         "snap",
                         "download",
                         "firefox",
-                        "--channel=stable",
+                        "--channel=latest/stable",
                         "--basename=firefox",
                         "--target-directory=/tmp",
                     ],

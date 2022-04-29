@@ -260,7 +260,7 @@ def _run_job(
             install_from_store(
                 executor=instance,
                 snap_name=snap,
-                channel="stable",
+                channel="latest/stable",
                 classic=True,
             )
         packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
