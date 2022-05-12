@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.12 (unreleased)
+0.0.12 (2022-05-12)
 ===================
 
 - Update requirements.
