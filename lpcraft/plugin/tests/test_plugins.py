@@ -51,6 +51,13 @@ class TestPlugins(CommandBaseTestCase):
         self.assertEqual(
             [
                 call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"TOX_TESTENV_PASSENV": "http_proxy https_proxy"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
                     [
                         "apt",
                         "install",
@@ -143,6 +150,13 @@ class TestPlugins(CommandBaseTestCase):
         self.assertEqual(
             [
                 call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"TOX_TESTENV_PASSENV": "http_proxy https_proxy"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
                     [
                         "apt",
                         "install",
@@ -195,6 +209,13 @@ class TestPlugins(CommandBaseTestCase):
 
         self.assertEqual(
             [
+                call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
                 call(
                     [
                         "apt",

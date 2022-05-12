@@ -6,7 +6,7 @@ import json
 import os
 import re
 import subprocess
-from pathlib import Path
+from pathlib import Path, PosixPath
 from textwrap import dedent
 from typing import Any, AnyStr, Dict, List, Optional
 from unittest.mock import ANY, Mock, call, patch
@@ -493,7 +493,11 @@ class TestRun(RunBaseTestCase):
         provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
-        execute_run.return_value = subprocess.CompletedProcess([], 100)
+        # `apt update` should pass -> 0
+        # `apt install` should fails -> 100
+        execute_run.side_effect = iter(
+            [subprocess.CompletedProcess([], ret) for ret in (0, 100)]
+        )
         config = dedent(
             """
             pipeline:
@@ -521,7 +525,14 @@ class TestRun(RunBaseTestCase):
                     env={},
                     stdout=ANY,
                     stderr=ANY,
-                )
+                ),
+                call(
+                    ["apt", "install", "-y", "git"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
             ],
             execute_run.call_args_list,
         )
@@ -1530,6 +1541,13 @@ class TestRun(RunBaseTestCase):
         self.assertEqual(
             [
                 call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
                     [
                         "apt",
                         "install",
@@ -1584,8 +1602,8 @@ class TestRun(RunBaseTestCase):
         self.assertEqual(
             [
                 call(
-                    ["apt", "install", "-y", "unknown_package"],
-                    cwd=Path("/root/lpcraft/project"),
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,

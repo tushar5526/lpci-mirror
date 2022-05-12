@@ -278,24 +278,24 @@ def _run_job(
                         group="root",
                         user="root",
                     )
-                # update local repository information
-                apt_update = ["apt", "update"]
-                with emit.open_stream(f"Running {apt_update}") as stream:
-                    proc = instance.execute_run(
-                        apt_update,
-                        cwd=remote_cwd,
-                        env=environment,
-                        stdout=stream,
-                        stderr=stream,
-                    )
-                if proc.returncode != 0:
-                    raise CommandError(
-                        f"Job {job_name!r} for "
-                        f"{job.series}/{host_architecture} failed with "
-                        f"exit status {proc.returncode} "
-                        f"while running `{shlex.join(apt_update)}`.",
-                        retcode=proc.returncode,
-                    )
+            # update local repository information
+            apt_update = ["apt", "update"]
+            with emit.open_stream(f"Running {apt_update}") as stream:
+                proc = instance.execute_run(
+                    apt_update,
+                    cwd=remote_cwd,
+                    env=environment,
+                    stdout=stream,
+                    stderr=stream,
+                )
+            if proc.returncode != 0:
+                raise CommandError(
+                    f"Job {job_name!r} for "
+                    f"{job.series}/{host_architecture} failed with "
+                    f"exit status {proc.returncode} "
+                    f"while running `{shlex.join(apt_update)}`.",
+                    retcode=proc.returncode,
+                )
             packages_cmd = ["apt", "install", "-y"] + packages
             emit.progress("Installing system packages")
             with emit.open_stream(f"Running {packages_cmd}") as stream:

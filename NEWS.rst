@@ -5,7 +5,7 @@ Version history
 0.0.13 (unreleased)
 ===================
 
-- Nothing yet.
+- Always update apt cache index before installing a package.
 
 0.0.12 (2022-05-12)
 ===================
