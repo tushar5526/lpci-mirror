@@ -5,7 +5,8 @@ Version history
 0.0.14 (unreleased)
 ===================
 
-- Nothing yet.
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5424-1.
 
 0.0.13 (2022-05-12)
 ===================
