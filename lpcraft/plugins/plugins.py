@@ -35,7 +35,7 @@ class BasePlugin:
     def __init__(self, config: Job) -> None:
         self.config = config
 
-    def get_plugin_config(self):
+    def get_plugin_config(self) -> BaseConfig:
         """Return the properly typecast plugin configuration."""
         raise NotImplementedError
 
