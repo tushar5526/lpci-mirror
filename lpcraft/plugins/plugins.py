@@ -3,9 +3,15 @@
 
 from __future__ import annotations  # isort:skip
 
-__all__ = ["ToxPlugin", "PyProjectBuildPlugin", "MiniCondaPlugin"]
+__all__ = [
+    "ToxPlugin",
+    "PyProjectBuildPlugin",
+    "MiniCondaPlugin",
+    "CondaBuildPlugin",
+]
 
 import textwrap
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, List, Optional, cast
 
 import pydantic
@@ -212,4 +218,175 @@ class MiniCondaPlugin(BasePlugin):
         return (
             "export PATH=$HOME/miniconda3/bin:$PATH; "
             f"source activate $CONDA_ENV; conda env export{run}"
+        )
+
+
+@register(name="conda-build")
+class CondaBuildPlugin(MiniCondaPlugin):
+    """Sets up `miniconda3` and performs a `conda-build` on a package.
+
+    Usage:
+        In `.launchpad.yaml`, create the following structure:
+
+        .. code-block:: yaml
+
+           jobs:
+               myjob:
+                  plugin: conda-build
+                  build-target: info/recipe/parent
+                  conda-channels:
+                    - conda-forge
+                    - defaults
+                  conda-packages:
+                    - mamba
+                    - numpy=1.17
+                    - scipy
+                    - pip
+                  conda-python: 3.8
+                  run: |
+                    conda install ....
+                    pip install --upgrade pytest
+                    python -m build .
+    """
+
+    class Config(MiniCondaPlugin.Config):
+        build_target: Optional[StrictStr]
+        conda_channels: Optional[List[StrictStr]]
+        conda_packages: Optional[List[StrictStr]]
+        conda_python: Optional[StrictStr]
+
+    DEFAULT_CONDA_PACKAGES = ("conda-build",)
+
+    def get_plugin_config(self) -> "CondaBuildPlugin.Config":
+        return cast(CondaBuildPlugin.Config, self.config.plugin_config)
+
+    @staticmethod
+    def _has_recipe(dir_: Path) -> bool:
+        return dir_.joinpath("meta.yaml").is_file()
+
+    @staticmethod
+    def _rename_recipe_template(dir_: Path) -> None:
+        # XXX techalchemy 2022-04-01: conda packages which are already built
+        # and subsequently downloaded from the anaconda repositories retain
+        # the templated recipe, at `meta.yaml.template`, but place the
+        # rendered template at `meta.yaml`. The rendered recipes contain
+        # hardcoded paths for a specific build environment and, for our
+        # purposes, are not reusable. We need to render new ones from the
+        # original templates.
+        template_path = dir_.joinpath("meta.yaml.template")
+        if template_path.is_file():
+            dir_.joinpath("meta.yaml.template").replace(dir_ / "meta.yaml")
+
+    def find_recipe(self) -> Path:
+        def _find_recipe_dir(path: Path) -> Path:
+            for subpath in path.iterdir():
+                if subpath.is_dir():
+                    self._rename_recipe_template(subpath)
+                    if subpath.name == "recipe" and self._has_recipe(subpath):
+                        return subpath
+                    try:
+                        return _find_recipe_dir(subpath)
+                    except FileNotFoundError:
+                        continue
+            raise FileNotFoundError
+
+        return _find_recipe_dir(Path("."))
+
+    def find_build_target(self) -> str:
+        def find_parents(pth: Path) -> Path:
+            for parent in pth.iterdir():
+                if parent.is_dir():
+                    self._rename_recipe_template(parent)
+                    if parent.name == "parent" and self._has_recipe(parent):
+                        return parent
+            raise FileNotFoundError(pth.joinpath("meta.yaml"))
+
+        try:
+            recipe = self.find_recipe()
+        except FileNotFoundError:
+            raise RuntimeError("No build target found")
+        try:
+            # XXX techalchemy 2022-04-01: Some conda packages are built as
+            # part of a parent package build process (e.g. `mkl-include` which
+            # is built by `intel_repack`). If you acquire the child package
+            # and attempt to build it (`mkl-include` in this case) it will
+            # fail; you must build the parent instead if it exists
+            return find_parents(recipe).as_posix()
+        except FileNotFoundError:
+            return recipe.as_posix()
+
+    @property
+    def build_configs(self) -> list[str]:
+        try:
+            recipe = self.find_recipe()
+        except FileNotFoundError:
+            return []
+        configs = sorted(
+            recipe.glob("**/conda_build_config.yaml"), reverse=True
+        )
+        return [_.as_posix() for _ in configs]
+
+    @property
+    def build_target(self) -> str:
+        build_target = self.get_plugin_config().build_target
+        if not build_target:
+            return self.find_build_target()
+        return build_target
+
+    @hookimpl  # type: ignore
+    def lpcraft_set_environment(self) -> dict[str, str]:
+        # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
+        rv: dict[str, str] = super().lpcraft_set_environment()
+        return rv
+
+    @hookimpl  # type: ignore
+    def lpcraft_execute_before_run(self) -> str:
+        # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
+        rv: str = super().lpcraft_execute_before_run()
+        return rv
+
+    @hookimpl  # type: ignore
+    def lpcraft_execute_after_run(self) -> str:
+        # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
+        rv: str = super().lpcraft_execute_after_run()
+        return rv
+
+    @hookimpl  # type: ignore
+    def lpcraft_install_packages(self) -> list[str]:
+        # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
+        base_packages: list[str] = super().lpcraft_install_packages()
+        base_packages.extend(
+            [
+                "automake",
+                "build-essential",
+                "cmake",
+                "gcc",
+                "g++",
+                "libc++-dev",
+                "libc6-dev",
+                "libffi-dev",
+                "libjpeg-dev",
+                "libpng-dev",
+                "libreadline-dev",
+                "libsqlite3-dev",
+                "libtool",
+                "zlib1g-dev",
+            ]
+        )
+        return base_packages
+
+    @hookimpl  # type: ignore
+    def lpcraft_execute_run(self) -> str:
+        conda_channels = " ".join(f"-c {_}" for _ in self.conda_channels)
+        conda_channels = f" {conda_channels}" if conda_channels else ""
+        configs = " ".join(f"-m {_}" for _ in self.build_configs)
+        configs = f" {configs}" if configs else ""
+        build_command = "conda-build --no-anaconda-upload --output-folder dist"
+        run_command = self.config.run or ""
+        return textwrap.dedent(
+            f"""
+            export PATH=$HOME/miniconda3/bin:$PATH
+            source activate $CONDA_ENV
+            {build_command}{conda_channels}{configs} {self.build_target}
+            {run_command}"""
         )
