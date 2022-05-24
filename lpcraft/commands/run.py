@@ -9,12 +9,13 @@ import os
 import shlex
 from argparse import Namespace
 from pathlib import Path, PurePath
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from craft_cli import EmitterMode, emit
-from craft_providers import Executor
+from craft_providers import Executor, lxd
 from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
+from pluggy import PluginManager
 
 from lpcraft import env
 from lpcraft.config import Config, Job, Output
@@ -193,6 +194,108 @@ def _copy_output_properties(
         json.dump(properties, f)
 
 
+def _resolve_runtime_value(
+    pm: PluginManager, job: Job, hook_name: str, job_property: str
+) -> Optional[str]:
+    command_from_config = getattr(job, job_property)
+    if command_from_config is not None:
+        return command_from_config
+    rv = getattr(pm.hook, hook_name)()
+    return next(iter(rv), None)
+
+
+def _install_apt_packages(
+    job_name: str,
+    job: Job,
+    packages: List[str],
+    instance: lxd.LXDInstance,
+    host_architecture: str,
+    remote_cwd: Path,
+    apt_replacement_repositories: Optional[List[str]],
+    environment: Optional[Dict[str, Optional[str]]],
+) -> None:
+    if apt_replacement_repositories:
+        # replace sources.list
+        lines = "\n".join(apt_replacement_repositories) + "\n"
+        with emit.open_stream("Replacing /etc/apt/sources.list") as stream:
+            instance.push_file_io(
+                destination=PurePath("/etc/apt/sources.list"),
+                content=io.BytesIO(lines.encode()),
+                file_mode="0644",
+                group="root",
+                user="root",
+            )
+    # update local repository information
+    apt_update = ["apt", "update"]
+    with emit.open_stream(f"Running {apt_update}") as stream:
+        proc = instance.execute_run(
+            apt_update,
+            cwd=remote_cwd,
+            env=environment,
+            stdout=stream,
+            stderr=stream,
+        )
+    if proc.returncode != 0:
+        raise CommandError(
+            f"Job {job_name!r} for "
+            f"{job.series}/{host_architecture} failed with "
+            f"exit status {proc.returncode} "
+            f"while running `{shlex.join(apt_update)}`.",
+            retcode=proc.returncode,
+        )
+    packages_cmd = ["apt", "install", "-y"] + packages
+    emit.progress("Installing system packages")
+    with emit.open_stream(f"Running {packages_cmd}") as stream:
+        proc = instance.execute_run(
+            packages_cmd,
+            cwd=remote_cwd,
+            env=environment,
+            stdout=stream,
+            stderr=stream,
+        )
+    if proc.returncode != 0:
+        raise CommandError(
+            f"Job {job_name!r} for "
+            f"{job.series}/{host_architecture} failed with "
+            f"exit status {proc.returncode} "
+            f"while running `{shlex.join(packages_cmd)}`.",
+            retcode=proc.returncode,
+        )
+
+
+def _run_instance_command(
+    command: str,
+    job_name: str,
+    job: Job,
+    instance: lxd.LXDInstance,
+    host_architecture: str,
+    remote_cwd: Path,
+    environment: Optional[Dict[str, Optional[str]]],
+) -> None:
+    full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", command]
+    emit.progress("Running command for the job...")
+    original_mode = emit.get_mode()
+    if original_mode == EmitterMode.NORMAL:
+        emit.set_mode(EmitterMode.VERBOSE)
+    with emit.open_stream(f"Running {full_run_cmd}") as stream:
+        proc = instance.execute_run(
+            full_run_cmd,
+            cwd=remote_cwd,
+            env=environment,
+            stdout=stream,
+            stderr=stream,
+        )
+    if original_mode == EmitterMode.NORMAL:
+        emit.set_mode(original_mode)
+    if proc.returncode != 0:
+        raise CommandError(
+            f"Job {job_name!r} for "
+            f"{job.series}/{host_architecture} failed with "
+            f"exit status {proc.returncode}.",
+            retcode=proc.returncode,
+        )
+
+
 def _run_job(
     job_name: str,
     job: Job,
@@ -209,14 +312,24 @@ def _run_job(
         return
     pm = get_plugin_manager(job)
     # XXX jugmac00 2021-12-17: extract inferring run_command
-    run_command = None
-
-    run_from_configuration = job.run
-    if run_from_configuration is not None:
-        run_command = run_from_configuration
-    else:
-        rv = pm.hook.lpcraft_execute_run()
-        run_command = rv and rv[0] or None
+    pre_run_command = _resolve_runtime_value(
+        pm,
+        job,
+        hook_name="lpcraft_execute_before_run",
+        job_property="run_before",
+    )
+    run_command = _resolve_runtime_value(
+        pm,
+        job,
+        hook_name="lpcraft_execute_run",
+        job_property="run",
+    )
+    post_run_command = _resolve_runtime_value(
+        pm,
+        job,
+        hook_name="lpcraft_execute_after_run",
+        job_property="run_after",
+    )
 
     if not run_command:
         raise CommandError(
@@ -265,77 +378,27 @@ def _run_job(
             )
         packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
         if packages:
-            if apt_replacement_repositories:
-                # replace sources.list
-                lines = "\n".join(apt_replacement_repositories) + "\n"
-                with emit.open_stream(
-                    "Replacing /etc/apt/sources.list"
-                ) as stream:
-                    instance.push_file_io(
-                        destination=PurePath("/etc/apt/sources.list"),
-                        content=io.BytesIO(lines.encode()),
-                        file_mode="0644",
-                        group="root",
-                        user="root",
-                    )
-            # update local repository information
-            apt_update = ["apt", "update"]
-            with emit.open_stream(f"Running {apt_update}") as stream:
-                proc = instance.execute_run(
-                    apt_update,
-                    cwd=remote_cwd,
-                    env=environment,
-                    stdout=stream,
-                    stderr=stream,
-                )
-            if proc.returncode != 0:
-                raise CommandError(
-                    f"Job {job_name!r} for "
-                    f"{job.series}/{host_architecture} failed with "
-                    f"exit status {proc.returncode} "
-                    f"while running `{shlex.join(apt_update)}`.",
-                    retcode=proc.returncode,
-                )
-            packages_cmd = ["apt", "install", "-y"] + packages
-            emit.progress("Installing system packages")
-            with emit.open_stream(f"Running {packages_cmd}") as stream:
-                proc = instance.execute_run(
-                    packages_cmd,
-                    cwd=remote_cwd,
-                    env=environment,
-                    stdout=stream,
-                    stderr=stream,
-                )
-            if proc.returncode != 0:
-                raise CommandError(
-                    f"Job {job_name!r} for "
-                    f"{job.series}/{host_architecture} failed with "
-                    f"exit status {proc.returncode} "
-                    f"while running `{shlex.join(packages_cmd)}`.",
-                    retcode=proc.returncode,
-                )
-        full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", run_command]
-        emit.progress("Running the job")
-        original_mode = emit.get_mode()
-        if original_mode == EmitterMode.NORMAL:
-            emit.set_mode(EmitterMode.VERBOSE)
-        with emit.open_stream(f"Running {full_run_cmd}") as stream:
-            proc = instance.execute_run(
-                full_run_cmd,
-                cwd=remote_cwd,
-                env=environment,
-                stdout=stream,
-                stderr=stream,
+            _install_apt_packages(
+                job_name=job_name,
+                job=job,
+                packages=packages,
+                instance=instance,
+                host_architecture=host_architecture,
+                remote_cwd=remote_cwd,
+                apt_replacement_repositories=apt_replacement_repositories,
+                environment=environment,
             )
-        if original_mode == EmitterMode.NORMAL:
-            emit.set_mode(original_mode)
-        if proc.returncode != 0:
-            raise CommandError(
-                f"Job {job_name!r} for "
-                f"{job.series}/{host_architecture} failed with "
-                f"exit status {proc.returncode}.",
-                retcode=proc.returncode,
-            )
+        for cmd in (pre_run_command, run_command, post_run_command):
+            if cmd:
+                _run_instance_command(
+                    command=cmd,
+                    job_name=job_name,
+                    job=job,
+                    instance=instance,
+                    host_architecture=host_architecture,
+                    remote_cwd=remote_cwd,
+                    environment=environment,
+                )
 
         if job.output is not None and output is not None:
             target_path = output / job_name / job.series / host_architecture
@@ -401,6 +464,7 @@ def run(args: Namespace) -> int:
                         emit.error(e)
                         stage_failed = True
             if stage_failed:
+                # FIXME: should we still clean here?
                 raise CommandError(
                     f"Some jobs in {stage} failed; stopping.", retcode=1
                 )

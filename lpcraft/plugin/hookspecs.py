@@ -7,6 +7,8 @@ __all__ = [
     "lpcraft_install_packages",
     "lpcraft_install_snaps",
     "lpcraft_execute_run",
+    "lpcraft_execute_before_run",
+    "lpcraft_execute_after_run",
     "lpcraft_set_environment",
 ]
 
@@ -41,3 +43,13 @@ def lpcraft_set_environment() -> dict[str, str | None]:
     # Please note: when there is the same environment variable provided by
     # the plugin and the configuration file, the one in the configuration
     # file will be taken into account
+
+
+@hookspec  # type: ignore
+def lpcraft_execute_before_run() -> str:
+    """Command to execute prior to the main execution body."""
+
+
+@hookspec  # type: ignore
+def lpcraft_execute_after_run() -> str:
+    """Command to execute after the main execution body."""

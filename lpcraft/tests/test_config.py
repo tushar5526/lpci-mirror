@@ -59,8 +59,10 @@ class TestConfig(TestCase):
                     test:
                         series: focal
                         architectures: [amd64, arm64]
+                        run-before: pip install --upgrade setuptools build
                         run: |
                             tox
+                        run-after: coverage report
                 """
             )
         )
@@ -76,7 +78,9 @@ class TestConfig(TestCase):
                                 MatchesStructure.byEquality(
                                     series="focal",
                                     architectures=["amd64", "arm64"],
+                                    run_before="pip install --upgrade setuptools build",  # noqa:E501
                                     run="tox\n",
+                                    run_after="coverage report",
                                 )
                             ]
                         )
