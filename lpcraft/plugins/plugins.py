@@ -1,26 +1,53 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-from __future__ import annotations
+from __future__ import annotations  # isort:skip
 
 __all__ = ["ToxPlugin", "PyProjectBuildPlugin"]
 
-from lpcraft.config import Job
+from typing import TYPE_CHECKING
+
+import pydantic
+
 from lpcraft.plugin import hookimpl
 from lpcraft.plugins import register
 
+# XXX: techalchemy 2022-03-25: prevent circular import of Job class
+if TYPE_CHECKING:
+
+    from lpcraft.config import Job  # pragma: no cover
+
+
+class BaseConfig(
+    pydantic.BaseModel,
+    extra=pydantic.Extra.forbid,
+    frozen=True,
+    alias_generator=lambda s: s.replace("_", "-"),
+    underscore_attrs_are_private=True,
+):
+    """Base config for plugin models."""
+
+
+class BasePlugin:
+    class Config(BaseConfig):
+        pass
+
+    def __init__(self, config: Job) -> None:
+        self.config = config
+
+    def get_plugin_config(self):
+        """Return the properly typecast plugin configuration."""
+        raise NotImplementedError
+
 
 @register(name="tox")
-class ToxPlugin:
+class ToxPlugin(BasePlugin):
     """Installs `tox` and executes the configured environments.
 
     Usage:
         In `.launchpad.yaml` create a key/value pair with `plugin` and `tox`
         within the job definition.
     """
-
-    def __init__(self, config: Job) -> None:
-        self.config = config
 
     @hookimpl  # type: ignore
     def lpcraft_install_packages(self) -> list[str]:
@@ -41,16 +68,13 @@ class ToxPlugin:
 
 
 @register(name="pyproject-build")
-class PyProjectBuildPlugin:
+class PyProjectBuildPlugin(BasePlugin):
     """Installs `build` and builds a Python package according to PEP 517.
 
     Usage:
         In `.launchpad.yaml` create a key/value pair with `plugin` and
         `pyproject-build` within the job definition.
     """
-
-    def __init__(self, config: Job) -> None:
-        self.config = config
 
     @hookimpl  # type: ignore
     def lpcraft_install_packages(self) -> list[str]:

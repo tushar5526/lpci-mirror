@@ -5,12 +5,14 @@ import re
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import pydantic
 from pydantic import StrictStr
 
 from lpcraft.errors import ConfigurationError
+from lpcraft.plugins import PLUGINS
+from lpcraft.plugins.plugins import BaseConfig, BasePlugin
 from lpcraft.utils import load_yaml
 
 
@@ -58,6 +60,21 @@ class Output(ModelConfigDefaults):
         return v
 
 
+def _validate_plugin_config(
+    plugin: Type[BasePlugin],
+    values: Dict[StrictStr, Any],
+    job_fields: List[str],
+) -> Dict[StrictStr, Any]:
+    plugin_config = {}
+    for k in plugin.Config.schema()["properties"].keys():
+        if k in values and k not in job_fields:
+            # TODO: should some error be raised if a plugin tries consuming
+            # a job configuration key?
+            plugin_config[k] = values.pop(k)
+    values["plugin-config"] = plugin.Config.parse_obj(plugin_config)
+    return values
+
+
 class Job(ModelConfigDefaults):
     """A job definition."""
 
@@ -75,6 +92,7 @@ class Job(ModelConfigDefaults):
     snaps: Optional[List[StrictStr]]
     packages: Optional[List[StrictStr]]
     plugin: Optional[StrictStr]
+    plugin_config: Optional[BaseConfig]
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(
@@ -83,6 +101,22 @@ class Job(ModelConfigDefaults):
         if isinstance(v, str):
             v = [v]
         return v
+
+    @pydantic.root_validator(pre=True)
+    def move_plugin_config_settings(
+        cls, values: Dict[StrictStr, Any]
+    ) -> Dict[StrictStr, Any]:
+        if "plugin" in values:
+            base_values = values.copy()
+            if values["plugin"] not in PLUGINS:
+                raise ConfigurationError("Unknown plugin")
+            plugin = PLUGINS[values["plugin"]]
+            return _validate_plugin_config(
+                plugin,
+                base_values,
+                list(cls.__fields__.keys()),
+            )
+        return values
 
 
 def _expand_job_values(
