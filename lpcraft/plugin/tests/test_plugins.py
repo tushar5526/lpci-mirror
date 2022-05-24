@@ -324,3 +324,162 @@ class TestPlugins(CommandBaseTestCase):
         plugin_config = fake_plugin[0].get_plugin_config()
         self.assertEqual(plugin_config.python_version, "3.8")
         self.assertIsNone(getattr(plugin_config, "series", None))
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_miniconda_plugin(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: miniconda
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        pre_run_command = dedent(
+            """
+        if [ ! -d "$HOME/miniconda3" ]; then
+            wget -O /tmp/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            chmod +x /tmp/miniconda.sh
+            /tmp/miniconda.sh -b
+        fi
+        export PATH=$HOME/miniconda3/bin:$PATH
+        conda remove --all -q -y -n $CONDA_ENV
+        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults PYTHON=3.8 mamba pip
+        source activate $CONDA_ENV
+        """  # noqa:E501
+        )
+
+        run_command = dedent(
+            """
+            export PATH=$HOME/miniconda3/bin:$PATH
+            source activate $CONDA_ENV
+            pip install --upgrade pytest
+        """
+        )
+        post_run_command = (
+            "export PATH=$HOME/miniconda3/bin:$PATH; "
+            "source activate $CONDA_ENV; conda env export"
+        )
+
+        self.run_command("run")
+
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "apt",
+                        "install",
+                        "-y",
+                        "git",
+                        "python3-dev",
+                        "python3-pip",
+                        "python3-venv",
+                        "wget",
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        pre_run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        post_run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    def test_miniconda_plugin_works_without_plugin_settings(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: miniconda
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "miniconda")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "MiniCondaPlugin"
+        ]
+        self.assertEqual(
+            [
+                "defaults",
+            ],
+            plugin_match[0].conda_channels,
+        )
+        self.assertEqual(["PYTHON=3.8", "pip"], plugin_match[0].conda_packages)
