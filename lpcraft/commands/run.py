@@ -21,6 +21,7 @@ from lpcraft import env
 from lpcraft.config import Config, Job, Output
 from lpcraft.errors import CommandError
 from lpcraft.plugin.manager import get_plugin_manager
+from lpcraft.plugins import PLUGINS
 from lpcraft.providers import Provider, get_provider
 from lpcraft.utils import get_host_architecture
 
@@ -197,11 +198,18 @@ def _copy_output_properties(
 def _resolve_runtime_value(
     pm: PluginManager, job: Job, hook_name: str, job_property: str
 ) -> Optional[str]:
-    command_from_config: Optional[str] = getattr(job, job_property, None)
-    if command_from_config is not None:
-        return command_from_config
-    rv: List[str] = getattr(pm.hook, hook_name)()
-    return next(iter(rv), None)
+    command_value: Optional[str] = None
+    command_from_config = getattr(job, job_property)
+    plugin: Optional[str] = getattr(job, "plugin", None)
+    interpolated_run_command = False
+    if plugin is not None and plugin in PLUGINS:
+        interpolated_run_command = PLUGINS[plugin].INTERPOLATES_RUN_COMMAND
+    if command_from_config is not None and not interpolated_run_command:
+        command_value = command_from_config
+    else:
+        rv = getattr(pm.hook, hook_name)()
+        command_value = next(iter(rv), None)
+    return command_value
 
 
 def _install_apt_packages(

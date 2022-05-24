@@ -29,6 +29,9 @@ class BaseConfig(
 
 
 class BasePlugin:
+
+    INTERPOLATES_RUN_COMMAND: bool = False
+
     class Config(BaseConfig):
         pass
 

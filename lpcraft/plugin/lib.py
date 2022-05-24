@@ -15,6 +15,9 @@ from lpcraft.plugin import hookimpl
 
 
 class InternalPlugins:
+
+    INTERPOLATES_RUN_COMMAND: bool = False
+
     def __init__(self, config: Job) -> None:
         self.config = config
 
