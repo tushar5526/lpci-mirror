@@ -197,10 +197,10 @@ def _copy_output_properties(
 def _resolve_runtime_value(
     pm: PluginManager, job: Job, hook_name: str, job_property: str
 ) -> Optional[str]:
-    command_from_config = getattr(job, job_property)
+    command_from_config: Optional[str] = getattr(job, job_property, None)
     if command_from_config is not None:
         return command_from_config
-    rv = getattr(pm.hook, hook_name)()
+    rv: List[str] = getattr(pm.hook, hook_name)()
     return next(iter(rv), None)
 
 
