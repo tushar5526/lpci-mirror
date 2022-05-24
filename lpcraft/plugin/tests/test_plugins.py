@@ -11,7 +11,9 @@ from craft_providers.lxd import launch
 from fixtures import TempDir
 
 from lpcraft.commands.tests import CommandBaseTestCase
+from lpcraft.config import Config
 from lpcraft.errors import ConfigurationError
+from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.providers.tests import makeLXDProvider
 
 
@@ -244,4 +246,32 @@ class TestPlugins(CommandBaseTestCase):
                 ),
             ],
             execute_run.call_args_list,
+        )
+
+    def test_plugin_config_raises_notimplementederror(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: pyproject-build
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "pyproject-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _
+            for _ in plugins
+            if _.__class__.__name__ == "PyProjectBuildPlugin"
+        ]
+        self.assertRaises(
+            NotImplementedError, plugin_match[0].get_plugin_config
         )
