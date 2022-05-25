@@ -469,7 +469,7 @@ class TestPlugins(CommandBaseTestCase):
         )
         config_path = Path(".launchpad.yaml")
         config_path.write_text(config)
-        config_obj = Config.load(config_path)
+        config_obj = lpcraft.config.Config.load(config_path)
         self.assertEqual(config_obj.jobs["build"][0].plugin, "miniconda")
         pm = get_plugin_manager(config_obj.jobs["build"][0])
         plugins = pm.get_plugins()
