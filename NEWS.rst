@@ -5,7 +5,10 @@ Version history
 0.0.15 (unreleased)
 ===================
 
-- Nothing yet.
+- Allow ``run-before`` and ``run-after`` in ``.launchpad.yaml`` config.
+
+- Add ``lpcraft_execute_before_run`` and ``lpcraft_execute_after_run`` hooks.
+
 
 0.0.14 (2022-05-18)
 ===================

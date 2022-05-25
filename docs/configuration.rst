@@ -60,9 +60,17 @@ Job definitions
 ``plugin`` (optional)
     A plugin which will be used for this job. See :doc:`../plugins`
 
+``run-before`` (optional)
+    A string (possibly multi-line) containing shell commands to run for this
+    job prior to the main ``run`` section.
+
 ``run`` (optional)
     A string (possibly multi-line) containing shell commands to run for this
     job.
+
+``run-after`` (optional)
+    A string (possibly multi-line) containing shell commands to run for this
+    job after the main ``run`` section.
 
 ``output`` (optional)
     See the :ref:`output-properties` section below.

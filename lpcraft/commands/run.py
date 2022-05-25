@@ -311,7 +311,6 @@ def _run_job(
     if host_architecture not in job.architectures:
         return
     pm = get_plugin_manager(job)
-    # XXX jugmac00 2021-12-17: extract inferring run_command
     pre_run_command = _resolve_runtime_value(
         pm,
         job,
