@@ -5,15 +5,19 @@ import os
 import subprocess
 from pathlib import Path, PosixPath
 from textwrap import dedent
+from typing import List, Optional, Union, cast
 from unittest.mock import ANY, Mock, call, patch
 
 from craft_providers.lxd import launch
 from fixtures import TempDir
+from pydantic import StrictStr, validator
 
+import lpcraft.config
 from lpcraft.commands.tests import CommandBaseTestCase
-from lpcraft.config import Config
 from lpcraft.errors import ConfigurationError
 from lpcraft.plugin.manager import get_plugin_manager
+from lpcraft.plugins import register
+from lpcraft.plugins.plugins import BaseConfig, BasePlugin
 from lpcraft.providers.tests import makeLXDProvider
 
 
@@ -263,7 +267,7 @@ class TestPlugins(CommandBaseTestCase):
         )
         config_path = Path(".launchpad.yaml")
         config_path.write_text(config)
-        config_obj = Config.load(config_path)
+        config_obj = lpcraft.config.Config.load(config_path)
         self.assertEqual(config_obj.jobs["build"][0].plugin, "pyproject-build")
         pm = get_plugin_manager(config_obj.jobs["build"][0])
         plugins = pm.get_plugins()
@@ -275,3 +279,47 @@ class TestPlugins(CommandBaseTestCase):
         self.assertRaises(
             NotImplementedError, plugin_match[0].get_plugin_config
         )
+
+    def test_plugin_config_sets_values(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: fake-plugin
+                    python-version: 3.8
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+
+        @register(name="fake-plugin")
+        class FakePlugin(BasePlugin):
+            class Config(BaseConfig):
+                series: Optional[List[StrictStr]]
+                python_version: Optional[StrictStr]
+
+                @validator("python_version", pre=True)
+                def validate_python_version(
+                    cls, v: Union[str, float, int]
+                ) -> str:
+                    return str(v)
+
+            def get_plugin_config(self) -> "FakePlugin.Config":
+                return cast(FakePlugin.Config, self.config.plugin_config)
+
+        config_obj = lpcraft.config.Config.load(config_path)
+        job = config_obj.jobs["build"][0]
+        pm = get_plugin_manager(job)
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "FakePlugin"
+        ]
+        self.assertEqual(job.plugin, "fake-plugin")
+        plugin_config = plugin_match[0].get_plugin_config()
+        self.assertEqual(plugin_config.python_version, "3.8")
+        self.assertIsNone(getattr(plugin_config, "series", None))
