@@ -483,3 +483,385 @@ class TestPlugins(CommandBaseTestCase):
             plugin_match[0].conda_channels,
         )
         self.assertEqual(["PYTHON=3.8", "pip"], plugin_match[0].conda_packages)
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_conda_build_plugin(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    build-target: info/recipe/parent
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("info/recipe/parent").mkdir(parents=True)
+        Path("info/recipe/meta.yaml").touch()
+        Path("info/recipe/parent/meta.yaml").touch()
+        pre_run_command = dedent(
+            """
+        if [ ! -d "$HOME/miniconda3" ]; then
+            wget -O /tmp/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            chmod +x /tmp/miniconda.sh
+            /tmp/miniconda.sh -b
+        fi
+        export PATH=$HOME/miniconda3/bin:$PATH
+        conda remove --all -q -y -n $CONDA_ENV
+        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults PYTHON=3.8 conda-build mamba pip
+        source activate $CONDA_ENV
+        """  # noqa:E501
+        )
+        run_command = dedent(
+            """
+            export PATH=$HOME/miniconda3/bin:$PATH
+            source activate $CONDA_ENV
+            conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults info/recipe/parent
+            pip install --upgrade pytest
+        """  # noqa: E501
+        )
+        post_run_command = (
+            "export PATH=$HOME/miniconda3/bin:$PATH; "
+            "source activate $CONDA_ENV; conda env export"
+        )
+
+        self.run_command("run")
+
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "apt",
+                        "install",
+                        "-y",
+                        "git",
+                        "python3-dev",
+                        "python3-pip",
+                        "python3-venv",
+                        "wget",
+                        "automake",
+                        "build-essential",
+                        "cmake",
+                        "gcc",
+                        "g++",
+                        "libc++-dev",
+                        "libc6-dev",
+                        "libffi-dev",
+                        "libjpeg-dev",
+                        "libpng-dev",
+                        "libreadline-dev",
+                        "libsqlite3-dev",
+                        "libtool",
+                        "zlib1g-dev",
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        pre_run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        post_run_command,
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={"CONDA_ENV": "lpci"},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    def test_conda_build_plugin_finds_recipe(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        Path("include/fake_subdir").mkdir(parents=True)
+        meta_yaml = Path("info/recipe/meta.yaml")
+        meta_yaml.parent.mkdir(parents=True)
+        meta_yaml.touch()
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual("info/recipe", plugin_match[0].build_target)
+
+    def test_conda_build_plugin_finds_recipe_with_fake_parent(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        meta_yaml = Path("info/recipe/meta.yaml")
+        meta_yaml.parent.mkdir(parents=True)
+        parent_path = meta_yaml.parent.joinpath("parent")
+        parent_path.mkdir()
+        parent_path.joinpath("some_file.yaml").touch()
+        meta_yaml.touch()
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual("info/recipe", plugin_match[0].build_target)
+
+    def test_conda_build_plugin_finds_parent_recipe(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        Path("include/fake_subdir").mkdir(parents=True)
+        meta_yaml = Path("info/recipe/meta.yaml")
+        parent_meta_yaml = meta_yaml.parent.joinpath("parent/meta.yaml")
+        parent_meta_yaml.parent.mkdir(parents=True)
+        meta_yaml.touch()
+        parent_meta_yaml.touch()
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual("info/recipe/parent", plugin_match[0].build_target)
+
+    def test_conda_build_plugin_uses_child_vars_with_parent_recipe(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        run_command = dedent(
+            """
+            export PATH=$HOME/miniconda3/bin:$PATH
+            source activate $CONDA_ENV
+            conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults -m info/recipe/parent/conda_build_config.yaml -m info/recipe/conda_build_config.yaml info/recipe/parent
+            pip install --upgrade pytest
+        """  # noqa: E501
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        Path("include/fake_subdir").mkdir(parents=True)
+        meta_yaml = Path("info/recipe/meta.yaml")
+        variant_config = meta_yaml.with_name("conda_build_config.yaml")
+        parent_meta_yaml = meta_yaml.parent.joinpath("parent/meta.yaml")
+        parent_variant_config = parent_meta_yaml.with_name(
+            "conda_build_config.yaml"
+        )
+        parent_meta_yaml.parent.mkdir(parents=True)
+        meta_yaml.touch()
+        variant_config.touch()
+        parent_variant_config.touch()
+        parent_meta_yaml.touch()
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual(
+            [parent_variant_config.as_posix(), variant_config.as_posix()],
+            plugin_match[0].build_configs,
+        )
+        self.assertEqual(run_command, plugin_match[0].lpcraft_execute_run())
+
+    def test_conda_build_plugin_renames_recipe_templates(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        meta_yaml = Path("info/recipe/meta.yaml")
+        template_meta_yaml = meta_yaml.with_name("meta.yaml.template")
+        meta_yaml.parent.mkdir(parents=True)
+        meta_yaml.touch()
+        template_meta_yaml.touch()
+        config_obj = Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual("info/recipe", plugin_match[0].build_target)
+        self.assertFalse(template_meta_yaml.is_file())
+
+    def test_conda_build_plugin_raises_error_if_no_recipe(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        config_obj = Config.load(config_path)
+        self.assertRaisesRegex(
+            RuntimeError,
+            r"No build target found",
+            get_plugin_manager,
+            config_obj.jobs["build"][0],
+        )
