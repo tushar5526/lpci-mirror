@@ -9,6 +9,7 @@ Version history
 
 - Add ``lpcraft_execute_before_run`` and ``lpcraft_execute_after_run`` hooks.
 
+- Add support for pydantic configuration on plugin classes.
 
 0.0.14 (2022-05-18)
 ===================

@@ -82,6 +82,10 @@ Job definitions
     removing the ``matrix`` key itself, and updating it with the contents of
     each item in turn.
 
+.. note::
+
+    Plugins can define :ref:`plugin_configuration_keys`.
+
 .. _output-properties:
 
 Output properties

@@ -47,6 +47,42 @@ Available hooks
 .. automodule:: lpcraft.plugin.hookspecs
    :members:
 
+.. _plugin_configuration_keys:
+
+Additional configuration keys
+*****************************
+
+Plugins can have their own configuration keys.
+
+.. code-block:: python
+
+    @register(name="miniconda")
+    class MiniCondaPlugin(BasePlugin):
+        class Config(BaseConfig):
+            conda_packages: Optional[List[StrictStr]]
+            conda_python: Optional[StrictStr]
+
+The above code defines the ``MiniCondaPlugin`` with two additional configuration
+keys.
+
+These keys could be used in the ``.launchpad.yaml`` configuration file as
+following:
+
+.. code-block:: yaml
+
+    jobs:
+        myjob:
+            plugin: miniconda
+            conda-packages:
+                - mamba
+                - numpy=1.17
+                - scipy
+                - pip
+            conda-python: 3.8
+            run: |
+                pip install --upgrade pytest
+                python -m build .
+
 
 Builtin plugins
 ---------------

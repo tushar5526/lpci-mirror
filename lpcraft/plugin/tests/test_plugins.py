@@ -271,13 +271,14 @@ class TestPlugins(CommandBaseTestCase):
         self.assertEqual(config_obj.jobs["build"][0].plugin, "pyproject-build")
         pm = get_plugin_manager(config_obj.jobs["build"][0])
         plugins = pm.get_plugins()
-        plugin_match = [
+        build_plugin = [
             _
             for _ in plugins
             if _.__class__.__name__ == "PyProjectBuildPlugin"
         ]
+        # build_plugin does not define its own configuration
         self.assertRaises(
-            NotImplementedError, plugin_match[0].get_plugin_config
+            NotImplementedError, build_plugin[0].get_plugin_config
         )
 
     def test_plugin_config_sets_values(self):
@@ -316,10 +317,10 @@ class TestPlugins(CommandBaseTestCase):
         job = config_obj.jobs["build"][0]
         pm = get_plugin_manager(job)
         plugins = pm.get_plugins()
-        plugin_match = [
+        fake_plugin = [
             _ for _ in plugins if _.__class__.__name__ == "FakePlugin"
         ]
         self.assertEqual(job.plugin, "fake-plugin")
-        plugin_config = plugin_match[0].get_plugin_config()
+        plugin_config = fake_plugin[0].get_plugin_config()
         self.assertEqual(plugin_config.python_version, "3.8")
         self.assertIsNone(getattr(plugin_config, "series", None))

@@ -67,6 +67,7 @@ def _validate_plugin_config(
 ) -> Dict[StrictStr, Any]:
     plugin_config = {}
     for k in plugin.Config.schema()["properties"].keys():
+        # configuration key belongs to the plugin
         if k in values and k not in job_fields:
             # TODO: should some error be raised if a plugin tries consuming
             # a job configuration key?
@@ -106,15 +107,16 @@ class Job(ModelConfigDefaults):
     def move_plugin_config_settings(
         cls, values: Dict[StrictStr, Any]
     ) -> Dict[StrictStr, Any]:
+        """Delegate plugin settings to the plugin."""
         if "plugin" in values:
             base_values = values.copy()
             if values["plugin"] not in PLUGINS:
                 raise ConfigurationError("Unknown plugin")
             plugin = PLUGINS[values["plugin"]]
             return _validate_plugin_config(
-                plugin,
-                base_values,
-                list(cls.__fields__.keys()),
+                plugin=plugin,
+                values=base_values,
+                job_fields=list(cls.__fields__.keys()),
             )
         return values
 
