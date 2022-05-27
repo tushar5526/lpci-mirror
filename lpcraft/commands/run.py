@@ -463,7 +463,6 @@ def run(args: Namespace) -> int:
                         emit.error(e)
                         stage_failed = True
             if stage_failed:
-                # FIXME: should we still clean here?
                 raise CommandError(
                     f"Some jobs in {stage} failed; stopping.", retcode=1
                 )
