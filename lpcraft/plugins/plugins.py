@@ -165,6 +165,7 @@ class MiniCondaPlugin(BasePlugin):
 
     @hookimpl  # type: ignore
     def lpcraft_set_environment(self) -> dict[str, str]:
+        # `CONDA_ENV` sets the name of the Conda virtual environment
         return {"CONDA_ENV": "lpci"}
 
     @hookimpl  # type: ignore

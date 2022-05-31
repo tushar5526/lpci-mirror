@@ -13,6 +13,8 @@ Version history
 
 - Allow interpolation of the  ``run`` commands.
 
+- Add Miniconda plugin.
+
 0.0.14 (2022-05-18)
 ===================
 
