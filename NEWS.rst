@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.15 (unreleased)
+0.0.15 (2022-06-01)
 ===================
 
 - Allow ``run-before`` and ``run-after`` in ``.launchpad.yaml`` config.
