@@ -275,7 +275,7 @@ class CondaBuildPlugin(MiniCondaPlugin):
         # original templates.
         template_path = dir_.joinpath("meta.yaml.template")
         if template_path.is_file():
-            dir_.joinpath("meta.yaml.template").replace(dir_ / "meta.yaml")
+            template_path.replace(dir_ / "meta.yaml")
 
     def find_recipe(self) -> Path:
         def _find_recipe_dir(path: Path) -> Path:

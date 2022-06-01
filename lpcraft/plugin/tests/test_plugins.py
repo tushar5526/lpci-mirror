@@ -861,7 +861,44 @@ class TestPlugins(CommandBaseTestCase):
         config_obj = lpcraft.config.Config.load(config_path)
         self.assertRaisesRegex(
             RuntimeError,
-            r"No build target found",
+            "No build target found",
+            get_plugin_manager,
+            config_obj.jobs["build"][0],
+        )
+
+    def test_conda_build_plugin_raises_error_if_no_recipe_in_recipe_folder(
+        self,
+    ):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        Path("include/fake_subdir").mkdir(parents=True)
+        # there is a recipe folder, but no meta.yaml file
+        meta_yaml = Path("info/recipe/")
+        meta_yaml.mkdir(parents=True)
+        config_obj = lpcraft.config.Config.load(config_path)
+        self.assertRaisesRegex(
+            RuntimeError,
+            "No build target found",
             get_plugin_manager,
             config_obj.jobs["build"][0],
         )
