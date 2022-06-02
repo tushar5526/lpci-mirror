@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.16 (unreleased)
+===================
+
+- Rewrite the release documentation.
+
 0.0.15 (2022-06-01)
 ===================
 
