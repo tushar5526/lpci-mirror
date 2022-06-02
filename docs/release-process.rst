@@ -1,37 +1,51 @@
 Release process
 ===============
 
-The lpcraft snap is automatically built for all supported architectures and
-released to the ``edge`` channel in the snap store using a `Launchpad recipe
-<https://launchpad.net/~launchpad/lpcraft/+snap/lpcraft>`_.  Builds run
-shortly after pushes to the ``main`` Git branch; members of the Launchpad
-team can use the "Request builds" button on that recipe if they need updated
-builds urgently.
+Prerequisites
+*************
+- In order to promote a Snap release from ``edge`` to ``stable``,
+  you need publishing access, which you can get from Colin Watson.
 
-Most users, as well as default CI builds in Launchpad, should use the
-``stable`` channel rather than the auto-built ``edge`` channel.  People with
-publishing access to the snap in the store can promote revisions to
-``stable`` (ask Colin Watson for access if you need it).  The easiest way to
-do this across all architectures is to use the store's `Releases page
-<https://snapcraft.io/lpcraft/releases>`_: click on the cog icon next to
-"latest/edge", select "Promote/close" and then "Promote to: latest/stable".
-Finally, hit the "Save" button in the top right corner to apply the changes.
+How to create a new release
+***************************
 
-Version numbers in snaps are for human consumption (the revision is assigned
-by the store and is what matters to ``snapd``), and there's nothing to stop
-multiple revisions of a snap having the same version number, though of
-course it's less confusing if substantially different revisions have
-substantially different version numbers as well.  Use `semver
-<https://semver.org/>`_, and update ``NEWS.rst`` when making significant
-user-visible changes.  Make sure there's a git tag for the old version
-number before you bump to a new version number.
+- create an MP with a release commit, with updated version number in
+  ``setup.cfg`` and updated version number and release date in ``NEWS.rst``,
+  following the `semver <https://semver.org/>`_ recommendations
 
-We don't yet have a defined QA process for making new releases to
-``stable``, although it's a good idea to smoke-test that the snap isn't
-obviously broken.  Use ``snap refresh --edge lpcraft`` to ensure that you're
-running the latest revision from the ``edge`` channel in the store, and then
-do whatever testing you need to do; for example, you might run lpcraft's own
-tests using ``lpcraft -v``.
+- once the MP has been merged to the ``main`` branch,
+  a `Launchpad recipe <https://launchpad.net/~launchpad/lpcraft/+snap/lpcraft>`_
+  automatically builds and publishes Snap packages to the ``edge`` channel
 
-We don't yet use channels other than ``stable`` and ``edge``, though there's
-no particular reason not to do so if they become useful.
+- once the Snaps have been published,
+  update your local Snap installation
+
+      .. code:: bash
+
+        snap refresh --edge lpcraft
+
+- in order to make sure nothing is broken, run
+
+      .. code:: bash
+
+         lpcraft -v
+
+- go to the `Releases page <https://snapcraft.io/lpcraft/releases>`_
+  of the Snap store to promote the release from ``edge`` to ``stable``
+
+    - click on the cog icon next to ``latest/edge``
+    - select ``Promote/close``
+    - click on ``Promote to: latest/stable``
+    - finally, hit the ``Save`` button in the top right corner to apply the changes
+
+Some additional information
+***************************
+
+- members of the Launchpad team can use the ``Request builds`` button
+  on that recipe if they need updated builds urgently
+
+- lpcraft currently only makes use of ``stable`` and ``edge``,
+  though this may change in future if necessary
+
+- most users, as well as default CI builds in Launchpad,
+  should use the stable channel rather than the auto-built ``edge`` channel
