@@ -7,11 +7,11 @@ import itertools
 import json
 import os
 import shlex
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path, PurePath
 from typing import Dict, List, Optional, Set
 
-from craft_cli import EmitterMode, emit
+from craft_cli import BaseCommand, EmitterMode, emit
 from craft_providers import Executor, lxd
 from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
@@ -440,109 +440,199 @@ def _get_job_instance_name(provider: Provider, job: Job) -> str:
     )
 
 
-def run(args: Namespace) -> int:
+class RunCommand(BaseCommand):
     """Run a pipeline, launching managed environments as needed."""
-    # XXX jugmac00 2022-02-04: this fallback may become obsolete once we
-    # use craft-cli's command dispatcher
-    config_path = getattr(args, "config", Path(".launchpad.yaml"))
-    config = Config.load(config_path)
 
-    provider = get_provider()
-    provider.ensure_provider_is_available()
-    launched_instances = []
+    name = "run"
+    help_msg = __doc__.splitlines()[0]
+    overview = __doc__
+    common = True
 
-    try:
-        for stage in config.pipeline:
-            stage_failed = False
-            for job_name in stage:
-                try:
-                    jobs = config.jobs.get(job_name, [])
-                    if not jobs:
-                        raise CommandError(
-                            f"No job definition for {job_name!r}"
-                        )
-                    for job in jobs:
-                        launched_instances.append(
-                            _get_job_instance_name(provider, job)
-                        )
-                        _run_job(
-                            job_name,
-                            job,
-                            provider,
-                            getattr(args, "output_directory", None),
-                            apt_replacement_repositories=getattr(
-                                args, "apt_replace_repositories", None
-                            ),
-                            env_from_cli=getattr(args, "set_env", None),
-                            plugin_settings=getattr(
-                                args, "plugin_setting", None
-                            ),
-                        )
-                except CommandError as e:
-                    if len(stage) == 1:
-                        # Single-job stage, so just reraise this
-                        # in order to get simpler error messages.
-                        raise
-                    else:
-                        emit.error(e)
-                        stage_failed = True
-            if stage_failed:
-                raise CommandError(
-                    f"Some jobs in {stage} failed; stopping.", retcode=1
+    def fill_parser(self, parser: ArgumentParser) -> None:
+        """Add arguments specific to this command."""
+        parser.add_argument(
+            "--output-directory",
+            type=Path,
+            help="Write output files to this directory.",
+        )
+        parser.add_argument(
+            "-c",
+            "--config",
+            type=Path,
+            default=".launchpad.yaml",
+            help="Read the configuration file from this path.",
+        )
+        parser.add_argument(
+            "--clean",
+            action="store_true",
+            default=False,
+            help=(
+                "Clean the managed environments created "
+                "for the pipeline after the running it."
+            ),
+        )
+        parser.add_argument(
+            "--apt-replace-repositories",
+            action="append",
+            help="Overwrite /etc/apt/sources.list.",
+        )
+        parser.add_argument(
+            "--set-env",
+            action="append",
+            help="Set an environment variable.",
+        )
+        parser.add_argument(
+            "--plugin-setting",
+            action="append",
+            help="Add additional plugin setting.",
+        )
+
+    def run(self, args: Namespace) -> int:
+        """Run the command."""
+        config = Config.load(args.config)
+
+        provider = get_provider()
+        provider.ensure_provider_is_available()
+        launched_instances = []
+
+        try:
+            for stage in config.pipeline:
+                stage_failed = False
+                for job_name in stage:
+                    try:
+                        jobs = config.jobs.get(job_name, [])
+                        if not jobs:
+                            raise CommandError(
+                                f"No job definition for {job_name!r}"
+                            )
+                        for job in jobs:
+                            launched_instances.append(
+                                _get_job_instance_name(provider, job)
+                            )
+                            _run_job(
+                                job_name,
+                                job,
+                                provider,
+                                args.output_directory,
+                                apt_replacement_repositories=(
+                                    args.apt_replace_repositories
+                                ),
+                                env_from_cli=args.set_env,
+                                plugin_settings=args.plugin_setting,
+                            )
+                    except CommandError as e:
+                        if len(stage) == 1:
+                            # Single-job stage, so just reraise this
+                            # in order to get simpler error messages.
+                            raise
+                        else:
+                            emit.error(e)
+                            stage_failed = True
+                if stage_failed:
+                    raise CommandError(
+                        f"Some jobs in {stage} failed; stopping.", retcode=1
+                    )
+        finally:
+            if args.clean:
+                cwd = Path.cwd()
+                provider.clean_project_environments(
+                    project_name=cwd.name,
+                    project_path=cwd,
+                    instances=launched_instances,
                 )
-    finally:
-        should_clean_environment = getattr(args, "clean", False)
-
-        if should_clean_environment:
-            cwd = Path.cwd()
-            provider.clean_project_environments(
-                project_name=cwd.name,
-                project_path=cwd,
-                instances=launched_instances,
-            )
-    return 0
+        return 0
 
 
-def run_one(args: Namespace) -> int:
+class RunOneCommand(BaseCommand):
     """Select and run a single job from a pipeline.
 
     (This command is for use by Launchpad, and is subject to change.)
     """
-    config = Config.load(args.config)
 
-    jobs = config.jobs.get(args.job, [])
-    if not jobs:
-        raise CommandError(f"No job definition for {args.job!r}")
-    if args.index >= len(jobs):
-        raise CommandError(
-            f"No job definition with index {args.index} for {args.job!r}"
+    name = "run-one"
+    help_msg = __doc__.splitlines()[0]
+    overview = __doc__
+    hidden = True
+
+    def fill_parser(self, parser: ArgumentParser) -> None:
+        """Add arguments specific to this command."""
+        parser.add_argument(
+            "--output-directory",
+            type=Path,
+            help="Write output files to this directory.",
         )
-    job = jobs[args.index]
-
-    provider = get_provider()
-    provider.ensure_provider_is_available()
-
-    try:
-        _run_job(
-            args.job,
-            job,
-            provider,
-            getattr(args, "output_directory", None),
-            apt_replacement_repositories=getattr(
-                args, "apt_replace_repositories", None
+        parser.add_argument(
+            "-c",
+            "--config",
+            type=Path,
+            default=".launchpad.yaml",
+            help="Read the configuration file from this path.",
+        )
+        parser.add_argument(
+            "--clean",
+            action="store_true",
+            default=False,
+            help=(
+                "Clean the managed environment created for the job "
+                "after running it."
             ),
-            env_from_cli=getattr(args, "set_env", None),
-            plugin_settings=getattr(args, "plugin_setting", None),
         )
-    finally:
-        should_clean_environment = getattr(args, "clean", False)
+        parser.add_argument("job", help="Run only this job name.")
+        parser.add_argument(
+            "index",
+            type=int,
+            metavar="N",
+            help="Run only the Nth job with the given name (indexing from 0).",
+        )
+        parser.add_argument(
+            "--apt-replace-repositories",
+            action="append",
+            help="Overwrite /etc/apt/sources.list.",
+        )
+        parser.add_argument(
+            "--set-env",
+            action="append",
+            help="Set an environment variable.",
+        )
+        parser.add_argument(
+            "--plugin-setting",
+            action="append",
+            help="Add additional plugin setting.",
+        )
 
-        if should_clean_environment:
-            cwd = Path.cwd()
-            provider.clean_project_environments(
-                project_name=cwd.name,
-                project_path=cwd,
-                instances=[_get_job_instance_name(provider, job)],
+    def run(self, args: Namespace) -> int:
+        """Run the command."""
+        config = Config.load(args.config)
+
+        jobs = config.jobs.get(args.job, [])
+        if not jobs:
+            raise CommandError(f"No job definition for {args.job!r}")
+        if args.index >= len(jobs):
+            raise CommandError(
+                f"No job definition with index {args.index} for {args.job!r}"
             )
+        job = jobs[args.index]
 
-    return 0
+        provider = get_provider()
+        provider.ensure_provider_is_available()
+
+        try:
+            _run_job(
+                args.job,
+                job,
+                provider,
+                args.output_directory,
+                apt_replacement_repositories=args.apt_replace_repositories,
+                env_from_cli=args.set_env,
+                plugin_settings=args.plugin_setting,
+            )
+        finally:
+            if args.clean:
+                cwd = Path.cwd()
+                provider.clean_project_environments(
+                    project_name=cwd.name,
+                    project_path=cwd,
+                    instances=[_get_job_instance_name(provider, job)],
+                )
+
+        return 0

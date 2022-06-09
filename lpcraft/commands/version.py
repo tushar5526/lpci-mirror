@@ -3,12 +3,20 @@
 
 from argparse import Namespace
 
-from craft_cli import emit
+from craft_cli import BaseCommand, emit
 
 from lpcraft._version import version_description as lpcraft_version
 
 
-def version(args: Namespace) -> int:
+class VersionCommand(BaseCommand):
     """Show lpcraft's version number."""
-    emit.message(lpcraft_version)
-    return 0
+
+    name = "version"
+    help_msg = __doc__.splitlines()[0]
+    overview = __doc__
+    common = True
+
+    def run(self, args: Namespace) -> int:
+        """Run the command."""
+        emit.message(lpcraft_version)
+        return 0

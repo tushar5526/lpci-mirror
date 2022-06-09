@@ -1,34 +1,51 @@
 # Copyright 2022 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from craft_cli import emit
+from craft_cli import BaseCommand, emit
 
 from lpcraft.config import Config
 from lpcraft.providers import get_provider
 
 
-def clean(args: Namespace) -> int:
+class CleanCommand(BaseCommand):
     """Clean the managed environments for a project."""
-    # We want to run the "clean" command only when run from
-    # an lpcraft project directory.
-    config_path = getattr(args, "config", Path(".launchpad.yaml"))
-    Config.load(config_path)
 
-    cwd = Path.cwd()
-    emit.progress(
-        f"Deleting the managed environments for the {cwd.name!r} project."
-    )
+    name = "clean"
+    help_msg = __doc__.splitlines()[0]
+    overview = __doc__
+    common = True
 
-    provider = get_provider()
-    provider.ensure_provider_is_available()
+    def fill_parser(self, parser: ArgumentParser) -> None:
+        """Add arguments specific to this command."""
+        parser.add_argument(
+            "-c",
+            "--config",
+            type=Path,
+            default=".launchpad.yaml",
+            help="Read the configuration file from this path.",
+        )
 
-    provider.clean_project_environments(
-        project_name=cwd.name, project_path=cwd
-    )
-    emit.message(
-        f"Deleted the managed environments for the {cwd.name!r} project."
-    )
-    return 0
+    def run(self, args: Namespace) -> int:
+        """Run the command."""
+        # We want to run the "clean" command only when run from
+        # an lpcraft project directory.
+        Config.load(args.config)
+
+        cwd = Path.cwd()
+        emit.progress(
+            f"Deleting the managed environments for the {cwd.name!r} project."
+        )
+
+        provider = get_provider()
+        provider.ensure_provider_is_available()
+
+        provider.clean_project_environments(
+            project_name=cwd.name, project_path=cwd
+        )
+        emit.message(
+            f"Deleted the managed environments for the {cwd.name!r} project."
+        )
+        return 0
