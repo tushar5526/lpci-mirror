@@ -528,7 +528,7 @@ class TestPlugins(CommandBaseTestCase):
         fi
         export PATH=$HOME/miniconda3/bin:$PATH
         conda remove --all -q -y -n $CONDA_ENV
-        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults PYTHON=3.8 conda-build mamba pip
+        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults -c https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/ PYTHON=3.8 conda-build mamba pip
         source activate $CONDA_ENV
         """  # noqa:E501
         )
@@ -536,7 +536,7 @@ class TestPlugins(CommandBaseTestCase):
             """
             export PATH=$HOME/miniconda3/bin:$PATH
             source activate $CONDA_ENV
-            conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults info/recipe/parent
+            conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults -c https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/ info/recipe/parent
             pip install --upgrade pytest
         """  # noqa: E501
         )
@@ -545,88 +545,102 @@ class TestPlugins(CommandBaseTestCase):
             "source activate $CONDA_ENV; conda env export"
         )
 
-        self.run_command("run")
+        self.run_command(
+            "run",
+            "--plugin-setting",
+            "miniconda_conda_channel=https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/",  # noqa: E501
+        )
 
         self.assertEqual(
-            [
-                call(
-                    ["apt", "update"],
-                    cwd=PosixPath("/root/lpcraft/project"),
-                    env={"CONDA_ENV": "lpci"},
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "apt",
-                        "install",
-                        "-y",
-                        "git",
-                        "python3-dev",
-                        "python3-pip",
-                        "python3-venv",
-                        "wget",
-                        "automake",
-                        "build-essential",
-                        "cmake",
-                        "gcc",
-                        "g++",
-                        "libc++-dev",
-                        "libc6-dev",
-                        "libffi-dev",
-                        "libjpeg-dev",
-                        "libpng-dev",
-                        "libreadline-dev",
-                        "libsqlite3-dev",
-                        "libtool",
-                        "zlib1g-dev",
-                    ],
-                    cwd=PosixPath("/root/lpcraft/project"),
-                    env={"CONDA_ENV": "lpci"},
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "bash",
-                        "--noprofile",
-                        "--norc",
-                        "-ec",
-                        pre_run_command,
-                    ],
-                    cwd=PosixPath("/root/lpcraft/project"),
-                    env={"CONDA_ENV": "lpci"},
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "bash",
-                        "--noprofile",
-                        "--norc",
-                        "-ec",
-                        run_command,
-                    ],
-                    cwd=PosixPath("/root/lpcraft/project"),
-                    env={"CONDA_ENV": "lpci"},
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-                call(
-                    [
-                        "bash",
-                        "--noprofile",
-                        "--norc",
-                        "-ec",
-                        post_run_command,
-                    ],
-                    cwd=PosixPath("/root/lpcraft/project"),
-                    env={"CONDA_ENV": "lpci"},
-                    stdout=ANY,
-                    stderr=ANY,
-                ),
-            ],
-            execute_run.call_args_list,
+            call(
+                ["apt", "update"],
+                cwd=PosixPath("/root/lpcraft/project"),
+                env={"CONDA_ENV": "lpci"},
+                stdout=ANY,
+                stderr=ANY,
+            ),
+            execute_run.call_args_list[0],
+        )
+        self.assertEqual(
+            call(
+                [
+                    "apt",
+                    "install",
+                    "-y",
+                    "git",
+                    "python3-dev",
+                    "python3-pip",
+                    "python3-venv",
+                    "wget",
+                    "automake",
+                    "build-essential",
+                    "cmake",
+                    "gcc",
+                    "g++",
+                    "libc++-dev",
+                    "libc6-dev",
+                    "libffi-dev",
+                    "libjpeg-dev",
+                    "libpng-dev",
+                    "libreadline-dev",
+                    "libsqlite3-dev",
+                    "libtool",
+                    "zlib1g-dev",
+                ],
+                cwd=PosixPath("/root/lpcraft/project"),
+                env={"CONDA_ENV": "lpci"},
+                stdout=ANY,
+                stderr=ANY,
+            ),
+            execute_run.call_args_list[1],
+        )
+        self.assertEqual(
+            call(
+                [
+                    "bash",
+                    "--noprofile",
+                    "--norc",
+                    "-ec",
+                    pre_run_command,
+                ],
+                cwd=PosixPath("/root/lpcraft/project"),
+                env={"CONDA_ENV": "lpci"},
+                stdout=ANY,
+                stderr=ANY,
+            ),
+            execute_run.call_args_list[2],
+        )
+        self.assertEqual(
+            call(
+                [
+                    "bash",
+                    "--noprofile",
+                    "--norc",
+                    "-ec",
+                    run_command,
+                ],
+                cwd=PosixPath("/root/lpcraft/project"),
+                env={"CONDA_ENV": "lpci"},
+                stdout=ANY,
+                stderr=ANY,
+            ),
+            execute_run.call_args_list[3],
+        )
+        self.assertEqual(
+            call(
+                [
+                    "bash",
+                    "--noprofile",
+                    "--norc",
+                    "-ec",
+                    post_run_command,
+                ],
+                cwd=PosixPath("/root/lpcraft/project"),
+                env={"CONDA_ENV": "lpci"},
+                stdout=ANY,
+                stderr=ANY,
+            ),
+            execute_run.call_args_list[4],
         )
 
     def test_conda_build_plugin_finds_recipe(self):
@@ -902,3 +916,48 @@ class TestPlugins(CommandBaseTestCase):
             get_plugin_manager,
             config_obj.jobs["build"][0],
         )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_additional_settings(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # XXX jugmac00 2022-06-13
+        # this test covers the case when there are additional plugin settings,
+        # but not soss related
+        # this has not (yet) a real use case, but is necessary for coverage
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    build-target: info/recipe/parent
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    run: |
+                        pip install --upgrade pytest
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run",
+            "--plugin-setting",
+            "foo=bar",
+        )
+
+        self.assertEqual(0, result.exit_code)

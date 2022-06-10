@@ -42,6 +42,12 @@ def _check_relative_path(path: PurePath, container: PurePath) -> PurePath:
         raise CommandError(str(e), retcode=1)
 
 
+def _convert_config_list_to_dict(list_: List[str]) -> Dict[str, str]:
+    # takes a list of strings, each string separated by an equal sign,
+    # and converts it to a dictionary
+    return dict(pair.split("=", maxsplit=1) for pair in list_)
+
+
 def _remove_prefix_if_possible(path: PurePath, prefix: str) -> PurePath:
     """Remove an initial prefix from `path` if possible.
 
@@ -311,6 +317,7 @@ def _run_job(
     output: Optional[Path],
     apt_replacement_repositories: Optional[List[str]] = None,
     env_from_cli: Optional[List[str]] = None,
+    plugin_settings: Optional[List[str]] = None,
 ) -> None:
     """Run a single job."""
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
@@ -318,7 +325,12 @@ def _run_job(
     host_architecture = get_host_architecture()
     if host_architecture not in job.architectures:
         return
-    pm = get_plugin_manager(job)
+    # verbosity is necessary to please mypy
+    if plugin_settings is not None:
+        plugin_settings_as_dict = _convert_config_list_to_dict(plugin_settings)
+        pm = get_plugin_manager(job, plugin_settings_as_dict)
+    else:
+        pm = get_plugin_manager(job, None)
     pre_run_command = _resolve_runtime_value(
         pm,
         job,
@@ -357,6 +369,7 @@ def _run_job(
         env_from_plugin.update(env_from_configuration)
     environment = env_from_plugin
     if env_from_cli:
+        # XXX jugmac00 2022-05-13: use _convert_config_list_to_dict
         pairs_from_cli = dict(
             pair.split("=", maxsplit=1) for pair in env_from_cli
         )
@@ -461,6 +474,9 @@ def run(args: Namespace) -> int:
                                 args, "apt_replace_repositories", None
                             ),
                             env_from_cli=getattr(args, "set_env", None),
+                            plugin_settings=getattr(
+                                args, "plugin_setting", None
+                            ),
                         )
                 except CommandError as e:
                     if len(stage) == 1:
@@ -516,6 +532,7 @@ def run_one(args: Namespace) -> int:
                 args, "apt_replace_repositories", None
             ),
             env_from_cli=getattr(args, "set_env", None),
+            plugin_settings=getattr(args, "plugin_setting", None),
         )
     finally:
         should_clean_environment = getattr(args, "clean", False)

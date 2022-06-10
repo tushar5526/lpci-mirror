@@ -26,6 +26,9 @@ lpcraft run optional arguments
 - ``--set-env KEY=VALUE``, e.g.
   ``lpcraft run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
 
+- ``--plugin-setting``, e.g.
+  ``lpcraft run --plugin-setting="foo=bar"``
+
 lpcraft run-one
 ---------------
 
@@ -46,3 +49,6 @@ lpcraft run-one optional arguments
 
 - ``--set-env KEY=VALUE``, e.g.
   ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``.
+
+- ``--plugin-setting``, e.g.
+  ``lpcraft run-one --plugin-setting="foo=bar" test 0``.

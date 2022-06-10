@@ -12,7 +12,7 @@ __all__ = [
 
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, List, Optional, cast
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, cast
 
 import pydantic
 from pydantic import StrictStr
@@ -43,8 +43,11 @@ class BasePlugin:
     class Config(BaseConfig):
         pass
 
-    def __init__(self, config: Job) -> None:
+    def __init__(
+        self, config: Job, plugin_settings: Optional[Dict[str, str]] = None
+    ) -> None:
         self.config = config
+        self.additional_settings = plugin_settings
 
     def get_plugin_config(self) -> BaseConfig:
         """Return the properly typecast plugin configuration."""
@@ -167,6 +170,12 @@ class MiniCondaPlugin(BasePlugin):
             conda_channels.extend(plugin_config.conda_channels)
         for channel in set(self.DEFAULT_CONDA_CHANNELS) - set(conda_channels):
             conda_channels.append(channel)
+        if self.additional_settings:
+            soss_channel = self.additional_settings.get(
+                "miniconda_conda_channel"
+            )
+            if soss_channel is not None:
+                conda_channels.append(soss_channel)
         return conda_channels
 
     @hookimpl  # type: ignore

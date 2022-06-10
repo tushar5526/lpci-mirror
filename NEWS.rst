@@ -7,6 +7,10 @@ Version history
 
 - Rewrite the release documentation.
 
+- Add CLI support for plugin settings via "--plugin-setting".
+
+- Add support for custom Conda channels.
+
 0.0.15 (2022-06-01)
 ===================
 

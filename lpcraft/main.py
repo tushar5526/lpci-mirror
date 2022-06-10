@@ -107,6 +107,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="append",
         help="Set an environment variable.",
     )
+    parser_run.add_argument(
+        "--plugin-setting",
+        action="append",
+        help="Add additional plugin setting.",
+    )
     parser_run.set_defaults(func=run)
 
     parser_run_one = subparsers.add_parser(
@@ -148,6 +153,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--set-env",
         action="append",
         help="Set an environment variable.",
+    )
+    parser_run_one.add_argument(
+        "--plugin-setting",
+        action="append",
+        help="Add additional plugin setting.",
     )
     parser_run_one.set_defaults(func=run_one)
 
