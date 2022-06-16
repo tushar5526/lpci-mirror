@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.16 (unreleased)
+0.0.16 (2022-06-16)
 ===================
 
 - Rewrite the release documentation.
