@@ -5,7 +5,7 @@ Version history
 0.0.17 (unreleased)
 ===================
 
-- Nothing yet.
+- Add support for running jobs on Ubuntu 22.04 (jammy).
 
 0.0.16 (2022-06-16)
 ===================
