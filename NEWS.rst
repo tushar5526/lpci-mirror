@@ -7,6 +7,8 @@ Version history
 
 - Use the ``craft-cli`` command dispatcher.
 
+- Hide the internal ``run-one`` command from ``--help`` output.
+
 0.0.17 (2022-06-17)
 ===================
 
