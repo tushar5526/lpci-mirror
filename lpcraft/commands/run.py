@@ -471,20 +471,21 @@ class RunCommand(BaseCommand):
                 "for the pipeline after the running it."
             ),
         )
+        # Job configuration options.
         parser.add_argument(
             "--apt-replace-repositories",
             action="append",
             help="Overwrite /etc/apt/sources.list.",
         )
         parser.add_argument(
-            "--set-env",
-            action="append",
-            help="Set an environment variable.",
-        )
-        parser.add_argument(
             "--plugin-setting",
             action="append",
             help="Add additional plugin setting.",
+        )
+        parser.add_argument(
+            "--set-env",
+            action="append",
+            help="Set an environment variable.",
         )
 
     def run(self, args: Namespace) -> int:
@@ -584,20 +585,21 @@ class RunOneCommand(BaseCommand):
             metavar="N",
             help="Run only the Nth job with the given name (indexing from 0).",
         )
+        # Job configuration options.
         parser.add_argument(
             "--apt-replace-repositories",
             action="append",
             help="Overwrite /etc/apt/sources.list.",
         )
         parser.add_argument(
-            "--set-env",
-            action="append",
-            help="Set an environment variable.",
-        )
-        parser.add_argument(
             "--plugin-setting",
             action="append",
             help="Add additional plugin setting.",
+        )
+        parser.add_argument(
+            "--set-env",
+            action="append",
+            help="Set an environment variable.",
         )
 
     def run(self, args: Namespace) -> int:
