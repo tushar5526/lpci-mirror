@@ -30,8 +30,9 @@ class CleanCommand(BaseCommand):
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
-        # We want to run the "clean" command only when run from
-        # an lpcraft project directory.
+        # We want to run the "clean" command only when run from an lpcraft
+        # project directory, so we load the config here even though we don't
+        # do anything with it.
         Config.load(args.config)
 
         cwd = Path.cwd()
