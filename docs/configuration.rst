@@ -50,6 +50,11 @@ Job definitions
 ``packages`` (optional)
     Packages to install using ``apt`` as dependencies of this job.
 
+``package-repositories`` (optional)
+    Repositories which will be added to the already existing ones in
+    `/etc/apt/sources.list`.
+    Also see the :ref:`package-repositories` section below.
+
 ``snaps`` (optional)
     Snaps to install as dependencies of this job.
 
@@ -132,3 +137,35 @@ Output properties
     This value is parsed using `pydantic's standard timedelta parsing
     <https://pydantic-docs.helpmanual.io/usage/types/#datetime-types>`_,
     restricted to non-negative timedeltas.
+
+
+.. _package-repositories:
+
+Package-repositories properties
+-------------------------------
+
+The properties are inspired by the properties of `Snapcraft
+<https://snapcraft.io/docs/package-repositories>`_.
+Only a subset of them is currently implemented.
+
+More properties can be implemented on demand.
+
+``type`` (required)
+    Specifies the type of package-repository.
+    Currently only `apt` is supported.
+
+``formats`` (required)
+    Specifies the format of the package-repository.
+    Supported values: ``deb`` and ``deb-src``.
+
+``components`` (required)
+    Specifies the component of the package-repository,
+    One or several of ``main``, ``restricted``, ``universe``, ``multiverse``.
+
+``suites`` (required)
+    Specifies the suite of the package-repository.
+    One or several of ``bionic``, ``focal``, ``jammy``.
+
+``url`` (required)
+    Specifies the URL of the package-repository.
+    e.g. ``http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu``

@@ -7,7 +7,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from fixtures import TempDir
-from pydantic import ValidationError
+from pydantic import AnyHttpUrl, ValidationError
 from testtools import TestCase
 from testtools.matchers import (
     Equals,
@@ -16,7 +16,7 @@ from testtools.matchers import (
     MatchesStructure,
 )
 
-from lpcraft.config import Config, OutputDistributeEnum
+from lpcraft.config import Config, OutputDistributeEnum, PackageRepository
 from lpcraft.errors import CommandError
 
 
@@ -403,3 +403,81 @@ class TestConfig(TestCase):
         config = Config.load(path)
 
         self.assertEqual("tox", config.jobs["test"][0].plugin)
+
+    def test_package_repositories(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [nginx, apache2]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [focal]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                """  # noqa: E501
+            )
+        )
+
+        config = Config.load(path)
+
+        self.assertEqual(
+            [
+                PackageRepository(
+                    type="apt",
+                    formats=["deb"],
+                    components=["main"],
+                    suites=["focal"],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/jammy-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/jammy-golang-backport",
+                    ),
+                )
+            ],
+            config.jobs["test"][0].package_repositories,
+        )
+
+    def test_package_repositories_as_string(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [nginx, apache2]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              components: [main]
+                              suites: [focal, bionic]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                """  # noqa: E501
+            )
+        )
+        config = Config.load(path)
+        expected = [
+            "deb https://canonical.example.org/artifactory/jammy-golang-backport focal main",  # noqa: E501
+            "deb https://canonical.example.org/artifactory/jammy-golang-backport bionic main",  # noqa: E501
+            "deb-src https://canonical.example.org/artifactory/jammy-golang-backport focal main",  # noqa: E501
+            "deb-src https://canonical.example.org/artifactory/jammy-golang-backport bionic main",  # noqa: E501
+        ]
+        repositories = config.jobs["test"][0].package_repositories
+        assert repositories is not None  # workaround necessary to please mypy
+        self.assertEqual(
+            expected, (list(repositories[0].sources_list_lines()))
+        )

@@ -9,6 +9,7 @@ import os
 import shlex
 from argparse import ArgumentParser, Namespace
 from pathlib import Path, PurePath
+from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Set
 
 from craft_cli import BaseCommand, EmitterMode, emit
@@ -18,7 +19,7 @@ from dotenv import dotenv_values
 from pluggy import PluginManager
 
 from lpcraft import env
-from lpcraft.config import Config, Job, Output
+from lpcraft.config import Config, Job, Output, PackageRepository
 from lpcraft.errors import CommandError
 from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.plugins import PLUGINS
@@ -226,19 +227,38 @@ def _install_apt_packages(
     host_architecture: str,
     remote_cwd: Path,
     apt_replacement_repositories: Optional[List[str]],
+    additional_apt_repositories: Optional[List[PackageRepository]],
     environment: Optional[Dict[str, Optional[str]]],
 ) -> None:
-    if apt_replacement_repositories:
-        # replace sources.list
-        lines = "\n".join(apt_replacement_repositories) + "\n"
+    if apt_replacement_repositories or additional_apt_repositories:
+        sources_list_path = "/etc/apt/sources.list"
+
+        with NamedTemporaryFile(mode="w+") as tmpfile:
+            try:
+                instance.pull_file(
+                    source=Path(sources_list_path),
+                    destination=Path(tmpfile.name),
+                )
+            except Exception as e:
+                raise CommandError(str(e), retcode=1)
+            sources = tmpfile.read()
+
+        if apt_replacement_repositories:
+            sources = "\n".join(apt_replacement_repositories) + "\n"
+        if additional_apt_repositories:
+            for repository in additional_apt_repositories:
+                sources += (
+                    "\n" + "\n".join(repository.sources_list_lines()) + "\n"
+                )
         with emit.open_stream("Replacing /etc/apt/sources.list") as stream:
             instance.push_file_io(
-                destination=PurePath("/etc/apt/sources.list"),
-                content=io.BytesIO(lines.encode()),
+                destination=PurePath(sources_list_path),
+                content=io.BytesIO(sources.encode()),
                 file_mode="0644",
                 group="root",
                 user="root",
             )
+
     # update local repository information
     apt_update = ["apt", "update"]
     with emit.open_stream(f"Running {apt_update}") as stream:
@@ -316,6 +336,7 @@ def _run_job(
     provider: Provider,
     output: Optional[Path],
     apt_replacement_repositories: Optional[List[str]] = None,
+    additional_apt_repositories: Optional[List[PackageRepository]] = None,
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
 ) -> None:
@@ -406,6 +427,7 @@ def _run_job(
                 host_architecture=host_architecture,
                 remote_cwd=remote_cwd,
                 apt_replacement_repositories=apt_replacement_repositories,
+                additional_apt_repositories=additional_apt_repositories,
                 environment=environment,
             )
         for cmd in (pre_run_command, run_command, post_run_command):
@@ -518,6 +540,7 @@ class RunCommand(BaseCommand):
                                 apt_replacement_repositories=(
                                     args.apt_replace_repositories
                                 ),
+                                additional_apt_repositories=job.package_repositories,  # noqa: E501
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
                             )
@@ -625,6 +648,7 @@ class RunOneCommand(BaseCommand):
                 provider,
                 args.output_directory,
                 apt_replacement_repositories=args.apt_replace_repositories,
+                additional_apt_repositories=job.package_repositories,
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
             )

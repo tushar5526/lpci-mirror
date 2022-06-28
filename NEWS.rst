@@ -9,6 +9,8 @@ Version history
 
 - Hide the internal ``run-one`` command from ``--help`` output.
 
+- Add new configuration option to provide additional package repositories.
+
 0.0.17 (2022-06-17)
 ===================
 

@@ -5,10 +5,10 @@ import re
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, Iterator, List, Optional, Type, Union
 
 import pydantic
-from pydantic import StrictStr
+from pydantic import AnyHttpUrl, StrictStr
 
 from lpcraft.errors import ConfigurationError
 from lpcraft.plugins import PLUGINS
@@ -76,6 +76,64 @@ def _validate_plugin_config(
     return values
 
 
+class PackageType(str, Enum):
+    """Specifies the type of the package repository.
+
+    Currently only supports apt.
+    """
+
+    apt = "apt"
+
+
+class PackageFormat(str, Enum):
+    """Specifies the format of the package repository."""
+
+    deb = "deb"
+    deb_src = "deb-src"
+
+
+class PackageComponent(str, Enum):
+    """Specifies the component of the package repository."""
+
+    main = "main"
+    restricted = "restricted"
+    universe = "universe"
+    multiverse = "multiverse"
+
+
+class PackageSuite(str, Enum):
+    """Specifies the suite of the package repository.
+
+    e.g. xenial, focal, ...
+    """
+
+    bionic = "bionic"  # 18.04
+    focal = "focal"  # 20.04
+    jammy = "jammy"  # 22.04
+
+
+class PackageRepository(ModelConfigDefaults):
+    """A representation of a package repository.
+
+    inspired by https://snapcraft.io/docs/package-repositories
+    """
+
+    type: PackageType  # e.g. `apt``
+    formats: List[PackageFormat]  # e.g. `[deb, deb-src]`
+    components: List[PackageComponent]  # e.g. `[main, universe]`
+    suites: List[PackageSuite]  # e.g. `[bionic, focal]`
+    url: AnyHttpUrl
+
+    def sources_list_lines(self) -> Iterator[str]:
+        """Yield repository lines as strings.
+
+        e.g. 'deb https://canonical.example.org/artifactory/jammy-golang-backport focal main'
+        """  # noqa: E501
+        for format in self.formats:
+            for suite in self.suites:
+                yield f"{format} {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
+
+
 class Job(ModelConfigDefaults):
     """A job definition."""
 
@@ -92,6 +150,7 @@ class Job(ModelConfigDefaults):
     output: Optional[Output]
     snaps: Optional[List[StrictStr]]
     packages: Optional[List[StrictStr]]
+    package_repositories: Optional[List[PackageRepository]]
     plugin: Optional[StrictStr]
     plugin_config: Optional[BaseConfig]
 

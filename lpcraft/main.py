@@ -63,6 +63,21 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
     ]
 
+    # dispatcher = Dispatcher(
+    #     "lpcraft",
+    #     command_groups,
+    #     summary=summary,
+    #     extra_global_args=extra_global_args,
+    #     default_command=RunCommand,
+    # )
+    # global_args = dispatcher.pre_parse_args(argv)
+    # if global_args["version"]:
+    #     emit.message(lpcraft_version)
+    #     emit.ended_ok()
+    #     return 0
+    # dispatcher.load_command(None)
+    # ret = dispatcher.run() or 0
+
     try:
         dispatcher = Dispatcher(
             "lpcraft",
