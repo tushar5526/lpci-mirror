@@ -16,6 +16,9 @@ Version history
 
 - Add new configuration option to provide additional package repositories.
 
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5495-1/.
+
 0.0.17 (2022-06-17)
 ===================
 
