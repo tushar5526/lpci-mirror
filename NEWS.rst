@@ -2,8 +2,8 @@
 Version history
 ===============
 
-0.0.18 (unreleased)
-===================
+0.0.18
+======
 
 - Use the ``craft-cli`` command dispatcher.
 
