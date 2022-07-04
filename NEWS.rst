@@ -2,8 +2,8 @@
 Version history
 ===============
 
-0.0.18
-======
+0.0.18 (2022-07-04)
+===================
 
 - Use the ``craft-cli`` command dispatcher.
 
