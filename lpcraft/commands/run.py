@@ -12,10 +12,12 @@ from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Set
 
+import yaml
 from craft_cli import BaseCommand, EmitterMode, emit
 from craft_providers import Executor, lxd
 from craft_providers.actions.snap_installer import install_from_store
 from dotenv import dotenv_values
+from jinja2 import BaseLoader, Environment
 from pluggy import PluginManager
 
 from lpcraft import env
@@ -229,6 +231,7 @@ def _install_apt_packages(
     apt_replacement_repositories: Optional[List[str]],
     additional_apt_repositories: Optional[List[PackageRepository]],
     environment: Optional[Dict[str, Optional[str]]],
+    secrets: Optional[Dict[str, str]],
 ) -> None:
     if apt_replacement_repositories or additional_apt_repositories:
         sources_list_path = "/etc/apt/sources.list"
@@ -247,9 +250,14 @@ def _install_apt_packages(
             sources = "\n".join(apt_replacement_repositories) + "\n"
         if additional_apt_repositories:
             for repository in additional_apt_repositories:
-                sources += (
-                    "\n" + "\n".join(repository.sources_list_lines()) + "\n"
+                sources += "\n" + "\n".join(repository.sources_list_lines())
+            if secrets:
+                template = Environment(loader=BaseLoader()).from_string(
+                    sources
                 )
+                sources = template.render(**secrets)
+            sources += "\n"
+
         with emit.open_stream("Replacing /etc/apt/sources.list") as stream:
             instance.push_file_io(
                 destination=PurePath(sources_list_path),
@@ -339,6 +347,7 @@ def _run_job(
     additional_apt_repositories: Optional[List[PackageRepository]] = None,
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
+    secrets: Optional[Dict[str, str]] = None,
 ) -> None:
     """Run a single job."""
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
@@ -429,6 +438,7 @@ def _run_job(
                 apt_replacement_repositories=apt_replacement_repositories,
                 additional_apt_repositories=additional_apt_repositories,
                 environment=environment,
+                secrets=secrets,
             )
         for cmd in (pre_run_command, run_command, post_run_command):
             if cmd:
@@ -509,6 +519,14 @@ class RunCommand(BaseCommand):
             action="append",
             help="Set an environment variable.",
         )
+        parser.add_argument(
+            "--secrets",
+            dest="secrets_file",
+            metavar="file",
+            default=None,
+            type=Path,
+            help="Pass in a YAML-based configuration file for secrets.",
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -517,6 +535,12 @@ class RunCommand(BaseCommand):
         provider = get_provider()
         provider.ensure_provider_is_available()
         launched_instances = []
+
+        secrets = {}
+        if args.secrets_file:
+            with open(args.secrets_file) as f:
+                content = f.read()
+            secrets = yaml.safe_load(content)
 
         try:
             for stage in config.pipeline:
@@ -543,6 +567,7 @@ class RunCommand(BaseCommand):
                                 additional_apt_repositories=job.package_repositories,  # noqa: E501
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
+                                secrets=secrets,
                             )
                     except CommandError as e:
                         if len(stage) == 1:
@@ -624,6 +649,14 @@ class RunOneCommand(BaseCommand):
             action="append",
             help="Set an environment variable.",
         )
+        parser.add_argument(
+            "--secrets",
+            dest="secrets_file",
+            metavar="file",
+            default=None,
+            type=Path,
+            help="Pass in a YAML-based configuration file for secrets.",
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -641,6 +674,11 @@ class RunOneCommand(BaseCommand):
         provider = get_provider()
         provider.ensure_provider_is_available()
 
+        secrets = {}
+        if args.secrets_file:
+            with open(args.secrets_file) as f:
+                content = f.read()
+            secrets = yaml.safe_load(content)
         try:
             _run_job(
                 args.job,
@@ -651,6 +689,7 @@ class RunOneCommand(BaseCommand):
                 additional_apt_repositories=job.package_repositories,
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
+                secrets=secrets,
             )
         finally:
             if args.clean:

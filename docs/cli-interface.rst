@@ -29,6 +29,17 @@ lpcraft run optional arguments
 - ``--plugin-setting``, e.g.
   ``lpcraft run --plugin-setting="foo=bar"``
 
+- ``--secrets``, e.g.
+  ``lpcraft run --secrets="<path-to-configuration-file>"``
+
+  The configuration file should look like...
+
+  .. code::
+
+    key: secret
+    another_key: another_secret
+
+
 lpcraft run-one
 ---------------
 
@@ -52,3 +63,13 @@ lpcraft run-one optional arguments
 
 - ``--plugin-setting``, e.g.
   ``lpcraft run-one --plugin-setting="foo=bar" test 0``.
+
+- ``--secrets``, e.g.
+  ``lpcraft run-one --secrets="<path-to-configuration-file>" test 0``.
+
+  The configuration file should look like...
+
+  .. code::
+
+    key: secret
+    another_key: another_secret

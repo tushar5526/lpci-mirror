@@ -2056,6 +2056,101 @@ class TestRun(RunBaseTestCase):
             file_contents,
         )
 
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_run_with_additional_apt_repositories_with_secrets(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        existing_repositories = [
+            "deb http://archive.ubuntu.com/ubuntu/ focal main restricted",
+            "deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted",
+        ]
+
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.write_text("\n".join(existing_repositories))
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+                    package-repositories:
+                        - type: apt
+                          formats: [deb]
+                          components: [main, universe]
+                          suites: [focal]
+                          url: "https://{{auth}}@canonical.example.org/artifactory/jammy-golang-backport"
+            """  # noqa: E501
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        credentials = dedent('auth: "user:pass"')
+        Path(".launchpad-secrets.yaml").write_text(credentials)
+
+        result = self.run_command(
+            "run",
+            "--secrets",
+            ".launchpad-secrets.yaml",
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["apt", "install", "-y", "git"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+        mock_info = launcher.return_value.push_file_io.call_args_list
+
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[0][1]["destination"]
+        )
+
+        file_contents = mock_info[0][1]["content"].read().decode()
+
+        self.assertEqual(
+            dedent(
+                """\
+            deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb https://user:pass@canonical.example.org/artifactory/jammy-golang-backport focal main universe
+            """  # noqa: E501
+            ),
+            file_contents,
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_config_file_not_under_project_directory(self):
@@ -2803,4 +2898,139 @@ class TestRunOne(RunBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=1, errors=[CommandError("File not found", retcode=1)]
             ),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_provide_secrets_file_via_cli(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        credentials = dedent('auth: "user:pass"')
+        Path(".launchpad-secrets.yaml").write_text(credentials)
+
+        result = self.run_command(
+            "run-one",
+            "--secrets",
+            ".launchpad-secrets.yaml",
+            "test",
+            "0",
+        )
+        self.assertEqual(0, result.exit_code)
+        self.assertIn(
+            "'--secrets', '.launchpad-secrets.yaml'", result.trace[0]
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_run_with_additional_apt_repositories_with_secrets(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        existing_repositories = [
+            "deb http://archive.ubuntu.com/ubuntu/ focal main restricted",
+            "deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted",
+        ]
+
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.write_text("\n".join(existing_repositories))
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+                    package-repositories:
+                        - type: apt
+                          formats: [deb]
+                          components: [main, universe]
+                          suites: [focal]
+                          url: https://canonical.example.org/artifactory/jammy-golang-backport
+            """  # noqa: E501
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        credentials = dedent('auth: "user:pass"')
+        Path(".launchpad-secrets.yaml").write_text(credentials)
+
+        result = self.run_command(
+            "run-one",
+            "--secrets",
+            ".launchpad-secrets.yaml",
+            "test",
+            "0",
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["apt", "install", "-y", "git"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
+                    cwd=Path("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+        mock_info = launcher.return_value.push_file_io.call_args_list
+
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[0][1]["destination"]
+        )
+
+        file_contents = mock_info[0][1]["content"].read().decode()
+
+        self.assertEqual(
+            dedent(
+                """\
+                deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+                deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+                deb https://canonical.example.org/artifactory/jammy-golang-backport focal main universe
+                """  # noqa: E501
+            ),
+            file_contents,
         )
