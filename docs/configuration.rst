@@ -167,5 +167,8 @@ More properties can be implemented on demand.
     One or several of ``bionic``, ``focal``, ``jammy``.
 
 ``url`` (required)
-    Specifies the URL of the package-repository.
-    e.g. ``http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu``
+    Specifies the URL of the package-repository,
+    e.g. ``http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu``.
+    The URL is rendered using `Jinja2 <https://pypi.org/project/Jinja2/>`_.
+    This can be used to supply authentication details via the *secrets*
+    command line option.
