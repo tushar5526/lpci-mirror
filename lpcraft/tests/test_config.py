@@ -422,6 +422,12 @@ class TestConfig(TestCase):
                               components: [main]
                               suites: [focal]
                               url: https://canonical.example.org/artifactory/jammy-golang-backport
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [focal]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                              trusted: false
                 """  # noqa: E501
             )
         )
@@ -443,7 +449,22 @@ class TestConfig(TestCase):
                         host_type="domain",
                         path="/artifactory/jammy-golang-backport",
                     ),
-                )
+                ),
+                PackageRepository(
+                    type="apt",
+                    formats=["deb"],
+                    components=["main"],
+                    suites=["focal"],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/jammy-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/jammy-golang-backport",
+                    ),
+                    trusted=False,
+                ),
             ],
             config.jobs["test"][0].package_repositories,
         )
@@ -466,6 +487,18 @@ class TestConfig(TestCase):
                               components: [main]
                               suites: [focal, bionic]
                               url: https://canonical.example.org/artifactory/jammy-golang-backport
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [focal]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                              trusted: true
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [focal]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                              trusted: false
                 """  # noqa: E501
             )
         )
@@ -480,4 +513,16 @@ class TestConfig(TestCase):
         assert repositories is not None  # workaround necessary to please mypy
         self.assertEqual(
             expected, (list(repositories[0].sources_list_lines()))
+        )
+        self.assertEqual(
+            [
+                "deb [trusted=yes] https://canonical.example.org/artifactory/jammy-golang-backport focal main"  # noqa: E501
+            ],  # noqa: E501
+            list(repositories[1].sources_list_lines()),
+        )
+        self.assertEqual(
+            [
+                "deb [trusted=no] https://canonical.example.org/artifactory/jammy-golang-backport focal main"  # noqa: E501
+            ],  # noqa: E501
+            list(repositories[2].sources_list_lines()),
         )

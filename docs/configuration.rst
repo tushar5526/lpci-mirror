@@ -172,3 +172,9 @@ More properties can be implemented on demand.
     The URL is rendered using `Jinja2 <https://pypi.org/project/Jinja2/>`_.
     This can be used to supply authentication details via the *secrets*
     command line option.
+
+``trusted`` (optional)
+    Set this to ``true`` to override APT's security checks, ie accept sources
+    which do not pass authentication checks. ``false`` does the opposite.
+    By default APT decides whether a source is considered trusted. This third
+    option cannot be set explicitly.

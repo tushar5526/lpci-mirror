@@ -5,7 +5,10 @@ Version history
 0.0.19 (unreleased)
 ===================
 
-- nothing yet
+- Add new CLI option to provide secrets via a YAML-based configuration file.
+
+- Allow overriding APT's security checks via `PackageRepository.trusted`
+
 
 0.0.18 (2022-07-04)
 ===================
@@ -18,8 +21,6 @@ Version history
 
 - Rebuild the Snap package to include updated system packages.
   See https://ubuntu.com/security/notices/USN-5495-1/.
-
-- Add new CLI option to provide secrets via a YAML-based configuration file.
 
 0.0.17 (2022-06-17)
 ===================

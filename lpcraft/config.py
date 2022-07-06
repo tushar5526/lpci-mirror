@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 
 import pydantic
-from pydantic import AnyHttpUrl, StrictStr
+from pydantic import AnyHttpUrl, StrictStr, validator
 
 from lpcraft.errors import ConfigurationError
 from lpcraft.plugins import PLUGINS
@@ -123,6 +123,12 @@ class PackageRepository(ModelConfigDefaults):
     components: List[PackageComponent]  # e.g. `[main, universe]`
     suites: List[PackageSuite]  # e.g. `[bionic, focal]`
     url: AnyHttpUrl
+    trusted: Optional[bool]
+
+    @validator("trusted")
+    def convert_trusted(cls, v: bool) -> str:
+        # trusted is True or False, but we need `yes` or `no`
+        return v and "yes" or "no"
 
     def sources_list_lines(self) -> Iterator[str]:
         """Yield repository lines as strings.
@@ -131,7 +137,10 @@ class PackageRepository(ModelConfigDefaults):
         """  # noqa: E501
         for format in self.formats:
             for suite in self.suites:
-                yield f"{format} {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
+                if self.trusted:
+                    yield f"{format} [trusted={self.trusted}] {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
+                else:
+                    yield f"{format} {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
 
 
 class Job(ModelConfigDefaults):
