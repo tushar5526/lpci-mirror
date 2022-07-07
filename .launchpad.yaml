@@ -13,4 +13,6 @@ jobs:
         architectures: amd64
         plugin: pyproject-build
         output:
-            paths: ["dist/*.whl"]
+            paths:
+                - "dist/*.tar.gz"
+                - "dist/*.whl"
