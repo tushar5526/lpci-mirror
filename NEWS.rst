@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.19 (unreleased)
+0.0.19 (2022-07-11)
 ===================
 
 - Add new CLI option to provide secrets via a YAML-based configuration file.
