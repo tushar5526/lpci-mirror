@@ -2,12 +2,17 @@
 Version history
 ===============
 
+0.0.20 (unreleased)
+===================
+
+- Nothing yet.
+
 0.0.19 (2022-07-11)
 ===================
 
 - Add new CLI option to provide secrets via a YAML-based configuration file.
 
-- Allow overriding APT's security checks via `PackageRepository.trusted`
+- Allow overriding APT's security checks via `PackageRepository.trusted`.
 
 
 0.0.18 (2022-07-04)
