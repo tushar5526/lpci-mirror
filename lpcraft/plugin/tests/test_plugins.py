@@ -10,7 +10,7 @@ from unittest.mock import ANY, Mock, call, patch
 
 from craft_providers.lxd import launch
 from fixtures import TempDir
-from pydantic import StrictStr, validator
+from pydantic import StrictStr, ValidationError, validator
 
 import lpcraft.config
 from lpcraft.commands.tests import CommandBaseTestCase
@@ -961,3 +961,122 @@ class TestPlugins(CommandBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_golang_plugin(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    plugin: golang
+                    golang-version: "1.17"
+                    series: focal
+                    architectures: amd64
+                    packages: [file, git]
+                    run: go build -x examples/go-top.go
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        self.run_command("run")
+        self.assertEqual(
+            [
+                call(
+                    ["apt", "update"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    ["apt", "install", "-y", "golang-1.17", "file", "git"],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+                call(
+                    [
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        "\nexport PATH=/usr/lib/go-1.17/bin/:$PATH\ngo build -x examples/go-top.go",  # noqa: E501
+                    ],
+                    cwd=PosixPath("/root/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_golang_plugin_with_illegal_version(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        # we do not allow floats as e.g. `1.20` is a problematic value in YAML
+        config = dedent(
+            """
+            pipeline:
+                - build
+            jobs:
+                build:
+                    plugin: golang
+                    golang-version: 1.18
+                    series: focal
+                    architectures: amd64
+                    packages: [file, git]
+                    run: go build -x examples/go-top.go
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(1, result.exit_code)
+
+        [error] = result.errors
+        self.assertIn("str type expected", str(error))
+
+    def test_load_golang_plugin_configuration_with_invalid_version(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+            jobs:
+                build:
+                    plugin: golang
+                    golang-version: 1.18
+                    series: focal
+                    architectures: amd64
+                    packages: [file, git]
+                    run: go build -x examples/go-top.go
+            """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+
+        self.assertRaises(
+            ValidationError,
+            lpcraft.config.Config.load,
+            config_path,
+        )

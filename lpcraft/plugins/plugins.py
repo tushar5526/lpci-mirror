@@ -8,6 +8,7 @@ __all__ = [
     "PyProjectBuildPlugin",
     "MiniCondaPlugin",
     "CondaBuildPlugin",
+    "GolangPlugin",
 ]
 
 import textwrap
@@ -397,5 +398,56 @@ class CondaBuildPlugin(MiniCondaPlugin):
             export PATH=$HOME/miniconda3/bin:$PATH
             source activate $CONDA_ENV
             {build_command}{conda_channels}{configs} {self.build_target}
+            {run_command}"""
+        )
+
+
+@register(name="golang")
+class GolangPlugin(BasePlugin):
+    """Installs the required `golang` version.
+
+    Usage:
+        In `.launchpad.yaml`, create the following structure. Please note that
+        the `golang-version` has to be a string.
+
+        .. code-block:: yaml
+
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    plugin: golang
+                    golang-version: "1.17"
+                    series: focal
+                    architectures: amd64
+                    packages: [file, git]
+                    run: go build -x examples/go-top.go
+
+    Please note that the requested golang package needs to be available
+    either in the standard repository or in a repository specified in
+    `package-repositories`.
+    """
+
+    class Config(BaseConfig):
+        golang_version: StrictStr
+
+    INTERPOLATES_RUN_COMMAND = True
+
+    def get_plugin_config(self) -> "GolangPlugin.Config":
+        return cast(GolangPlugin.Config, self.config.plugin_config)
+
+    @hookimpl  # type: ignore
+    def lpcraft_install_packages(self) -> list[str]:
+        version = self.get_plugin_config().golang_version
+        return [f"golang-{version}"]
+
+    @hookimpl  # type: ignore
+    def lpcraft_execute_run(self) -> str:
+        version = self.get_plugin_config().golang_version
+        run_command = self.config.run or ""
+        return textwrap.dedent(
+            f"""
+            export PATH=/usr/lib/go-{version}/bin/:$PATH
             {run_command}"""
         )
