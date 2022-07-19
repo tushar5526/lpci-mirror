@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.21 (unreleased)
+0.0.21 (2022-07-19)
 ===================
 
 - Add Golang plugin.
