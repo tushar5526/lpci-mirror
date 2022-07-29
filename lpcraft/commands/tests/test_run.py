@@ -1414,25 +1414,22 @@ class TestRun(RunBaseTestCase):
     def test_install_snaps(
         self, mock_get_host_architecture, mock_get_provider
     ):
+        def run_side_effect(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[bytes]":
+            if command[0] == "curl":
+                response = {"result": {"revision": "1"}, "status-code": 200}
+                return subprocess.CompletedProcess(
+                    [], 0, stdout=json.dumps(response).encode()
+                )
+            else:
+                return subprocess.CompletedProcess([], 0)
+
         launcher = Mock(spec=launch)
         provider = makeLXDProvider(lxd_launcher=launcher)
         mock_get_provider.return_value = provider
         execute_run = launcher.return_value.execute_run
-        execute_run.return_value = subprocess.CompletedProcess([], 0)
-        responses.add(
-            "GET",
-            "http+unix://%2Frun%2Fsnapd.socket/v2/find?name=chromium",
-            json={
-                "result": [{"channels": {"latest/stable": {"revision": "1"}}}]
-            },
-        )
-        responses.add(
-            "GET",
-            "http+unix://%2Frun%2Fsnapd.socket/v2/find?name=firefox",
-            json={
-                "result": [{"channels": {"latest/stable": {"revision": "1"}}}]
-            },
-        )
+        execute_run.side_effect = run_side_effect
         config = dedent(
             """
             pipeline:
@@ -1456,11 +1453,22 @@ class TestRun(RunBaseTestCase):
                 call(
                     [
                         "snap",
-                        "download",
+                        "install",
                         "chromium",
-                        "--channel=latest/stable",
-                        "--basename=chromium",
-                        "--target-directory=/tmp",
+                        "--channel",
+                        "latest/stable",
+                        "--classic",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/chromium",
                     ],
                     check=True,
                     capture_output=True,
@@ -1469,32 +1477,21 @@ class TestRun(RunBaseTestCase):
                     [
                         "snap",
                         "install",
-                        "/tmp/chromium.snap",
-                        "--classic",
-                        "--dangerous",
-                    ],
-                    check=True,
-                    capture_output=True,
-                ),
-                call(
-                    [
-                        "snap",
-                        "download",
                         "firefox",
-                        "--channel=latest/stable",
-                        "--basename=firefox",
-                        "--target-directory=/tmp",
+                        "--channel",
+                        "latest/stable",
+                        "--classic",
                     ],
                     check=True,
                     capture_output=True,
                 ),
                 call(
                     [
-                        "snap",
-                        "install",
-                        "/tmp/firefox.snap",
-                        "--classic",
-                        "--dangerous",
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/firefox",
                     ],
                     check=True,
                     capture_output=True,
