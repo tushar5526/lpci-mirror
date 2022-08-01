@@ -2,8 +2,8 @@
 Version history
 ===============
 
-0.0.22
-======
+0.0.22 (2022-08-01)
+===================
 
 - Upgrade to craft-providers 1.3.1, improving snap installation logic.
 
