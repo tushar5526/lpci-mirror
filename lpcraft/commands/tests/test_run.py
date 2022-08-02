@@ -912,7 +912,7 @@ class TestRun(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "0"
         self.assertEqual(
             [
                 call(
@@ -976,7 +976,7 @@ class TestRun(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "0"
         self.assertEqual(
             [
                 call(
@@ -1218,7 +1218,7 @@ class TestRun(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "0"
         self.assertEqual(
             {"foo": "bar"},
             json.loads((job_output / "properties").read_text()),
@@ -1263,7 +1263,7 @@ class TestRun(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "test" / "focal" / "amd64"
+        job_output = target_path / "test" / "0"
         self.assertEqual(
             {"version": "0.1"},
             json.loads((job_output / "properties").read_text()),
@@ -1313,7 +1313,7 @@ class TestRun(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "test" / "focal" / "amd64"
+        job_output = target_path / "test" / "0"
         self.assertEqual(
             {"version": "0.2"},
             json.loads((job_output / "properties").read_text()),
@@ -2444,7 +2444,7 @@ class TestRunOne(RunBaseTestCase):
         )
 
         self.assertEqual(0, result.exit_code)
-        job_output = target_path / "build" / "focal" / "amd64"
+        job_output = target_path / "build" / "0"
         self.assertEqual(
             [
                 call(

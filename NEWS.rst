@@ -5,7 +5,8 @@ Version history
 0.0.23 (unreleased)
 ===================
 
-- Nothing yet.
+- Rearrange output directory structure to improve support for matrix jobs
+  and to prepare for passing input artifacts to jobs.
 
 0.0.22 (2022-08-01)
 ===================

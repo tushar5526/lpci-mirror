@@ -339,8 +339,9 @@ def _run_instance_command(
 
 
 def _run_job(
+    config: Config,
     job_name: str,
-    job: Job,
+    job_index: int,
     provider: Provider,
     output: Optional[Path],
     apt_replacement_repositories: Optional[List[str]] = None,
@@ -352,6 +353,7 @@ def _run_job(
     """Run a single job."""
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
     # passed in and not so many arguments
+    job = config.jobs[job_name][job_index]
     host_architecture = get_host_architecture()
     if host_architecture not in job.architectures:
         return
@@ -453,7 +455,7 @@ def _run_job(
                 )
 
         if job.output is not None and output is not None:
-            target_path = output / job_name / job.series / host_architecture
+            target_path = output / job_name / str(job_index)
             target_path.mkdir(parents=True, exist_ok=True)
             _copy_output_paths(job.output, remote_cwd, instance, target_path)
             _copy_output_properties(
@@ -552,13 +554,14 @@ class RunCommand(BaseCommand):
                             raise CommandError(
                                 f"No job definition for {job_name!r}"
                             )
-                        for job in jobs:
+                        for job_index, job in enumerate(jobs):
                             launched_instances.append(
                                 _get_job_instance_name(provider, job)
                             )
                             _run_job(
+                                config,
                                 job_name,
-                                job,
+                                job_index,
                                 provider,
                                 args.output_directory,
                                 apt_replacement_repositories=(
@@ -681,8 +684,9 @@ class RunOneCommand(BaseCommand):
             secrets = yaml.safe_load(content)
         try:
             _run_job(
+                config,
                 args.job,
-                job,
+                args.index,
                 provider,
                 args.output_directory,
                 apt_replacement_repositories=args.apt_replace_repositories,
