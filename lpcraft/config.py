@@ -30,7 +30,6 @@ class _Identifier(pydantic.ConstrainedStr):
 class ModelConfigDefaults(
     pydantic.BaseModel,
     extra=pydantic.Extra.forbid,
-    frozen=True,
     alias_generator=lambda s: s.replace("_", "-"),
     underscore_attrs_are_private=True,
 ):
@@ -49,7 +48,8 @@ class Output(ModelConfigDefaults):
     paths: Optional[List[StrictStr]]
     distribute: Optional[OutputDistributeEnum]
     channels: Optional[List[StrictStr]]
-    properties: Optional[Dict[StrictStr, StrictStr]]
+    # instead of `Any` this should be something like `JSONSerializable`
+    properties: Optional[Dict[StrictStr, Any]]
     dynamic_properties: Optional[Path]
     expires: Optional[timedelta]
 
@@ -205,11 +205,38 @@ def _expand_job_values(
     return expanded_values
 
 
+class License(ModelConfigDefaults):
+    """A representation of a license."""
+
+    # We do not need to check that at least one value is set, as currently
+    # there are only these two values, no others. That means not setting any of
+    # them will not result in the creation of a `License` object.
+    # Once we have more fields, we need to add e.g. a root validator, see
+    # https://stackoverflow.com/questions/58958970
+
+    # XXX jugmac00 2022-08-03: add validator for spdx identifier
+    # XXX jugmac00 2022-08-04: add validator for path
+
+    spdx: Optional[StrictStr] = None
+    path: Optional[StrictStr] = None
+
+    @validator("path", always=True)
+    def disallow_setting_both_sources(
+        cls, path: str, values: Dict[str, str]
+    ) -> str:
+        if values.get("spdx") and path:
+            raise ValueError(
+                "You cannot set `spdx` and `path` at the same time."
+            )
+        return path
+
+
 class Config(ModelConfigDefaults):
     """A .launchpad.yaml configuration file."""
 
     pipeline: List[List[_Identifier]]
     jobs: Dict[StrictStr, List[Job]]
+    license: Optional[License]
 
     @pydantic.validator("pipeline", pre=True)
     def validate_pipeline(

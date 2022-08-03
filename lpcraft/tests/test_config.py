@@ -526,3 +526,71 @@ class TestConfig(TestCase):
             ],  # noqa: E501
             list(repositories[2].sources_list_lines()),
         )
+
+    def test_specify_license_via_spdx(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                license:
+                    spdx: "MIT"
+                """  # noqa: E501
+            )
+        )
+        config = Config.load(path)
+
+        # workaround necessary to please mypy
+        assert config.license is not None
+        self.assertEqual("MIT", config.license.spdx)
+
+    def test_specify_license_via_path(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                license:
+                    path: LICENSE.txt
+                """  # noqa: E501
+            )
+        )
+        config = Config.load(path)
+
+        # workaround necessary to please mypy
+        assert config.license is not None
+        self.assertEqual("LICENSE.txt", config.license.path)
+
+    def test_license_setting_both_sources_not_allowed(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                license:
+                    spdx: MIT
+                    path: LICENSE.txt
+                """  # noqa: E501
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "You cannot set `spdx` and `path` at the same time.",
+            Config.load,
+            path,
+        )

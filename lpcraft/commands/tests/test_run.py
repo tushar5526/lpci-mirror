@@ -2148,6 +2148,141 @@ class TestRun(RunBaseTestCase):
             file_contents,
         )
 
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_spdx_gets_written_to_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+            license:
+                spdx: MIT
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"license": {"spdx": "MIT", "path": None}},
+            json.loads((job_output / "properties").read_text()),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_path_gets_written_to_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+            license:
+                path: LICENSE.txt
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"license": {"path": "LICENSE.txt", "spdx": None}},
+            json.loads((job_output / "properties").read_text()),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_works_also_with_other_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+                    output:
+                        properties:
+                            foo: bar
+            license:
+                path: LICENSE.txt
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"foo": "bar", "license": {"path": "LICENSE.txt", "spdx": None}},
+            json.loads((job_output / "properties").read_text()),
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_config_file_not_under_project_directory(self):
@@ -3030,4 +3165,139 @@ class TestRunOne(RunBaseTestCase):
                 """  # noqa: E501
             ),
             file_contents,
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_spdx_gets_written_to_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+            license:
+                spdx: MIT
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one", "--output-directory", str(target_path), "build", "0"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"license": {"spdx": "MIT", "path": None}},
+            json.loads((job_output / "properties").read_text()),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_path_gets_written_to_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+            license:
+                path: LICENSE.txt
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one", "--output-directory", str(target_path), "build", "0"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"license": {"path": "LICENSE.txt", "spdx": None}},
+            json.loads((job_output / "properties").read_text()),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_license_field_works_also_with_other_properties(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    run: |
+                        true
+                    output:
+                        properties:
+                            foo: bar
+            license:
+                path: LICENSE.txt
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one", "--output-directory", str(target_path), "build", "0"
+        )
+
+        self.assertEqual(0, result.exit_code)
+        job_output = target_path / "build" / "0"
+        self.assertEqual(
+            {"foo": "bar", "license": {"path": "LICENSE.txt", "spdx": None}},
+            json.loads((job_output / "properties").read_text()),
         )

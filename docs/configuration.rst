@@ -33,6 +33,12 @@ Top-level configuration
      Mapping of job names (:ref:`identifiers <identifiers>`) to job
      definitions.
 
+``license`` (optional)
+     The :ref:`license <license-properties>` info for the given repository can
+     be configured either via an
+     `spdx identifier <https://spdx.org/licenses/>`_
+     or a relative path to the license file.
+
 Job definitions
 ---------------
 
@@ -178,3 +184,18 @@ More properties can be implemented on demand.
     which do not pass authentication checks. ``false`` does the opposite.
     By default APT decides whether a source is considered trusted. This third
     option cannot be set explicitly.
+
+
+.. _license-properties:
+
+License properties
+------------------
+
+Please note that either `spdx` or `path` is required.
+
+``spdx`` (optional)
+     A string representing a license,
+     see `spdx identifier <https://spdx.org/licenses/>`_.
+
+``path`` (optional)
+    A string with the relative path to the license file.

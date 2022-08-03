@@ -453,6 +453,17 @@ def _run_job(
                     remote_cwd=remote_cwd,
                     environment=environment,
                 )
+        if config.license:
+            if not job.output:
+                job.output = Output()
+                job.output.properties = dict()
+            values = config.license.dict()
+            # workaround necessary to please mypy
+            assert isinstance(job.output.properties, dict)
+            for key, value in values.items():
+                if "license" not in job.output.properties:
+                    job.output.properties["license"] = dict()
+                job.output.properties["license"][key] = value
 
         if job.output is not None and output is not None:
             target_path = output / job_name / str(job_index)
