@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.23 (unreleased)
+0.0.23 (2022-08-03)
 ===================
 
 - Rearrange output directory structure to improve support for matrix jobs
