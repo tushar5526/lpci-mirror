@@ -21,7 +21,7 @@ from jinja2 import BaseLoader, Environment
 from pluggy import PluginManager
 
 from lpcraft import env
-from lpcraft.config import Config, Job, Output, PackageRepository
+from lpcraft.config import Config, Input, Job, Output, PackageRepository
 from lpcraft.errors import CommandError
 from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.plugins import PLUGINS
@@ -114,6 +114,55 @@ def _resolve_symlinks(
         .split(b"\0")
     )
     return [PurePath(os.fsdecode(p)) for p in paths]
+
+
+def _copy_input_paths(
+    input: Input, remote_cwd: Path, instance: Executor, output_path: Path
+) -> None:
+    """Copy designated input artifacts into a job."""
+    source_parent_path = output_path / input.job_name
+    source_jobs = (
+        list(source_parent_path.iterdir())
+        if source_parent_path.exists()
+        else []
+    )
+    if not source_jobs:
+        raise CommandError(
+            f"Requested input from {input.job_name!r}, but that job was not "
+            f"previously executed or did not produce any output artifacts."
+        )
+    elif len(source_jobs) > 1:
+        raise CommandError(
+            f"Requested input from {input.job_name!r}, but more than one job "
+            f"with that name was previously executed and produced output "
+            f"artifacts."
+        )
+    source_path = source_jobs[0]
+
+    [target_path] = _resolve_symlinks(
+        instance, [remote_cwd / input.target_directory]
+    )
+    _check_relative_path(target_path, remote_cwd)
+    instance.execute_run(
+        ["mkdir", "-p", str(target_path / "files")], check=True
+    )
+
+    try:
+        for path in sorted((source_path / "files").iterdir()):
+            instance.push_file(
+                source=path,
+                # Path() here works around
+                # https://github.com/canonical/craft-providers/pull/135.
+                destination=Path(target_path / "files" / path.name),
+            )
+        instance.push_file(
+            source=source_path / "properties",
+            # Path() here works around
+            # https://github.com/canonical/craft-providers/pull/135.
+            destination=Path(target_path / "properties"),
+        )
+    except Exception as e:
+        raise CommandError(str(e), retcode=1)
 
 
 def _copy_output_paths(
@@ -442,6 +491,10 @@ def _run_job(
                 environment=environment,
                 secrets=secrets,
             )
+
+        if job.input is not None and output is not None:
+            _copy_input_paths(job.input, remote_cwd, instance, output)
+
         for cmd in (pre_run_command, run_command, post_run_command):
             if cmd:
                 _run_instance_command(

@@ -86,6 +86,9 @@ Job definitions
 ``output`` (optional)
     See the :ref:`output-properties` section below.
 
+``input`` (optional)
+    See the :ref:`input-properties` section below.
+
 ``matrix`` (optional)
     A list of mappings, each of which is a partial job definition.  The
     final list of concrete jobs to run for this job name is constructed by
@@ -144,6 +147,29 @@ Output properties
     <https://pydantic-docs.helpmanual.io/usage/types/#datetime-types>`_,
     restricted to non-negative timedeltas.
 
+.. _input-properties:
+
+Input properties
+----------------
+
+Input makes artifacts from previous pipeline stages available.  This only
+works if those artifacts were saved using the ``--output-directory`` option
+to ``lpcraft run``.
+
+``lpcraft`` copies artifact data to the ``files`` subdirectory of the
+designated target directory, and writes a ``properties`` file in the
+designated target directory with JSON-encoded properties of the copied
+artifacts.  (This mirrors the output file structure created by ``lpcraft run
+--output-directory``.)
+
+``job-name``
+    The name of a previously-executed job whose artifacts should be made
+    available.
+
+``target-directory``
+    A path, relative to the build tree of a project, identifying a directory
+    to which the artifacts of the chosen job will be copied; the directory
+    will be created if necessary.  Paths may not escape the build tree.
 
 .. _package-repositories:
 

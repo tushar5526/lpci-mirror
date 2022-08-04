@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path, PosixPath
 from textwrap import dedent
@@ -1407,6 +1408,374 @@ class TestRun(RunBaseTestCase):
         self.assertEqual(1, result.exit_code)
         [error] = result.errors
         self.assertIn("/target", str(error))
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_copies_input_paths(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            shutil.copy2(source, destination)
+
+        def fake_push_file(source: Path, destination: Path) -> None:
+            shutil.copy2(source, destination)
+
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+        launcher.return_value.push_file.side_effect = fake_push_file
+        config = dedent(
+            """
+            pipeline:
+                - build
+                - test
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    output:
+                        paths: [binary]
+
+                test:
+                    series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: artifacts
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("binary").write_bytes(b"binary")
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertEqual(0, result.exit_code)
+        build_job_output = target_path / "build" / "0"
+        artifacts_path = self.tmp_project_path / "artifacts"
+        self.assertEqual(
+            [
+                call(
+                    source=self.tmp_project_path / "binary",
+                    destination=build_job_output / "files" / "binary",
+                )
+            ],
+            launcher.return_value.pull_file.call_args_list,
+        )
+        self.assertEqual(
+            [
+                call(
+                    source=build_job_output / "files" / "binary",
+                    destination=artifacts_path / "files" / "binary",
+                ),
+                call(
+                    source=build_job_output / "properties",
+                    destination=artifacts_path / "properties",
+                ),
+            ],
+            launcher.return_value.push_file.call_args_list,
+        )
+        self.assertEqual(
+            ["files", "properties"],
+            sorted(path.name for path in artifacts_path.iterdir()),
+        )
+        self.assertEqual(
+            ["binary"],
+            sorted(path.name for path in (artifacts_path / "files").iterdir()),
+        )
+        self.assertEqual(
+            b"binary", (artifacts_path / "files" / "binary").read_bytes()
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_input_target_directory_not_previously_executed(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: artifacts
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError(
+                        "Requested input from 'build', but that job was not "
+                        "previously executed or did not produce any output "
+                        "artifacts.",
+                        retcode=1,
+                    )
+                ],
+            ),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_input_target_directory_multiple_jobs(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+                - test
+
+            jobs:
+                build:
+                    matrix:
+                        - series: bionic
+                        - series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    output:
+                        paths: [binary]
+
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: artifacts
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("binary").touch()
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError(
+                        "Requested input from 'build', but more than one job "
+                        "with that name was previously executed and produced "
+                        "output artifacts.",
+                        retcode=1,
+                    )
+                ],
+            ),
+        )
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_input_target_directory_escapes_directly(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+                - test
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    output:
+                        paths: [binary]
+
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: "../etc/secrets"
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("binary").touch()
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        # The exact error message differs between Python 3.8 and 3.9, so
+        # don't test it in detail, but make sure it includes the offending
+        # path.
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/etc/secrets", str(error))
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_input_target_directory_escapes_symlink(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+                - test
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    output:
+                        paths: [binary]
+
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: artifacts
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("binary").touch()
+        Path("artifacts").symlink_to("../secrets")
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        # The exact error message differs between Python 3.8 and 3.9, so
+        # don't test it in detail, but make sure it includes the offending
+        # path.
+        self.assertEqual(1, result.exit_code)
+        [error] = result.errors
+        self.assertIn("/secrets", str(error))
+
+    @patch("lpcraft.env.get_managed_environment_project_path")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_input_push_file_fails(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_get_project_path,
+    ):
+        target_path = Path(self.useFixture(TempDir()).path)
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = LocalExecuteRun(self.tmp_project_path)
+        launcher.return_value.execute_run = execute_run
+        launcher.return_value.push_file.side_effect = FileNotFoundError(
+            "File not found"
+        )
+        mock_get_project_path.return_value = self.tmp_project_path
+        config = dedent(
+            """
+            pipeline:
+                - build
+                - test
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: [amd64]
+                    run: "true"
+                    output:
+                        paths: [binary]
+
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: "true"
+                    input:
+                        job-name: build
+                        target-directory: artifacts
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        Path("binary").touch()
+
+        result = self.run_command(
+            "run", "--output-directory", str(target_path)
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1, errors=[CommandError("File not found", retcode=1)]
+            ),
+        )
 
     @responses.activate
     @patch("lpcraft.commands.run.get_provider")

@@ -5,7 +5,8 @@ Version history
 0.0.25 (unreleased)
 ===================
 
-- Nothing yet.
+- Add input properties, allowing jobs to use artifacts built by previous
+  pipeline stages.
 
 0.0.24 (2022-08-05)
 ===================

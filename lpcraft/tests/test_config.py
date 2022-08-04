@@ -313,6 +313,41 @@ class TestConfig(TestCase):
             path,
         )
 
+    def test_input(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - build
+                    - test
+
+                jobs:
+                    build:
+                        series: focal
+                        architectures: [amd64]
+                        packages: [make]
+                        run: make
+                        output:
+                            paths: [binary]
+
+                    test:
+                        series: focal
+                        architectures: [amd64]
+                        run: artifacts/binary
+                        input:
+                            job-name: build
+                            target-directory: artifacts
+                """
+            )
+        )
+        config = Config.load(path)
+        self.assertThat(
+            config.jobs["test"][0].input,
+            MatchesStructure.byEquality(
+                job_name="build", target_directory="artifacts"
+            ),
+        )
+
     def test_load_snaps(self):
         path = self.create_config(
             dedent(

@@ -60,6 +60,13 @@ class Output(ModelConfigDefaults):
         return v
 
 
+class Input(ModelConfigDefaults):
+    """Job input properties."""
+
+    job_name: StrictStr
+    target_directory: StrictStr
+
+
 def _validate_plugin_config(
     plugin: Type[BasePlugin],
     values: Dict[StrictStr, Any],
@@ -157,6 +164,7 @@ class Job(ModelConfigDefaults):
     run_after: Optional[StrictStr]
     environment: Optional[Dict[str, Optional[str]]]
     output: Optional[Output]
+    input: Optional[Input]
     snaps: Optional[List[StrictStr]]
     packages: Optional[List[StrictStr]]
     package_repositories: Optional[List[PackageRepository]]
