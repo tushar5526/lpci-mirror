@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.24 (unreleased)
+0.0.24 (2022-08-05)
 ===================
 
 - Enable adding license information via the `.launchpad.yaml` configuration
