@@ -143,17 +143,30 @@ def _copy_input_paths(
         instance, [remote_cwd / input.target_directory]
     )
     _check_relative_path(target_path, remote_cwd)
-    instance.execute_run(
-        ["mkdir", "-p", str(target_path / "files")], check=True
-    )
+
+    paths = []
+    for dirpath, _, filenames in os.walk(source_path / "files"):
+        paths.extend(
+            [
+                Path(dirpath).relative_to(source_path / "files") / filename
+                for filename in filenames
+            ]
+        )
+    paths = sorted(paths)
+    parent_paths = sorted(set(path.parent for path in paths) | {Path(".")})
 
     try:
-        for path in sorted((source_path / "files").iterdir()):
+        instance.execute_run(
+            ["mkdir", "-p"]
+            + [str(target_path / "files" / path) for path in parent_paths],
+            check=True,
+        )
+        for path in paths:
             instance.push_file(
-                source=path,
+                source=source_path / "files" / path,
                 # Path() here works around
                 # https://github.com/canonical/craft-providers/pull/135.
-                destination=Path(target_path / "files" / path.name),
+                destination=Path(target_path / "files" / path),
             )
         instance.push_file(
             source=source_path / "properties",

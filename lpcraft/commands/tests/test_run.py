@@ -1445,7 +1445,9 @@ class TestRun(RunBaseTestCase):
                     architectures: [amd64]
                     run: "true"
                     output:
-                        paths: [binary]
+                        paths:
+                            - binary
+                            - dist/*
 
                 test:
                     series: focal
@@ -1458,6 +1460,8 @@ class TestRun(RunBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
         Path("binary").write_bytes(b"binary")
+        Path("dist").mkdir()
+        Path("dist/empty").touch()
         result = self.run_command(
             "run", "--output-directory", str(target_path)
         )
@@ -1470,7 +1474,11 @@ class TestRun(RunBaseTestCase):
                 call(
                     source=self.tmp_project_path / "binary",
                     destination=build_job_output / "files" / "binary",
-                )
+                ),
+                call(
+                    source=self.tmp_project_path / "dist" / "empty",
+                    destination=build_job_output / "files" / "dist" / "empty",
+                ),
             ],
             launcher.return_value.pull_file.call_args_list,
         )
@@ -1479,6 +1487,10 @@ class TestRun(RunBaseTestCase):
                 call(
                     source=build_job_output / "files" / "binary",
                     destination=artifacts_path / "files" / "binary",
+                ),
+                call(
+                    source=build_job_output / "files" / "dist" / "empty",
+                    destination=artifacts_path / "files" / "dist" / "empty",
                 ),
                 call(
                     source=build_job_output / "properties",
@@ -1492,11 +1504,21 @@ class TestRun(RunBaseTestCase):
             sorted(path.name for path in artifacts_path.iterdir()),
         )
         self.assertEqual(
-            ["binary"],
+            ["binary", "dist"],
             sorted(path.name for path in (artifacts_path / "files").iterdir()),
         )
         self.assertEqual(
+            ["empty"],
+            sorted(
+                path.name
+                for path in (artifacts_path / "files" / "dist").iterdir()
+            ),
+        )
+        self.assertEqual(
             b"binary", (artifacts_path / "files" / "binary").read_bytes()
+        )
+        self.assertEqual(
+            b"", (artifacts_path / "files" / "dist" / "empty").read_bytes()
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
