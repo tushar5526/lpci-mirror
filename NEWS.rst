@@ -16,6 +16,9 @@ Version history
 - Fix handling of ``license`` in the case where a job has an ``output`` key
   but no ``properties`` key under that.
 
+- Deprecate ``--apt-replace-repositories``, introduce
+  ``--replace-package-repositories``.
+
 0.0.24 (2022-08-05)
 ===================
 

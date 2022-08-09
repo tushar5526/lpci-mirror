@@ -290,12 +290,12 @@ def _install_apt_packages(
     instance: lxd.LXDInstance,
     host_architecture: str,
     remote_cwd: Path,
-    apt_replacement_repositories: Optional[List[str]],
+    replace_package_repositories: Optional[List[str]],
     package_repositories: List[str],
     environment: Optional[Dict[str, Optional[str]]],
     secrets: Optional[Dict[str, str]],
 ) -> None:
-    if apt_replacement_repositories or package_repositories:
+    if replace_package_repositories or package_repositories:
         sources_list_path = "/etc/apt/sources.list"
 
         with NamedTemporaryFile(mode="w+") as tmpfile:
@@ -308,8 +308,8 @@ def _install_apt_packages(
                 raise CommandError(str(e), retcode=1)
             sources = tmpfile.read()
 
-        if apt_replacement_repositories:
-            sources = "\n".join(apt_replacement_repositories) + "\n"
+        if replace_package_repositories:
+            sources = "\n".join(replace_package_repositories) + "\n"
         if package_repositories:
             sources += "\n" + "\n".join(package_repositories)
             if secrets:
@@ -405,7 +405,7 @@ def _run_job(
     job_index: int,
     provider: Provider,
     output: Optional[Path],
-    apt_replacement_repositories: Optional[List[str]],
+    replace_package_repositories: Optional[List[str]],
     package_repositories: List[str],
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
@@ -498,7 +498,7 @@ def _run_job(
                 instance=instance,
                 host_architecture=host_architecture,
                 remote_cwd=remote_cwd,
-                apt_replacement_repositories=apt_replacement_repositories,
+                replace_package_repositories=replace_package_repositories,
                 package_repositories=package_repositories,
                 environment=environment,
                 secrets=secrets,
@@ -588,6 +588,13 @@ class RunCommand(BaseCommand):
         parser.add_argument(
             "--apt-replace-repositories",
             action="append",
+            default=[],
+            help="(deprecated) Overwrite /etc/apt/sources.list.",
+        )
+        parser.add_argument(
+            "--replace-package-repositories",
+            action="append",
+            default=[],
             help="Overwrite /etc/apt/sources.list.",
         )
         parser.add_argument(
@@ -618,6 +625,11 @@ class RunCommand(BaseCommand):
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
+        if getattr(args, "apt_replace_repositories"):
+            emit.message(
+                "Warning: `--apt-replace-repositories` is deprecated - "
+                "Please use `--replace-package-repositories instead"
+            )
         config = Config.load(args.config)
 
         provider = get_provider()
@@ -657,14 +669,11 @@ class RunCommand(BaseCommand):
                                 job_index,
                                 provider,
                                 args.output_directory,
-                                apt_replacement_repositories=(
+                                replace_package_repositories=(
                                     args.apt_replace_repositories
+                                    + args.replace_package_repositories
                                 ),
-<<<<<<< HEAD
                                 package_repositories=package_repositories,
-=======
-                                package_repositories=package_repositories,  # noqa: E501
->>>>>>> ac7213d (Rename additional_apt_repositories into package_repositories)
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
                                 secrets=secrets,
@@ -737,6 +746,13 @@ class RunOneCommand(BaseCommand):
         parser.add_argument(
             "--apt-replace-repositories",
             action="append",
+            default=[],
+            help="(deprecated) Overwrite /etc/apt/sources.list.",
+        )
+        parser.add_argument(
+            "--replace-package-repositories",
+            action="append",
+            default=[],
             help="Overwrite /etc/apt/sources.list.",
         )
         parser.add_argument(
@@ -767,6 +783,11 @@ class RunOneCommand(BaseCommand):
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
+        if getattr(args, "apt_replace_repositories"):
+            emit.message(
+                "Warning: `--apt-replace-repositories` is deprecated - "
+                "Please use `--replace-package-repositories instead"
+            )
         config = Config.load(args.config)
 
         jobs = config.jobs.get(args.job, [])
@@ -800,7 +821,10 @@ class RunOneCommand(BaseCommand):
                 args.index,
                 provider,
                 args.output_directory,
-                apt_replacement_repositories=args.apt_replace_repositories,
+                replace_package_repositories=(
+                    args.apt_replace_repositories
+                    + args.replace_package_repositories
+                ),
                 package_repositories=package_repositories,
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
