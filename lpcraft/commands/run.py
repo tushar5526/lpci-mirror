@@ -522,6 +522,8 @@ def _run_job(
         if config.license:
             if not job.output:
                 job.output = Output()
+            # XXX cjwatson 2022-08-09: Consider adding a default value for
+            # `Output.properties` instead.
             if job.output.properties is None:
                 job.output.properties = dict()
             values = config.license.dict()
