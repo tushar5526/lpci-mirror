@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.25 (unreleased)
+0.0.25 (2022-08-09)
 ===================
 
 - Add input properties, allowing jobs to use artifacts built by previous
