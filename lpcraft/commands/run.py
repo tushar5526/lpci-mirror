@@ -660,7 +660,11 @@ class RunCommand(BaseCommand):
                                 apt_replacement_repositories=(
                                     args.apt_replace_repositories
                                 ),
+<<<<<<< HEAD
                                 package_repositories=package_repositories,
+=======
+                                package_repositories=package_repositories,  # noqa: E501
+>>>>>>> ac7213d (Rename additional_apt_repositories into package_repositories)
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
                                 secrets=secrets,
