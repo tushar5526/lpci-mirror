@@ -2446,7 +2446,7 @@ class TestRun(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_run_with_additional_apt_repositories_with_secrets(
+    def test_provide_package_repositories_via_config_with_secrets(
         self, mock_get_host_architecture, mock_get_provider
     ):
         existing_repositories = [
@@ -2589,6 +2589,72 @@ class TestRun(RunBaseTestCase):
             deb http://archive.ubuntu.com/ubuntu/ focal main restricted
             deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
             one more
+            """  # noqa: E501
+            ),
+            file_contents,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_provide_package_repositories_via_cli_and_configuration(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        existing_repositories = [
+            "deb http://archive.ubuntu.com/ubuntu/ focal main restricted",
+            "deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted",
+        ]
+
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.write_text("\n".join(existing_repositories))
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+                    package-repositories:
+                        - type: apt
+                          formats: [deb]
+                          components: [main, universe]
+                          suites: [focal]
+                          url: https://repo-via-configuration
+            """  # noqa: E501
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run",
+            "--package-repository",
+            "repo via cli",
+        )
+
+        self.assertEqual(0, result.exit_code)
+
+        mock_info = launcher.return_value.push_file_io.call_args_list
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[0][1]["destination"]
+        )
+
+        file_contents = mock_info[0][1]["content"].read().decode()
+        self.assertEqual(
+            dedent(
+                """\
+            deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+            repo via cli
+            deb https://repo-via-configuration focal main universe
             """  # noqa: E501
             ),
             file_contents,
@@ -3564,7 +3630,7 @@ class TestRunOne(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_run_with_additional_apt_repositories_with_secrets(
+    def test_provide_package_repositories_via_config_with_secrets(
         self, mock_get_host_architecture, mock_get_provider
     ):
         existing_repositories = [
@@ -3661,7 +3727,7 @@ class TestRunOne(RunBaseTestCase):
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_run_provide_package_repositories_via_clix(
+    def test_run_provide_package_repositories_via_cli(
         self, mock_get_host_architecture, mock_get_provider
     ):
         existing_repositories = [
@@ -3711,6 +3777,70 @@ class TestRunOne(RunBaseTestCase):
             deb http://archive.ubuntu.com/ubuntu/ focal main restricted
             deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
             one more
+            """  # noqa: E501
+            ),
+            file_contents,
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_provide_package_repositories_via_cli_and_configuration(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        existing_repositories = [
+            "deb http://archive.ubuntu.com/ubuntu/ focal main restricted",
+            "deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted",
+        ]
+
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.write_text("\n".join(existing_repositories))
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [git]
+                    package-repositories:
+                        - type: apt
+                          formats: [deb]
+                          components: [main, universe]
+                          suites: [focal]
+                          url: https://repo-via-configuration
+            """  # noqa: E501
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command(
+            "run-one", "--package-repository", "repo via cli", "test", "0"
+        )
+
+        self.assertEqual(0, result.exit_code)
+
+        mock_info = launcher.return_value.push_file_io.call_args_list
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[0][1]["destination"]
+        )
+
+        file_contents = mock_info[0][1]["content"].read().decode()
+        self.assertEqual(
+            dedent(
+                """\
+            deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+            repo via cli
+            deb https://repo-via-configuration focal main universe
             """  # noqa: E501
             ),
             file_contents,

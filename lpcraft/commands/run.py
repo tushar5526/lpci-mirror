@@ -291,11 +291,11 @@ def _install_apt_packages(
     host_architecture: str,
     remote_cwd: Path,
     apt_replacement_repositories: Optional[List[str]],
-    additional_apt_repositories: List[str],
+    package_repositories: List[str],
     environment: Optional[Dict[str, Optional[str]]],
     secrets: Optional[Dict[str, str]],
 ) -> None:
-    if apt_replacement_repositories or additional_apt_repositories:
+    if apt_replacement_repositories or package_repositories:
         sources_list_path = "/etc/apt/sources.list"
 
         with NamedTemporaryFile(mode="w+") as tmpfile:
@@ -310,8 +310,8 @@ def _install_apt_packages(
 
         if apt_replacement_repositories:
             sources = "\n".join(apt_replacement_repositories) + "\n"
-        if additional_apt_repositories:
-            sources += "\n" + "\n".join(additional_apt_repositories)
+        if package_repositories:
+            sources += "\n" + "\n".join(package_repositories)
             if secrets:
                 template = Environment(loader=BaseLoader()).from_string(
                     sources
@@ -406,7 +406,7 @@ def _run_job(
     provider: Provider,
     output: Optional[Path],
     apt_replacement_repositories: Optional[List[str]],
-    additional_apt_repositories: List[str],
+    package_repositories: List[str],
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
     secrets: Optional[Dict[str, str]] = None,
@@ -499,7 +499,7 @@ def _run_job(
                 host_architecture=host_architecture,
                 remote_cwd=remote_cwd,
                 apt_replacement_repositories=apt_replacement_repositories,
-                additional_apt_repositories=additional_apt_repositories,
+                package_repositories=package_repositories,
                 environment=environment,
                 secrets=secrets,
             )
@@ -644,11 +644,13 @@ class RunCommand(BaseCommand):
                             launched_instances.append(
                                 _get_job_instance_name(provider, job)
                             )
-                            package_repositories = []
+                            # we prefer package repositories via CLI more
+                            # so they need to come first
+                            # also see sources.list(5)
+                            package_repositories = args.package_repositories
                             for group in job.package_repositories:
                                 for repository in group.sources_list_lines():
                                     package_repositories.append(repository)
-                            package_repositories += args.package_repositories
                             _run_job(
                                 config,
                                 job_name,
@@ -658,7 +660,7 @@ class RunCommand(BaseCommand):
                                 apt_replacement_repositories=(
                                     args.apt_replace_repositories
                                 ),
-                                additional_apt_repositories=package_repositories,  # noqa: E501
+                                package_repositories=package_repositories,
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
                                 secrets=secrets,
@@ -780,11 +782,13 @@ class RunOneCommand(BaseCommand):
             with open(args.secrets_file) as f:
                 content = f.read()
             secrets = yaml.safe_load(content)
-        package_repositories = []
+        # we prefer package repositories via CLI more
+        # so they need to come first
+        # also see sources.list(5)
+        package_repositories = args.package_repositories
         for group in job.package_repositories:
             for repository in group.sources_list_lines():
                 package_repositories.append(repository)
-        package_repositories += args.package_repositories
         try:
             _run_job(
                 config,
@@ -793,7 +797,7 @@ class RunOneCommand(BaseCommand):
                 provider,
                 args.output_directory,
                 apt_replacement_repositories=args.apt_replace_repositories,
-                additional_apt_repositories=package_repositories,
+                package_repositories=package_repositories,
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
                 secrets=secrets,
