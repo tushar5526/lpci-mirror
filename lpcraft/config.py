@@ -167,7 +167,7 @@ class Job(ModelConfigDefaults):
     input: Optional[Input]
     snaps: Optional[List[StrictStr]]
     packages: Optional[List[StrictStr]]
-    package_repositories: Optional[List[PackageRepository]]
+    package_repositories: List[PackageRepository] = []
     plugin: Optional[StrictStr]
     plugin_config: Optional[BaseConfig]
 

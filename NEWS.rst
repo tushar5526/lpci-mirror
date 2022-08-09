@@ -5,7 +5,7 @@ Version history
 0.0.26 (unreleased)
 ===================
 
-- Nothing yet.
+- Enable providing additional repositories via CLI.
 
 0.0.25 (2022-08-09)
 ===================

@@ -24,6 +24,10 @@ lpcraft run optional arguments
 
   This option is repeatable.
 
+- ``--package-repository`` (provide an additional repository), e.g.
+  ``lpcraft run --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
+  This option is repeatable.
+
 - ``--plugin-setting``, e.g.
   ``lpcraft run --plugin-setting="foo=bar"``
 
@@ -61,6 +65,10 @@ lpcraft run-one optional arguments
 - ``--apt-replace-repositories SOURCE_LINE``, e.g.
   ``lpcraft run-one --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
 
+  This option is repeatable.
+
+- ``--package-repository`` (provide an additional repository), e.g.
+  ``lpcraft run-one --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
   This option is repeatable.
 
 - ``--plugin-setting``, e.g.

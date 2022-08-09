@@ -21,7 +21,7 @@ from jinja2 import BaseLoader, Environment
 from pluggy import PluginManager
 
 from lpcraft import env
-from lpcraft.config import Config, Input, Job, Output, PackageRepository
+from lpcraft.config import Config, Input, Job, Output
 from lpcraft.errors import CommandError
 from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.plugins import PLUGINS
@@ -291,7 +291,7 @@ def _install_apt_packages(
     host_architecture: str,
     remote_cwd: Path,
     apt_replacement_repositories: Optional[List[str]],
-    additional_apt_repositories: Optional[List[PackageRepository]],
+    additional_apt_repositories: List[str],
     environment: Optional[Dict[str, Optional[str]]],
     secrets: Optional[Dict[str, str]],
 ) -> None:
@@ -311,8 +311,7 @@ def _install_apt_packages(
         if apt_replacement_repositories:
             sources = "\n".join(apt_replacement_repositories) + "\n"
         if additional_apt_repositories:
-            for repository in additional_apt_repositories:
-                sources += "\n" + "\n".join(repository.sources_list_lines())
+            sources += "\n" + "\n".join(additional_apt_repositories)
             if secrets:
                 template = Environment(loader=BaseLoader()).from_string(
                     sources
@@ -406,8 +405,8 @@ def _run_job(
     job_index: int,
     provider: Provider,
     output: Optional[Path],
-    apt_replacement_repositories: Optional[List[str]] = None,
-    additional_apt_repositories: Optional[List[PackageRepository]] = None,
+    apt_replacement_repositories: Optional[List[str]],
+    additional_apt_repositories: List[str],
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
     secrets: Optional[Dict[str, str]] = None,
@@ -609,6 +608,13 @@ class RunCommand(BaseCommand):
             type=Path,
             help="Pass in a YAML-based configuration file for secrets.",
         )
+        parser.add_argument(
+            "--package-repository",
+            action="append",
+            default=[],
+            dest="package_repositories",
+            help="Provide an additional package repository.",
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -638,6 +644,11 @@ class RunCommand(BaseCommand):
                             launched_instances.append(
                                 _get_job_instance_name(provider, job)
                             )
+                            package_repositories = []
+                            for group in job.package_repositories:
+                                for repository in group.sources_list_lines():
+                                    package_repositories.append(repository)
+                            package_repositories += args.package_repositories
                             _run_job(
                                 config,
                                 job_name,
@@ -647,7 +658,7 @@ class RunCommand(BaseCommand):
                                 apt_replacement_repositories=(
                                     args.apt_replace_repositories
                                 ),
-                                additional_apt_repositories=job.package_repositories,  # noqa: E501
+                                additional_apt_repositories=package_repositories,  # noqa: E501
                                 env_from_cli=args.set_env,
                                 plugin_settings=args.plugin_setting,
                                 secrets=secrets,
@@ -740,6 +751,13 @@ class RunOneCommand(BaseCommand):
             type=Path,
             help="Pass in a YAML-based configuration file for secrets.",
         )
+        parser.add_argument(
+            "--package-repository",
+            action="append",
+            default=[],
+            dest="package_repositories",
+            help="Provide an additional package repository.",
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -762,6 +780,11 @@ class RunOneCommand(BaseCommand):
             with open(args.secrets_file) as f:
                 content = f.read()
             secrets = yaml.safe_load(content)
+        package_repositories = []
+        for group in job.package_repositories:
+            for repository in group.sources_list_lines():
+                package_repositories.append(repository)
+        package_repositories += args.package_repositories
         try:
             _run_job(
                 config,
@@ -770,7 +793,7 @@ class RunOneCommand(BaseCommand):
                 provider,
                 args.output_directory,
                 apt_replacement_repositories=args.apt_replace_repositories,
-                additional_apt_repositories=job.package_repositories,
+                additional_apt_repositories=package_repositories,
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
                 secrets=secrets,
