@@ -20,14 +20,14 @@ lpcraft run optional arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``--apt-replace-repositories SOURCE_LINE``, e.g.
-  ``lpcraft run --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``.
-  Please note that the option is repeatable.
+  ``lpcraft run --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
 
-- ``--set-env KEY=VALUE``, e.g.
-  ``lpcraft run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
+  This option is repeatable.
 
 - ``--plugin-setting``, e.g.
   ``lpcraft run --plugin-setting="foo=bar"``
+
+  This option is repeatable.
 
 - ``--secrets``, e.g.
   ``lpcraft run --secrets="<path-to-configuration-file>"``
@@ -39,6 +39,10 @@ lpcraft run optional arguments
     key: secret
     another_key: another_secret
 
+- ``--set-env KEY=VALUE``, e.g.
+  ``lpcraft run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
+
+  This option is repeatable.
 
 lpcraft run-one
 ---------------
@@ -55,17 +59,17 @@ lpcraft run-one optional arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``--apt-replace-repositories SOURCE_LINE``, e.g.
-  ``lpcraft run-one --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``.
-  Please note that the option is repeatable.
+  ``lpcraft run-one --apt-replace-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
 
-- ``--set-env KEY=VALUE``, e.g.
-  ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``.
+  This option is repeatable.
 
 - ``--plugin-setting``, e.g.
-  ``lpcraft run-one --plugin-setting="foo=bar" test 0``.
+  ``lpcraft run-one --plugin-setting="foo=bar" test 0``
+
+  This option is repeatable.
 
 - ``--secrets``, e.g.
-  ``lpcraft run-one --secrets="<path-to-configuration-file>" test 0``.
+  ``lpcraft run-one --secrets="<path-to-configuration-file>" test 0``
 
   The configuration file should look like...
 
@@ -73,3 +77,8 @@ lpcraft run-one optional arguments
 
     key: secret
     another_key: another_secret
+
+- ``--set-env KEY=VALUE``, e.g.
+  ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``
+
+  This option is repeatable.
