@@ -522,6 +522,7 @@ def _run_job(
         if config.license:
             if not job.output:
                 job.output = Output()
+            if job.output.properties is None:
                 job.output.properties = dict()
             values = config.license.dict()
             # workaround necessary to please mypy

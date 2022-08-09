@@ -8,6 +8,9 @@ Version history
 - Add input properties, allowing jobs to use artifacts built by previous
   pipeline stages.
 
+- Fix handling of ``license`` in the case where a job has an ``output`` key
+  but no ``properties`` key under that.
+
 0.0.24 (2022-08-05)
 ===================
 
