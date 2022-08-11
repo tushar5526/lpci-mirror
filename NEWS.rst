@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.26 (unreleased)
+0.0.26 (2022-08-12)
 ===================
 
 - Enable providing additional repositories via CLI.
