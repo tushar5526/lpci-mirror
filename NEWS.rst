@@ -5,7 +5,7 @@ Version history
 0.0.27 (unreleased)
 ===================
 
-- Nothing yet.
+- Improve exception message for handling input when there are multiple jobs.
 
 0.0.26 (2022-08-12)
 ===================

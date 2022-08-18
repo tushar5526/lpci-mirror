@@ -135,7 +135,7 @@ def _copy_input_paths(
         raise CommandError(
             f"Requested input from {input.job_name!r}, but more than one job "
             f"with that name was previously executed and produced output "
-            f"artifacts."
+            f"artifacts in the following paths: {source_jobs!r}."
         )
     source_path = source_jobs[0]
 

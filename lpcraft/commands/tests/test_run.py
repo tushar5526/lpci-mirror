@@ -1621,19 +1621,12 @@ class TestRun(RunBaseTestCase):
             "run", "--output-directory", str(target_path)
         )
 
-        self.assertThat(
-            result,
-            MatchesStructure.byEquality(
-                exit_code=1,
-                errors=[
-                    CommandError(
-                        "Requested input from 'build', but more than one job "
-                        "with that name was previously executed and produced "
-                        "output artifacts.",
-                        retcode=1,
-                    )
-                ],
-            ),
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            r"Requested input from 'build', but more than one job with that "
+            r"name was previously executed and produced output artifacts in "
+            r"the following paths: \[PosixPath\('.*'\), PosixPath\('.*'\)\]\.",
         )
 
     @patch("lpcraft.env.get_managed_environment_project_path")
