@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.28 (unreleased)
+0.0.28 (2022-08-19)
 ===================
 
 - Upgrade dependencies to their latest versions, most notably upgrading
