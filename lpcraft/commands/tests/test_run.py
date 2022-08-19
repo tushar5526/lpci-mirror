@@ -4,7 +4,6 @@
 import io
 import json
 import os
-import re
 import shutil
 import subprocess
 from pathlib import Path, PosixPath
@@ -2030,9 +2029,10 @@ class TestRun(RunBaseTestCase):
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
     @patch("sys.stderr", new_callable=io.StringIO)
-    def test_normal(
+    def test_default_verbosity(
         self, mock_stderr, mock_get_host_architecture, mock_get_provider
     ):
+        # default verbosity corresponds to the `BRIEF` mode
         def execute_run(
             command: List[str], **kwargs: Any
         ) -> "subprocess.CompletedProcess[AnyStr]":
@@ -2059,21 +2059,14 @@ class TestRun(RunBaseTestCase):
 
         result = self.run_command("run")
         self.assertEqual(0, result.exit_code)
-        stderr_lines = [
-            re.sub(
-                r"^(?P<date>.+?) (?P<time>.+?) (?P<text>.*?) *$",
-                r"\g<text>",
-                line,
+        stderr_lines = mock_stderr.getvalue()
+
+        self.assertTrue(
+            stderr_lines.endswith(
+                "Running "
+                "['bash', '--noprofile', '--norc', '-ec', 'echo test']\n"
+                ":: test\n"
             )
-            for line in mock_stderr.getvalue().splitlines()
-        ]
-        self.assertEqual(
-            [
-                "Running ['bash', '--noprofile', '--norc', '-ec', "
-                "'echo test']",
-                ":: test",
-            ],
-            stderr_lines[-2:],
         )
 
     @patch("lpcraft.commands.run.get_provider")

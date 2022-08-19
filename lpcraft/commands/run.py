@@ -378,7 +378,7 @@ def _run_instance_command(
     full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", command]
     emit.progress("Running command for the job...")
     original_mode = emit.get_mode()
-    if original_mode == EmitterMode.NORMAL:
+    if original_mode == EmitterMode.BRIEF:
         emit.set_mode(EmitterMode.VERBOSE)
     with emit.open_stream(f"Running {full_run_cmd}") as stream:
         proc = instance.execute_run(
@@ -388,7 +388,7 @@ def _run_instance_command(
             stdout=stream,
             stderr=stream,
         )
-    if original_mode == EmitterMode.NORMAL:
+    if original_mode == EmitterMode.BRIEF:
         emit.set_mode(original_mode)
     if proc.returncode != 0:
         raise CommandError(

@@ -50,7 +50,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
-    emit.init(EmitterMode.NORMAL, "lpcraft", f"Starting {lpcraft_version}")
+    emit.init(EmitterMode.BRIEF, "lpcraft", f"Starting {lpcraft_version}")
     command_groups = [CommandGroup("Basic", _basic_commands)]
     summary = "Run Launchpad CI jobs."
     extra_global_args = [

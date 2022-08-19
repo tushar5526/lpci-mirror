@@ -22,7 +22,7 @@ class TestMain(TestCase):
 
         self.assertEqual(0, ret)
         mock_emit.init.assert_called_once_with(
-            EmitterMode.NORMAL, "lpcraft", f"Starting {lpcraft_version}"
+            EmitterMode.BRIEF, "lpcraft", f"Starting {lpcraft_version}"
         )
         mock_emit.message.assert_called_once_with(lpcraft_version)
         mock_emit.ended_ok.assert_called_once_with()

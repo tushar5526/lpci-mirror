@@ -5,7 +5,8 @@ Version history
 0.0.28 (unreleased)
 ===================
 
-- Nothing yet.
+- Upgrade dependencies to their latest versions, most notably upgrading
+  ``craft-cli`` from version `0.6.0` to `1.2.0`.
 
 0.0.27 (2022-08-19)
 ===================
