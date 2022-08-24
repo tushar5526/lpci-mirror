@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.29 (unreleased)
+0.0.29 (2022-08-24)
 ===================
 
 - Fix `lpcraft run --clean` when more than one job is run for the same series
