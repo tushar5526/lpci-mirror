@@ -2113,46 +2113,20 @@ class TestRun(RunBaseTestCase):
         expected_instance_names = self.get_instance_names(
             provider, ("focal", "bionic")
         )
-        mock_clean_project_environments.assert_called_with(
-            project_name=self.tmp_project_path.name,
-            project_path=self.tmp_project_path,
-            instances=expected_instance_names,
-        )
-
-    @patch("lpcraft.commands.run.get_provider")
-    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    @patch("lpcraft.providers._lxd.LXDProvider.clean_project_environments")
-    def test_clean_flag_cleans_up_even_when_there_are_errors(
-        self,
-        mock_clean_project_environments,
-        mock_get_host_architecture,
-        mock_get_provider,
-    ):
-        mock_get_provider.return_value = makeLXDProvider()
-        # There are no jobs defined. So there will be an error.
-        config = dedent(
-            """
-            pipeline:
-                - test
-
-            jobs: {}
-            """
-        )
-        Path(".launchpad.yaml").write_text(config)
-
-        result = self.run_command("run", "--clean")
-
-        self.assertThat(
-            result,
-            MatchesStructure.byEquality(
-                exit_code=1,
-                errors=[CommandError("No job definition for 'test'")],
-            ),
-        )
-        mock_clean_project_environments.assert_called_with(
-            project_name=self.tmp_project_path.name,
-            project_path=self.tmp_project_path,
-            instances=[],
+        self.assertEqual(
+            mock_clean_project_environments.call_args_list,
+            [
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[0]],
+                ),
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[1]],
+                ),
+            ],
         )
 
     @patch("lpcraft.commands.run._run_job")
@@ -2216,10 +2190,25 @@ class TestRun(RunBaseTestCase):
         expected_instance_names = self.get_instance_names(
             provider, ("focal", "bionic", "jammy")
         )
-        mock_clean_project_environments.assert_called_with(
-            project_name=self.tmp_project_path.name,
-            project_path=self.tmp_project_path,
-            instances=expected_instance_names,
+        self.assertEqual(
+            mock_clean_project_environments.call_args_list,
+            [
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[0]],
+                ),
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[1]],
+                ),
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[2]],
+                ),
+            ],
         )
 
     @patch("lpcraft.commands.run._run_job")
@@ -2269,10 +2258,20 @@ class TestRun(RunBaseTestCase):
             provider,
             ("focal", "bionic"),
         )
-        mock_clean_project_environments.assert_called_with(
-            project_name=self.tmp_project_path.name,
-            project_path=self.tmp_project_path,
-            instances=expected_instance_names,
+        self.assertEqual(
+            mock_clean_project_environments.call_args_list,
+            [
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[0]],
+                ),
+                call(
+                    project_name=self.tmp_project_path.name,
+                    project_path=self.tmp_project_path,
+                    instances=[expected_instance_names[1]],
+                ),
+            ],
         )
 
     @patch("lpcraft.commands.run.get_provider")

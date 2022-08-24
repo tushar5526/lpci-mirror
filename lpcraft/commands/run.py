@@ -634,69 +634,66 @@ class RunCommand(BaseCommand):
 
         provider = get_provider()
         provider.ensure_provider_is_available()
-        launched_instances = []
 
         secrets = {}
         if args.secrets_file:
             with open(args.secrets_file) as f:
                 content = f.read()
             secrets = yaml.safe_load(content)
+        for stage in config.pipeline:
+            stage_failed = False
+            for job_name in stage:
+                try:
+                    jobs = config.jobs.get(job_name, [])
+                    if not jobs:
+                        raise CommandError(
+                            f"No job definition for {job_name!r}"
+                        )
+                    for job_index, job in enumerate(jobs):
+                        # we prefer package repositories via CLI more
+                        # so they need to come first
+                        # also see sources.list(5)
+                        package_repositories = args.package_repositories
+                        for group in job.package_repositories:
+                            for repository in group.sources_list_lines():
+                                package_repositories.append(repository)
+                        _run_job(
+                            config,
+                            job_name,
+                            job_index,
+                            provider,
+                            args.output_directory,
+                            replace_package_repositories=(
+                                args.apt_replace_repositories
+                                + args.replace_package_repositories
+                            ),
+                            package_repositories=package_repositories,
+                            env_from_cli=args.set_env,
+                            plugin_settings=args.plugin_setting,
+                            secrets=secrets,
+                        )
 
-        try:
-            for stage in config.pipeline:
-                stage_failed = False
-                for job_name in stage:
-                    try:
-                        jobs = config.jobs.get(job_name, [])
-                        if not jobs:
-                            raise CommandError(
-                                f"No job definition for {job_name!r}"
-                            )
-                        for job_index, job in enumerate(jobs):
-                            launched_instances.append(
-                                _get_job_instance_name(provider, job)
-                            )
-                            # we prefer package repositories via CLI more
-                            # so they need to come first
-                            # also see sources.list(5)
-                            package_repositories = args.package_repositories
-                            for group in job.package_repositories:
-                                for repository in group.sources_list_lines():
-                                    package_repositories.append(repository)
-                            _run_job(
-                                config,
-                                job_name,
-                                job_index,
-                                provider,
-                                args.output_directory,
-                                replace_package_repositories=(
-                                    args.apt_replace_repositories
-                                    + args.replace_package_repositories
-                                ),
-                                package_repositories=package_repositories,
-                                env_from_cli=args.set_env,
-                                plugin_settings=args.plugin_setting,
-                                secrets=secrets,
-                            )
-                    except CommandError as e:
-                        if len(stage) == 1:
-                            # Single-job stage, so just reraise this
-                            # in order to get simpler error messages.
-                            raise
-                        else:
-                            emit.error(e)
-                            stage_failed = True
-                if stage_failed:
-                    raise CommandError(
-                        f"Some jobs in {stage} failed; stopping.", retcode=1
-                    )
-        finally:
-            if args.clean:
-                cwd = Path.cwd()
-                provider.clean_project_environments(
-                    project_name=cwd.name,
-                    project_path=cwd,
-                    instances=launched_instances,
+                except CommandError as e:
+                    if len(stage) == 1:
+                        # Single-job stage, so just reraise this
+                        # in order to get simpler error messages.
+                        raise
+                    else:
+                        emit.error(e)
+                        stage_failed = True
+                finally:
+                    if args.clean:
+                        cwd = Path.cwd()
+                        provider.clean_project_environments(
+                            project_name=cwd.name,
+                            project_path=cwd,
+                            instances=[
+                                _get_job_instance_name(provider, job),
+                            ],
+                        )
+            if stage_failed:
+                raise CommandError(
+                    f"Some jobs in {stage} failed; stopping.", retcode=1
                 )
         return 0
 
