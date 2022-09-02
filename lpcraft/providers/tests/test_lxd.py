@@ -409,7 +409,7 @@ class TestLXDProvider(TestCase):
                     ),
                     call().lxc.exec(
                         instance_name=expected_instance_name,
-                        command=["rm", "-rf", "/root/lpcraft/project"],
+                        command=["rm", "-rf", "/build/lpcraft/project"],
                         project="test-project",
                         remote="test-remote",
                         runner=subprocess.run,
@@ -417,7 +417,7 @@ class TestLXDProvider(TestCase):
                     ),
                     call().lxc.exec(
                         instance_name=expected_instance_name,
-                        command=["mkdir", "-p", "/root/lpcraft"],
+                        command=["mkdir", "-p", "/build/lpcraft"],
                         project="test-project",
                         remote="test-remote",
                         runner=subprocess.run,
@@ -429,7 +429,7 @@ class TestLXDProvider(TestCase):
                             "cp",
                             "-a",
                             "/root/tmp-project",
-                            "/root/lpcraft/project",
+                            "/build/lpcraft/project",
                         ],
                         project="test-project",
                         remote="test-remote",
@@ -446,7 +446,7 @@ class TestLXDProvider(TestCase):
             [
                 call().lxc.exec(
                     instance_name=expected_instance_name,
-                    command=["rm", "-rf", "/root/lpcraft/project"],
+                    command=["rm", "-rf", "/build/lpcraft/project"],
                     project="test-project",
                     remote="test-remote",
                     runner=subprocess.run,
@@ -526,7 +526,7 @@ class TestLXDProvider(TestCase):
                 ),
                 call().lxc.exec(
                     instance_name=expected_instance_name,
-                    command=["rm", "-rf", "/root/lpcraft/project"],
+                    command=["rm", "-rf", "/build/lpcraft/project"],
                     project="test-project",
                     remote="test-remote",
                     runner=subprocess.run,
@@ -534,7 +534,7 @@ class TestLXDProvider(TestCase):
                 ),
                 call().lxc.exec(
                     instance_name=expected_instance_name,
-                    command=["mkdir", "-p", "/root/lpcraft"],
+                    command=["mkdir", "-p", "/build/lpcraft"],
                     project="test-project",
                     remote="test-remote",
                     runner=subprocess.run,
@@ -546,7 +546,7 @@ class TestLXDProvider(TestCase):
                         "cp",
                         "-a",
                         "/root/tmp-project",
-                        "/root/lpcraft/project",
+                        "/build/lpcraft/project",
                     ],
                     project="test-project",
                     remote="test-remote",
@@ -556,7 +556,7 @@ class TestLXDProvider(TestCase):
                 call().unmount(target=Path("/root/tmp-project")),
                 call().lxc.exec(
                     instance_name=expected_instance_name,
-                    command=["rm", "-rf", "/root/lpcraft/project"],
+                    command=["rm", "-rf", "/build/lpcraft/project"],
                     project="test-project",
                     remote="test-remote",
                     runner=subprocess.run,
@@ -586,7 +586,7 @@ class TestLXDProvider(TestCase):
             [
                 call().lxc.exec(
                     instance_name=expected_instance_name,
-                    command=["rm", "-rf", "/root/lpcraft/project"],
+                    command=["rm", "-rf", "/build/lpcraft/project"],
                     project="test-project",
                     remote="test-remote",
                     runner=subprocess.run,

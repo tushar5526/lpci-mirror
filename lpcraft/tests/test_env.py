@@ -16,6 +16,6 @@ class TestEnvironment(TestCase):
 
     def test_get_managed_environment_project_path(self):
         self.assertEqual(
-            Path("/root/lpcraft/project"),
+            Path("/build/lpcraft/project"),
             env.get_managed_environment_project_path(),
         )

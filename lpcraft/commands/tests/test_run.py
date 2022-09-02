@@ -163,7 +163,7 @@ class TestRun(RunBaseTestCase):
 
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
-            cwd=Path("/root/lpcraft/project"),
+            cwd=Path("/build/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -262,7 +262,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -350,7 +350,7 @@ class TestRun(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/lpcraft/project"),
+            cwd=Path("/build/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -396,7 +396,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -409,7 +409,7 @@ class TestRun(RunBaseTestCase):
                         "-ec",
                         "pyproject-build",
                     ],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -452,21 +452,21 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["apt", "install", "-y", "git"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -521,14 +521,14 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["apt", "install", "-y", "git"],
-                    cwd=PosixPath("/root/lpcraft/project"),
+                    cwd=PosixPath("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -570,7 +570,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -644,7 +644,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", command],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -703,7 +703,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", command],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -756,14 +756,14 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -776,7 +776,7 @@ class TestRun(RunBaseTestCase):
                         "-ec",
                         "pyproject-build",
                     ],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -818,7 +818,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={"TOX_SKIP_ENV": "^(?!lint-)"},
                     stdout=ANY,
                     stderr=ANY,
@@ -860,7 +860,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={"PIP_INDEX_URL": "http://pypi.example.com/simple"},
                     stdout=ANY,
                     stderr=ANY,
@@ -1881,7 +1881,7 @@ class TestRun(RunBaseTestCase):
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1922,7 +1922,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=PosixPath("/root/lpcraft/project"),
+                    cwd=PosixPath("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1935,14 +1935,14 @@ class TestRun(RunBaseTestCase):
                         "nginx",
                         "apache2",
                     ],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -1983,7 +1983,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=PosixPath("/root/lpcraft/project"),
+                    cwd=PosixPath("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -2308,7 +2308,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={
                         "DOUBLE_EQUAL": "value_with=another_equal_sign",
                     },
@@ -2357,7 +2357,7 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={
                         "PIP_INDEX_URL": "http://local-pypi.example.com/simple"
                     },
@@ -2483,21 +2483,21 @@ class TestRun(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["apt", "install", "-y", "git"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -2917,7 +2917,7 @@ class TestRunOne(RunBaseTestCase):
 
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/lpcraft/project"),
+            cwd=Path("/build/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -3025,7 +3025,7 @@ class TestRunOne(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "pyproject-build"],
-            cwd=Path("/root/lpcraft/project"),
+            cwd=Path("/build/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -3073,7 +3073,7 @@ class TestRunOne(RunBaseTestCase):
         )
         execute_run.assert_called_once_with(
             ["bash", "--noprofile", "--norc", "-ec", "tox"],
-            cwd=Path("/root/lpcraft/project"),
+            cwd=Path("/build/lpcraft/project"),
             env={},
             stdout=ANY,
             stderr=ANY,
@@ -3293,21 +3293,21 @@ class TestRunOne(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["apt", "install", "-y", "git"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
@@ -3362,7 +3362,7 @@ class TestRunOne(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={"PIP_INDEX_URL": "http://pypi.example.com/simple"},
                     stdout=ANY,
                     stderr=ANY,
@@ -3407,7 +3407,7 @@ class TestRunOne(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={
                         "DOUBLE_EQUAL": "value_with=another_equal_sign",
                     },
@@ -3458,7 +3458,7 @@ class TestRunOne(RunBaseTestCase):
             [
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={
                         "PIP_INDEX_URL": "http://local-pypi.example.com/simple"
                     },
@@ -3669,21 +3669,21 @@ class TestRunOne(RunBaseTestCase):
             [
                 call(
                     ["apt", "update"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["apt", "install", "-y", "git"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "ls -la"],
-                    cwd=Path("/root/lpcraft/project"),
+                    cwd=Path("/build/lpcraft/project"),
                     env={},
                     stdout=ANY,
                     stderr=ANY,

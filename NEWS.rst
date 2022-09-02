@@ -5,7 +5,8 @@ Version history
 0.0.31 (unreleased)
 ===================
 
-- Nothing yet.
+- Move project directory from ``/root/lpcraft/project`` to
+  ``/build/lpcraft/project``, making it more practical to drop privileges.
 
 0.0.30 (2022-09-05)
 ===================
