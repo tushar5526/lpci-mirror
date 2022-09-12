@@ -8,6 +8,8 @@ Version history
 - Move project directory from ``/root/lpcraft/project`` to
   ``/build/lpcraft/project``, making it more practical to drop privileges.
 
+- Upgrade to craft-providers 1.4.2.
+
 0.0.30 (2022-09-05)
 ===================
 

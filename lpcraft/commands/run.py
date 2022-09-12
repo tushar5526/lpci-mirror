@@ -164,15 +164,11 @@ def _copy_input_paths(
         for path in paths:
             instance.push_file(
                 source=source_path / "files" / path,
-                # Path() here works around
-                # https://github.com/canonical/craft-providers/pull/135.
-                destination=Path(target_path / "files" / path),
+                destination=target_path / "files" / path,
             )
         instance.push_file(
             source=source_path / "properties",
-            # Path() here works around
-            # https://github.com/canonical/craft-providers/pull/135.
-            destination=Path(target_path / "properties"),
+            destination=target_path / "properties",
         )
     except Exception as e:
         raise CommandError(str(e), retcode=1)
@@ -228,9 +224,7 @@ def _copy_output_paths(
         destination = output_files / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
-            # Path() here works around
-            # https://github.com/canonical/craft-providers/pull/83.
-            instance.pull_file(source=Path(path), destination=destination)
+            instance.pull_file(source=path, destination=destination)
         except Exception as e:
             raise CommandError(str(e), retcode=1)
 
