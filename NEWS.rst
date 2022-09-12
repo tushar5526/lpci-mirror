@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.31 (unreleased)
+0.0.31 (2022-09-12)
 ===================
 
 - Move project directory from ``/root/lpcraft/project`` to
