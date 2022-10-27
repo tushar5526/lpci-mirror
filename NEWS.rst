@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.0.35 (2022-10-27)
+===================
+
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5702-1/.
+
 0.0.34 (2022-10-20)
 ===================
 
