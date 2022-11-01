@@ -22,3 +22,9 @@ You can also run ``lpcraft run`` from a directory containing ``.launchpad.yaml``
 
 To save the output from a job, use ``lpcraft run --output-directory
 /path/to/output/directory``.
+
+Documentation
+=============
+
+For more extensive documentation, see `lpcraft on readthedocs
+<https://lpcraft.readthedocs.io/en/latest/>`_.
