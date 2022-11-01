@@ -15,13 +15,10 @@ the CLI design is based on both those tools.
 Running
 =======
 
-``lpcraft`` is mainly intended to be consumed as a snap.  Use ``snapcraft``
-to build the snap, which you can then install using ``snap install --classic
---dangerous lpcraft_<version>_<architecture>.snap``.  (Once ``lpcraft`` is
-more complete and stable, it will be made available from the snap store.)
+``lpcraft`` is mainly intended to be consumed as a snap.  Simply install with
+``sudo snap install lpcraft --classic``.
 
-You can run ``lpcraft`` from a directory containing ``.launchpad.yaml``,
-although it won't do very much useful yet.
+You can also run ``lpcraft run`` from a directory containing ``.launchpad.yaml``.
 
 To save the output from a job, use ``lpcraft run --output-directory
 /path/to/output/directory``.
