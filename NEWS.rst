@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.36 (unreleased)
+===================
+
+- Sanitize the project name before cleaning.
+
 0.0.35 (2022-10-27)
 ===================
 
