@@ -60,6 +60,48 @@ class TestLXDProvider(TestCase):
             mock_lxc.mock_calls,
         )
 
+    def test_clean_project_environments_project_name_requires_sanitizing(self):
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.list_names.return_value = [
+            "do-not-delete-me",
+            "lpcraft-testproject-12345-focal-amd64",
+            "lpcraft-my-project-12345--",
+            "lpcraft-my-project-12345-focal-amd64",
+            "lpcraft-my-project-12345-bionic-arm64",
+            "lpcraft-my-project-123456--",
+            "lpcraft_12345_focal_amd64",
+        ]
+        provider = makeLXDProvider(lxc=mock_lxc)
+
+        self.assertEqual(
+            [
+                "lpcraft-my-project-12345-focal-amd64",
+                "lpcraft-my-project-12345-bionic-arm64",
+            ],
+            provider.clean_project_environments(
+                project_name="my.project", project_path=self.mock_path
+            ),
+        )
+
+        self.assertEqual(
+            [
+                call.list_names(project="test-project", remote="test-remote"),
+                call.delete(
+                    instance_name="lpcraft-my-project-12345-focal-amd64",
+                    force=True,
+                    project="test-project",
+                    remote="test-remote",
+                ),
+                call.delete(
+                    instance_name="lpcraft-my-project-12345-bionic-arm64",
+                    force=True,
+                    project="test-project",
+                    remote="test-remote",
+                ),
+            ],
+            mock_lxc.mock_calls,
+        )
+
     def test_clean_project_environments(self):
         mock_lxc = Mock(spec=LXC)
         mock_lxc.list_names.return_value = [

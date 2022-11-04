@@ -22,7 +22,7 @@ from lpcraft.env import (
     get_managed_environment_project_path,
 )
 from lpcraft.errors import CommandError
-from lpcraft.providers._base import Provider
+from lpcraft.providers._base import Provider, sanitize_lxd_instance_name
 from lpcraft.providers._buildd import (
     SERIES_TO_BUILDD_IMAGE_ALIAS,
     LPCraftBuilddBaseConfiguration,
@@ -143,6 +143,7 @@ class LXDProvider(Provider):
             except lxd.LXDError as error:
                 raise CommandError(str(error)) from error
 
+        project_name = sanitize_lxd_instance_name(project_name)
         for instance in instances:
             if re.match(
                 rf"^lpcraft-{re.escape(project_name)}-{re.escape(inode)}"
