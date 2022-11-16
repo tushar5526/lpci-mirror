@@ -37,7 +37,16 @@ Example configuration
 
     $ lpcraft run --output-directory out
     Running the job
-    $ cat out/test/focal/amd64/files/output
+    $ tree out  # Find out the location of the output file
+    out
+    └── test
+        └── 0
+            ├── files
+            │   └── output
+            └── properties
+
+    3 directories, 2 files
+    $ cat out/test/0/files/output
     hello world
 
 
