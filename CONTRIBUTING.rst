@@ -86,10 +86,3 @@ Build the documentation locally.
     <https://lpcraft.readthedocs.io/en/latest/>`_ online,
     after having pushed your changes to the repository, you need to trigger a
     manual build on the project's dashboard on https://readthedocs.org.
-
-Getting help
-------------
-
-If you find bugs in this package, you can report them here:
-
-    https://launchpad.net/lpcraft

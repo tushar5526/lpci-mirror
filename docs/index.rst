@@ -58,5 +58,6 @@ Example configuration
     cli-interface
     plugins
     CONTRIBUTING
+    support
     release-process
     NEWS
