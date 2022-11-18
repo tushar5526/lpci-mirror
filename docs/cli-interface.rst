@@ -1,6 +1,6 @@
-=======================
-lpcraft - CLI interface
-=======================
+=============
+CLI interface
+=============
 
 Please note that this is only a small selection of the available commands and
 options.
