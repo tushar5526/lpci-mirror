@@ -7,11 +7,14 @@ import itertools
 import json
 import os
 import shlex
+import subprocess
+import tempfile
 from argparse import ArgumentParser, Namespace
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Set
 
+import requests
 import yaml
 from craft_cli import BaseCommand, EmitterMode, emit
 from craft_providers import Executor, lxd
@@ -21,12 +24,22 @@ from jinja2 import BaseLoader, Environment
 from pluggy import PluginManager
 
 from lpcraft import env
-from lpcraft.config import Config, Input, Job, Output
+from lpcraft.config import (
+    Config,
+    Input,
+    Job,
+    Output,
+    PackageType,
+    PPAShortFormURL,
+    get_ppa_url_parts,
+)
 from lpcraft.errors import CommandError
 from lpcraft.plugin.manager import get_plugin_manager
 from lpcraft.plugins import PLUGINS
 from lpcraft.providers import Provider, get_provider
 from lpcraft.utils import get_host_architecture
+
+LAUNCHPAD_API_BASE_URL = "https://api.launchpad.net/devel"
 
 
 def _check_relative_path(path: PurePath, container: PurePath) -> PurePath:
@@ -277,6 +290,47 @@ def _resolve_runtime_value(
     return command_value
 
 
+def _import_signing_keys_for_ppas(
+    instance: lxd.LXDInstance, ppas: Set[PPAShortFormURL]
+) -> None:
+    for ppa in ppas:
+        owner, distribution, archive = get_ppa_url_parts(ppa)
+        signing_key_url = (
+            f"{LAUNCHPAD_API_BASE_URL}/~{owner}/+archive/{distribution}"
+            f"/{archive}?ws.op=getSigningKeyData"
+        )
+        response = requests.get(signing_key_url)
+        if not response.ok:
+            raise CommandError(
+                "Error retrieving the signing key for the"
+                f" '{owner}/{archive}/{distribution}' ppa."
+                " Please check if the PPA exists and is not empty."
+            )
+        signing_key = response.json()
+        with NamedTemporaryFile("w+") as tmpfile:
+            tmpfile.write(signing_key)
+            tmpfile.flush()
+            with open(tmpfile.name) as keyfile:
+                gpg_cmd = [
+                    "gpg",
+                    "--ignore-time-conflict",
+                    "--no-options",
+                    "--no-keyring",
+                ]
+                with tempfile.NamedTemporaryFile(mode="wb+") as keyring:
+                    subprocess.check_call(
+                        gpg_cmd + ["--dearmor"], stdin=keyfile, stdout=keyring
+                    )
+                    os.fchmod(keyring.fileno(), 0o644)
+                    instance.push_file(
+                        destination=Path(
+                            "/etc/apt/trusted.gpg.d"
+                            f"/{owner}-{archive}-{distribution}.gpg"
+                        ),
+                        source=Path(keyring.name),
+                    )
+
+
 def _install_apt_packages(
     job_name: str,
     job: Job,
@@ -312,6 +366,17 @@ def _install_apt_packages(
                 )
                 sources = template.render(**secrets)
             sources += "\n"
+
+        ppas = set()
+        for package_repository in job.package_repositories:
+            if (
+                package_repository.type == PackageType.apt
+                and package_repository.ppa
+            ):
+                ppas.add(package_repository.ppa)
+
+        if ppas:
+            _import_signing_keys_for_ppas(instance, ppas)
 
         with emit.open_stream("Replacing /etc/apt/sources.list") as stream:
             instance.push_file_io(

@@ -8,6 +8,9 @@ Version history
 - Allow specifying PPAs using the shortform notation,
   e.g. `ppa:launchpad/ubuntu/ppa`.
 
+- Automatically import the signing keys for PPAs specified using
+  the short-form notation.
+
 0.0.37 (2022-12-09)
 ===================
 

@@ -16,6 +16,7 @@ from craft_providers.lxd import launch
 from fixtures import TempDir
 from testtools.matchers import MatchesStructure
 
+from lpcraft.commands.run import LAUNCHPAD_API_BASE_URL
 from lpcraft.commands.tests import CommandBaseTestCase
 from lpcraft.errors import CommandError, ConfigurationError
 from lpcraft.providers.tests import makeLXDProvider
@@ -483,6 +484,167 @@ class TestRun(RunBaseTestCase):
         self.assertEqual("0644", mock_info["file_mode"])
         self.assertEqual("root", mock_info["group"])
         self.assertEqual("root", mock_info["user"])
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_importing_ppa_key_key_not_found(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+
+        responses.get(
+            "{}/~example/+archive/ubuntu/foo".format(LAUNCHPAD_API_BASE_URL),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {"ws.op": "getSigningKeyData"}
+                )
+            ],
+            status=404,
+        )
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [foo]
+                    package-repositories:
+                        - type: apt
+                          ppa: example/foo
+                          formats: [deb, deb-src]
+                          suites: [focal]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=1,
+                errors=[
+                    CommandError(
+                        "Error retrieving the signing key for the"
+                        " 'example/foo/ubuntu' ppa. Please check"
+                        " if the PPA exists and is not empty."
+                    )
+                ],
+            ),
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_importing_ppa_signing_key(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+    ):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        test_key = dedent(
+            """
+            -----BEGIN PGP PUBLIC KEY BLOCK-----
+            Version: GnuPG v2
+
+            mI0ESUm55wEEALrxow0PCnGeCAebH9g5+wtZBfXZdx2vZts+XsTTHxDRsMNgMC9b
+            0klCgbydvkmF9WCphCjQ61Wp/Bh0C7DSXVCpA/xs55QB5VCUceIMZCbMTPq1h7Ht
+            cA1f+o6+OCPUntErG6eGize6kGhdjBNPOT+q4BSIL69rPuwfM9ZyAYcBABEBAAG0
+            JkxhdW5jaHBhZCBQUEEgZm9yIExhdW5jaHBhZCBEZXZlbG9wZXJziLYEEwECACAF
+            AklJuecCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAKCRAtH/tsClF0rxsQA/0Q
+            w0Yk+xIA1xibyf+UCF9/4fXzdo/tr76qxPRyFiv0uLbFOmW6t26jzpWBHocCHcCU
+            57l7rlcEzIHFMcS9Ol6MughP4lhywf9ceeqg2SD6AXjZ0iFarwkueTcHwff5j0lG
+            IzzCUVTYJ+m79f/r0dfctL2DwnX7JnT/41mEuR1qbokBHAQQAQIABgUCTB7s7wAK
+            CRDFXO8hUqH8T94pCACxl/Gdo82N01H82HvNBa8zQFixNQIwNJN/VxH3WfRvissW
+            OMTJnTnNOQErxUhqHrasvZf3djNoHeKRNToTTBaGiEwoySmEK05i4Toq74jWAOs6
+            flD2S8natWbobK5V+B2pXZl5g/4Ay21C3H1sZlUxDCcOH9Jh8/0feAZHoSQ/V1Xa
+            rEPb+TGdV0hP3Yp7+nIT91sYkj566kA8fjoxJrY/EvXGn98bhYMbMNbtS1Z0WeGp
+            zG2hiL6wLSLBxz4Ae9MShOMwNyC1zmr/d1wlF0Efx1N9HaRtRq2s/zqH+ebB7Sr+
+            V+SquObb0qr4eAjtslN5BxWROhf+wZM6WJO0Z6nBiQEcBBABAgAGBQJTHvsiAAoJ
+            EIngjfAzAr5Z8y4H/jltxz5OwHIDoiXsyWnpjO1SZUV6I6evKpSD7huYtd7MwFZC
+            0CgExsPPqLNQCUxITR+9jlqofi/QsTwP7Qq55VmIrKLrZ9KCK1qBnMa/YEXi6TeK
+            65lnyN6lNOdzhcsBm3s1/U9ewWp1vsw4UAclmu6tI8GUko+e32K1QjMtIjeVejQl
+            JCYDjuxfHhcFWyRo0TWu24F6VD3YxBHpne/M00yd2mLLpHdQrxw/vbvVhZkRDutQ
+            emKRA81ZM2WZ1iqYOXtEs5VrD/PtU0nvSAowgeWBmcOwWn3Om+pVsnSoFo46CDvo
+            C6YXOWMOMFIxfVhPWqlBkWQsnXFzgk/Xyo4vlTY==Wq6H
+            -----END PGP PUBLIC KEY BLOCK-----
+            """
+        )
+        test_key = json.dumps(test_key)
+        responses.get(
+            "{}/~example/+archive/ubuntu/foo".format(LAUNCHPAD_API_BASE_URL),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {"ws.op": "getSigningKeyData"}
+                )
+            ],
+            body=test_key,
+        )
+        responses.get(
+            "{}/~example/+archive/debian/bar".format(LAUNCHPAD_API_BASE_URL),
+            match=[
+                responses.matchers.query_param_matcher(
+                    {"ws.op": "getSigningKeyData"}
+                )
+            ],
+            body=test_key,
+        )
+        config = dedent(
+            """
+            pipeline:
+                - test
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [foo]
+                    package-repositories:
+                        - type: apt
+                          ppa: example/foo
+                          formats: [deb, deb-src]
+                          suites: [focal]
+                        - type: apt
+                          ppa: example/debian/bar
+                          formats: [deb, deb-src]
+                          suites: [focal]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        self.run_command("run")
+        mock_push_file = launcher.return_value.push_file
+        self.assertEqual(2, mock_push_file.call_count)
+        mock_push_file.assert_has_calls(
+            [
+                call(
+                    destination=Path(
+                        "/etc/apt/trusted.gpg.d/example-foo-ubuntu.gpg"
+                    ),
+                    source=ANY,
+                ),
+                call(
+                    destination=Path(
+                        "/etc/apt/trusted.gpg.d/example-bar-debian.gpg"
+                    ),
+                    source=ANY,
+                ),
+            ],
+            any_order=True,
+        )
 
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
