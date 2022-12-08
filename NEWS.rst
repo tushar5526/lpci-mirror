@@ -2,10 +2,13 @@
 Version history
 ===============
 
-0.0.36 (unreleased)
+0.0.36 (2022-12-08)
 ===================
 
 - Sanitize the project name before cleaning.
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5766-1/.
+
 
 0.0.35 (2022-10-27)
 ===================
