@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.37 (unreleased)
+0.0.37 (2022-12-09)
 ===================
 
 - Rebuild the Snap package to include updated system packages.
