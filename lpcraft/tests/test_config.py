@@ -16,7 +16,14 @@ from testtools.matchers import (
     MatchesStructure,
 )
 
-from lpcraft.config import Config, OutputDistributeEnum, PackageRepository
+from lpcraft.config import (
+    LAUNCHPAD_PPA_BASE_URL,
+    Config,
+    OutputDistributeEnum,
+    PackageRepository,
+    PPAShortFormURL,
+    get_ppa_url_parts,
+)
 from lpcraft.errors import CommandError
 
 
@@ -561,6 +568,169 @@ class TestConfig(TestCase):
             ],  # noqa: E501
             list(repositories[2].sources_list_lines()),
         )
+
+    def test_get_ppa_url_parts(self):
+        self.assertEqual(
+            ("example", "ubuntu", "foo"),
+            get_ppa_url_parts(PPAShortFormURL("example/foo")),
+        )
+        self.assertEqual(
+            ("example", "debian", "bar"),
+            get_ppa_url_parts(PPAShortFormURL("example/debian/bar")),
+        )
+
+    def test_missing_ppa_and_url(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              components: [main]
+                              suites: [focal]
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            r"One of the following keys is required with an appropriate"
+            r" value: 'url', 'ppa'",
+            Config.load,
+            path,
+        )
+
+    def test_both_ppa_and_url_provided(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              suites: [focal]
+                              ppa: launchpad/ppa
+                              url: https://canonical.example.com
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            r"Only one of the following keys can be specified:"
+            r" 'url', 'ppa'",
+            Config.load,
+            path,
+        )
+
+    def test_missing_ppa_and_components(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              suites: [focal]
+                              url: https://canonical.example.com
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            r"One of the following keys is required with an appropriate"
+            r" value: 'components', 'ppa'.",
+            Config.load,
+            path,
+        )
+
+    def test_both_ppa_and_components_specified(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              components: [main]
+                              ppa: launchpad/ppa
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            r"The 'components' key is not allowed when the 'ppa' key is"
+            r" specified. PPAs only support the 'main' component.",
+            Config.load,
+            path,
+        )
+
+    def test_ppa_shortform_url_and_components_automatically_inferred(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb, deb-src]
+                              suites: [focal]
+                              ppa: launchpad/ppa
+                            - type: apt
+                              formats: [deb, deb-src]
+                              suites: [focal]
+                              ppa: launchpad/debian/ppa2
+                """
+            )
+        )
+        config = Config.load(path)
+        package_repository = config.jobs["test"][0].package_repositories[0]
+        package_repository_2 = config.jobs["test"][0].package_repositories[1]
+
+        self.assertEqual("launchpad/ppa", package_repository.ppa)
+        self.assertEqual(
+            "{}/launchpad/ppa/ubuntu".format(
+                LAUNCHPAD_PPA_BASE_URL,
+            ),
+            str(package_repository.url),
+        )
+        self.assertEqual(["main"], package_repository.components)
+        self.assertEqual("launchpad/debian/ppa2", package_repository_2.ppa)
+        self.assertEqual(
+            "{}/launchpad/ppa2/debian".format(
+                LAUNCHPAD_PPA_BASE_URL,
+            ),
+            str(package_repository_2.url),
+        )
+        self.assertEqual(["main"], package_repository_2.components)
 
     def test_specify_license_via_spdx(self):
         path = self.create_config(

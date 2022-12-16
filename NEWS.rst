@@ -5,6 +5,8 @@ Version history
 0.0.38 (unreleased)
 ===================
 
+- Allow specifying PPAs using the shortform notation,
+  e.g. `ppa:launchpad/ubuntu/ppa`.
 
 0.0.37 (2022-12-09)
 ===================
@@ -18,7 +20,6 @@ Version history
 - Sanitize the project name before cleaning.
 - Rebuild the Snap package to include updated system packages.
   See https://ubuntu.com/security/notices/USN-5766-1/.
-
 
 0.0.35 (2022-10-27)
 ===================

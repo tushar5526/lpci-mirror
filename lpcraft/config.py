@@ -5,15 +5,17 @@ import re
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Type, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import pydantic
-from pydantic import AnyHttpUrl, StrictStr, validator
+from pydantic import AnyHttpUrl, StrictStr, root_validator, validator
 
 from lpcraft.errors import ConfigurationError
 from lpcraft.plugins import PLUGINS
 from lpcraft.plugins.plugins import BaseConfig, BasePlugin
 from lpcraft.utils import load_yaml
+
+LAUNCHPAD_PPA_BASE_URL = "https://ppa.launchpadcontent.net"
 
 
 class _Identifier(pydantic.ConstrainedStr):
@@ -119,6 +121,29 @@ class PackageSuite(str, Enum):
     jammy = "jammy"  # 22.04
 
 
+class PPAShortFormURL(pydantic.ConstrainedStr):
+    """A string with a constrained syntax to match a PPA short form URL."""
+
+    strict = True
+    # Support the two-segment form: OWNER/ARCHIVE (e.g. `launchpad/ppa`)
+    # and the three-segment form: OWNER/DISTRIBUTION/ARCHIVE
+    # (e.g. `launchpad/debian/ppa`).
+    regex = re.compile(
+        r"^[a-z0-9][a-z0-9\+\._\-]+(/[a-z0-9][a-z0-9\+\._\-]+){1,2}$"
+    )
+
+
+def get_ppa_url_parts(ppa_url: PPAShortFormURL) -> Tuple[str, str, str]:
+    """Split and return the parts of a PPA short-form URL."""
+    ppa_url_parts = ppa_url.split("/")
+    if len(ppa_url_parts) == 2:
+        owner, archive = ppa_url_parts
+        distribution = "ubuntu"
+    else:
+        owner, distribution, archive = ppa_url_parts
+    return owner, distribution, archive
+
+
 class PackageRepository(ModelConfigDefaults):
     """A representation of a package repository.
 
@@ -126,11 +151,60 @@ class PackageRepository(ModelConfigDefaults):
     """
 
     type: PackageType  # e.g. `apt``
+    ppa: Optional[PPAShortFormURL]  # e.g. `launchpad/ubuntu/ppa`
     formats: List[PackageFormat]  # e.g. `[deb, deb-src]`
-    components: List[PackageComponent]  # e.g. `[main, universe]`
+    components: Optional[List[PackageComponent]]  # e.g. `[main, universe]`
     suites: List[PackageSuite]  # e.g. `[bionic, focal]`
-    url: AnyHttpUrl
+    url: Optional[AnyHttpUrl]
     trusted: Optional[bool]
+
+    @root_validator(pre=True)
+    def validate_multiple_fields(
+        cls, values: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if "url" not in values and "ppa" not in values:
+            raise ValueError(
+                "One of the following keys is required with an appropriate"
+                " value: 'url', 'ppa'."
+            )
+        elif "url" in values and "ppa" in values:
+            raise ValueError(
+                "Only one of the following keys can be specified:"
+                " 'url', 'ppa'."
+            )
+        elif "ppa" not in values and "components" not in values:
+            raise ValueError(
+                "One of the following keys is required with an appropriate"
+                " value: 'components', 'ppa'."
+            )
+        elif "ppa" in values and "components" in values:
+            raise ValueError(
+                "The 'components' key is not allowed when the 'ppa' key is"
+                " specified. PPAs only support the 'main' component."
+            )
+        return values
+
+    @validator("components", pre=True, always=True)
+    def infer_components_if_ppa_is_set(
+        cls, v: List[PackageComponent], values: Dict[str, Any]
+    ) -> List[PackageComponent]:
+        if v is None and values["ppa"]:
+            return ["main"]
+        return v
+
+    @validator("url", pre=True, always=True)
+    def infer_url_if_ppa_is_set(
+        cls, v: AnyHttpUrl, values: Dict[str, Any]
+    ) -> AnyHttpUrl:
+        if v is None and values["ppa"]:
+            owner, distribution, archive = get_ppa_url_parts(values["ppa"])
+            v = "{}/{}/{}/{}".format(
+                LAUNCHPAD_PPA_BASE_URL,
+                owner,
+                archive,
+                distribution,
+            )
+        return v
 
     @validator("trusted")
     def convert_trusted(cls, v: bool) -> str:
@@ -144,6 +218,7 @@ class PackageRepository(ModelConfigDefaults):
         """  # noqa: E501
         for format in self.formats:
             for suite in self.suites:
+                assert self.components is not None
                 if self.trusted:
                     yield f"{format} [trusted={self.trusted}] {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
                 else:

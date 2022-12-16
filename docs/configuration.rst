@@ -178,25 +178,65 @@ Package-repositories properties
 
 The properties are inspired by the properties of `Snapcraft
 <https://snapcraft.io/docs/package-repositories>`_.
-Only a subset of them is currently implemented.
+Only a subset of them is currently implemented. More
+properties can be implemented on demand.
 
-More properties can be implemented on demand.
+A ``PPA`` or a ``deb`` repository can be added using the below properties.
+
+Adding a PPA
+^^^^^^^^^^^^
 
 ``type`` (required)
     Specifies the type of package-repository.
-    Currently only `apt` is supported.
+    Currently only ``apt`` is supported.
 
 ``formats`` (required)
     Specifies the format of the package-repository.
     Supported values: ``deb`` and ``deb-src``.
 
-``components`` (required)
-    Specifies the component of the package-repository,
-    One or several of ``main``, ``restricted``, ``universe``, ``multiverse``.
+``suites`` (required)
+    Specifies the suite of the package-repository.
+    One or several of ``bionic``, ``focal``, ``jammy``.
+
+``ppa`` (required)
+    Specifies the PPA to be used as the package repository in the short form,
+    e.g. ``launchpad/ppa``, ``launchpad/debian/ppa``.
+
+``trusted`` (optional)
+    Set this to ``true`` to override APT's security checks, ie accept sources
+    which do not pass authentication checks. ``false`` does the opposite.
+    By default APT decides whether a source is considered trusted. This third
+    option cannot be set explicitly.
+
+Example:
+
+.. code:: yaml
+
+   package-repositories:
+       - type: apt
+         formats: [deb, deb-src]
+         suites: [focal]
+         ppa: launchpad/ubuntu/ppa
+         trusted: false
+
+Adding a deb repository
+^^^^^^^^^^^^^^^^^^^^^^^
+
+``type`` (required)
+    Specifies the type of package-repository.
+    Currently only ``apt`` is supported.
+
+``formats`` (required)
+    Specifies the format of the package-repository.
+    Supported values: ``deb`` and ``deb-src``.
 
 ``suites`` (required)
     Specifies the suite of the package-repository.
     One or several of ``bionic``, ``focal``, ``jammy``.
+
+``components`` (required)
+    Specifies the component of the package-repository,
+    One or several of ``main``, ``restricted``, ``universe``, ``multiverse``.
 
 ``url`` (required)
     Specifies the URL of the package-repository,
@@ -211,6 +251,17 @@ More properties can be implemented on demand.
     By default APT decides whether a source is considered trusted. This third
     option cannot be set explicitly.
 
+Example:
+
+.. code:: yaml
+
+   package-repositories:
+       - type: apt
+         formats: [deb, deb-src]
+         components: [main]
+         suites: [focal]
+         url: https://canonical.example.org/ubuntu
+         trusted: false
 
 .. _license-properties:
 
