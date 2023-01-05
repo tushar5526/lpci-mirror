@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.38 (unreleased)
+0.0.38 (2023-01-05)
 ===================
 
 - Allow specifying PPAs using the shortform notation,
