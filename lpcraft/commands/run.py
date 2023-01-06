@@ -712,7 +712,7 @@ class RunCommand(BaseCommand):
                         # we prefer package repositories via CLI more
                         # so they need to come first
                         # also see sources.list(5)
-                        package_repositories = args.package_repositories
+                        package_repositories = list(args.package_repositories)
                         for group in job.package_repositories:
                             for repository in group.sources_list_lines():
                                 package_repositories.append(repository)

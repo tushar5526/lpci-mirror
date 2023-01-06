@@ -5,6 +5,7 @@ Version history
 0.0.40 (unreleased)
 ===================
 
+- Fix the leakage of package repositories from a job to the next
 
 0.0.39 (2023-01-06)
 ===================

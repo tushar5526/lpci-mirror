@@ -2807,6 +2807,93 @@ class TestRun(RunBaseTestCase):
             file_contents,
         )
 
+    @patch("lpcraft.commands.run._import_signing_keys_for_ppas")
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_per_job_package_repositories_are_isolated_to_corresponding_jobs(
+        self,
+        mock_get_host_architecture,
+        mock_get_provider,
+        mock_import_signing_keys_for_ppas,
+    ):
+        existing_repositories = [
+            "deb http://archive.ubuntu.com/ubuntu/ focal main restricted",
+            "deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted",
+        ]
+
+        def fake_pull_file(source: Path, destination: Path) -> None:
+            destination.write_text("\n".join(existing_repositories))
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        launcher.return_value.pull_file.side_effect = fake_pull_file
+
+        config = dedent(
+            """
+            pipeline:
+                - job1
+                - job2
+            jobs:
+                job1:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [example-package]
+                    package-repositories:
+                        - type: apt
+                          ppa: example/ppa
+                          formats: [deb]
+                          suites: [focal]
+                job2:
+                    series: focal
+                    architectures: amd64
+                    run: ls -la
+                    packages: [example-package]
+                    package-repositories:
+                        - type: apt
+                          url: https://canonical.example.org/repo
+                          components: [main]
+                          formats: [deb]
+                          suites: [focal]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        result = self.run_command("run")
+        mock_info = launcher.return_value.push_file_io.call_args_list
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[0][1]["destination"]
+        )
+        self.assertEqual(
+            Path("/etc/apt/sources.list"), mock_info[1][1]["destination"]
+        )
+        job1_sources_list = mock_info[0][1]["content"].read().decode()
+        self.assertEqual(
+            dedent(
+                """\
+            deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb https://ppa.launchpadcontent.net/example/ppa/ubuntu focal main
+            """  # noqa: E501
+            ),
+            job1_sources_list,
+        )
+        job2_sources_list = mock_info[1][1]["content"].read().decode()
+        self.assertEqual(
+            dedent(
+                """\
+            deb http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb-src http://archive.ubuntu.com/ubuntu/ focal main restricted
+            deb https://canonical.example.org/repo focal main
+            """  # noqa: E501
+            ),
+            job2_sources_list,
+        )
+
     @patch("lpcraft.env.get_managed_environment_project_path")
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
