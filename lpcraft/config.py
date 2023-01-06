@@ -220,9 +220,9 @@ class PackageRepository(ModelConfigDefaults):
             for suite in self.suites:
                 assert self.components is not None
                 if self.trusted:
-                    yield f"{format} [trusted={self.trusted}] {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
+                    yield f"{format.value} [trusted={self.trusted}] {self.url!s} {suite.value} {' '.join(self.components)}"  # noqa: E501
                 else:
-                    yield f"{format} {self.url!s} {suite} {' '.join(self.components)}"  # noqa: E501
+                    yield f"{format.value} {self.url!s} {suite.value} {' '.join(self.components)}"  # noqa: E501
 
 
 class Job(ModelConfigDefaults):

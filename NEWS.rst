@@ -6,6 +6,7 @@ Version history
 ===================
 
 - Fix the leakage of package repositories from a job to the next
+- Add support for Python 3.11.
 
 0.0.39 (2023-01-06)
 ===================

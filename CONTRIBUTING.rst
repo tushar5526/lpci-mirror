@@ -28,6 +28,7 @@ List the ``tox`` environments available for this project.
     py38     -> run test suite
     py39     -> run test suite
     py310    -> run test suite
+    py311    -> run test suite
     coverage -> generate coverage report
 
 Run the project's tests.
