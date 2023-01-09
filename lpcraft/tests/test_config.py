@@ -579,6 +579,32 @@ class TestConfig(TestCase):
             get_ppa_url_parts(PPAShortFormURL("example/debian/bar")),
         )
 
+    def test_default_values_for_package_repository_suites_and_formats(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+                jobs:
+                    test:
+                        series: focal
+                        architectures: amd64
+                        packages: [foo]
+                        package-repositories:
+                            - type: apt
+                              ppa: launchpad/ubuntu/ppa
+                            - type: apt
+                              url: https://canonical.example.org/ubuntu
+                              components: [main]
+                """
+            )
+        )
+        config = Config.load(path)
+
+        for package_repository in config.jobs["test"][0].package_repositories:
+            self.assertEqual(["deb"], package_repository.formats)
+            self.assertEqual(["focal"], package_repository.suites)
+
     def test_missing_ppa_and_url(self):
         path = self.create_config(
             dedent(

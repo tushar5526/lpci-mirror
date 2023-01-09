@@ -152,9 +152,9 @@ class PackageRepository(ModelConfigDefaults):
 
     type: PackageType  # e.g. `apt``
     ppa: Optional[PPAShortFormURL]  # e.g. `launchpad/ubuntu/ppa`
-    formats: List[PackageFormat]  # e.g. `[deb, deb-src]`
+    formats: Optional[List[PackageFormat]]  # e.g. `[deb, deb-src]`
     components: Optional[List[PackageComponent]]  # e.g. `[main, universe]`
-    suites: List[PackageSuite]  # e.g. `[bionic, focal]`
+    suites: Optional[List[PackageSuite]]  # e.g. `[bionic, focal]`
     url: Optional[AnyHttpUrl]
     trusted: Optional[bool]
 
@@ -209,6 +209,14 @@ class PackageRepository(ModelConfigDefaults):
             )
         return v
 
+    @validator("formats", pre=True, always=True)
+    def set_formats_default_value(
+        cls, v: List[PackageFormat]
+    ) -> List[PackageFormat]:
+        if not v:
+            v = [PackageFormat.deb]
+        return v
+
     @validator("trusted")
     def convert_trusted(cls, v: bool) -> str:
         # trusted is True or False, but we need `yes` or `no`
@@ -219,6 +227,8 @@ class PackageRepository(ModelConfigDefaults):
 
         e.g. 'deb https://canonical.example.org/artifactory/jammy-golang-backport focal main'
         """  # noqa: E501
+        assert self.formats is not None
+        assert self.suites is not None
         for format in self.formats:
             for suite in self.suites:
                 assert self.components is not None
@@ -256,6 +266,18 @@ class Job(ModelConfigDefaults):
         if isinstance(v, str):
             v = [v]
         return v
+
+    @pydantic.validator("package_repositories")
+    def validate_package_repositories(
+        cls, v: List[PackageRepository], values: Dict[StrictStr, Any]
+    ) -> List[PackageRepository]:
+        package_repositories = None
+        for index, package_repository in enumerate(v):
+            if not package_repository.suites:
+                if not package_repositories:
+                    package_repositories = v.copy()
+                package_repositories[index].suites = [values["series"]]
+        return package_repositories or v
 
     @pydantic.root_validator(pre=True)
     def move_plugin_config_settings(

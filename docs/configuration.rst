@@ -190,13 +190,15 @@ Adding a PPA
     Specifies the type of package-repository.
     Currently only ``apt`` is supported.
 
-``formats`` (required)
+``formats`` (optional)
     Specifies the format of the package-repository.
-    Supported values: ``deb`` and ``deb-src``.
+    Supported values: ``deb`` and ``deb-src``. If unspecified,
+    the format is assumed to be ``deb`` , i.e. ``[deb]``
 
-``suites`` (required)
+``suites`` (optional)
     Specifies the suite of the package-repository.
-    One or several of ``bionic``, ``focal``, ``jammy``.
+    One or several of ``bionic``, ``focal``, ``jammy``. If unspecified,
+    the suite is assumed to be the corresponding job's ``series`` value.
 
 ``ppa`` (required)
     Specifies the PPA to be used as the package repository in the short form,
@@ -228,11 +230,13 @@ Adding a deb repository
 
 ``formats`` (required)
     Specifies the format of the package-repository.
-    Supported values: ``deb`` and ``deb-src``.
+    Supported values: ``deb`` and ``deb-src``. If unspecified,
+    the format is assumed to be ``deb``, i.e. ``[deb]``.
 
 ``suites`` (required)
     Specifies the suite of the package-repository.
-    One or several of ``bionic``, ``focal``, ``jammy``.
+    One or several of ``bionic``, ``focal``, ``jammy``. If unspecified,
+    the suite is assumed to be the corresponding job's ``series`` value.
 
 ``components`` (required)
     Specifies the component of the package-repository,

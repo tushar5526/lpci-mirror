@@ -5,8 +5,9 @@ Version history
 0.0.40 (unreleased)
 ===================
 
-- Fix the leakage of package repositories from a job to the next
+- Fix the leakage of package repositories from a job to the next.
 - Add support for Python 3.11.
+- Set sensible default values for some package repository fields.
 
 0.0.39 (2023-01-06)
 ===================
