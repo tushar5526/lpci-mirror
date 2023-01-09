@@ -24,6 +24,9 @@ apps:
       # help git find its stuff
       GIT_TEMPLATE_DIR: $SNAP/git/templates
       GIT_EXEC_PATH: $SNAP/git/git-core
+    plugs:
+      # Allow launchpadlib access to the desktop keyring.
+      - desktop
 
 grade: stable
 confinement: classic

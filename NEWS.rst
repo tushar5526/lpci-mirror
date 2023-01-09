@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.1.0 (unreleased)
+==================
+
+- Add a ``release`` command.
+
 0.0.52 (2023-04-06)
 ===================
 - Fix regression from adding support to snap keys

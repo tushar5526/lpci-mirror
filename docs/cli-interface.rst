@@ -96,3 +96,32 @@ lpcraft run-one optional arguments
   ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``
 
   This option is repeatable.
+
+lpcraft release
+---------------
+
+This command releases a Launchpad build of a commit to a target archive
+(which must be configured with a repository format that accepts packages of
+the appropriate type).  It checks that the commit in question was
+successfully built and has some attached files.
+
+**Example:**
+
+``lpcraft release ppa:ubuntu-security/soss/soss-python-stable-local focal edge``
+
+lpcraft release optional arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``--launchpad INSTANCE`` to use a Launchpad instance other than
+  production.
+
+- ``--dry-run`` to just report what would be done rather than actually
+  performing a release.
+
+- ``--repository URL`` to specify the source Git repository URL (defaults to
+  the upstream repository for the current branch, if on
+  ``git.launchpad.net``).
+
+- ``--commit ID`` to specify the source Git branch name, tag name, or commit
+  ID (defaults to the tip commit found for the current branch in the
+  upstream repository).

@@ -20,6 +20,7 @@ from craft_cli import (
 
 from lpcraft._version import version_description as lpcraft_version
 from lpcraft.commands.clean import CleanCommand
+from lpcraft.commands.release import ReleaseCommand
 from lpcraft.commands.run import RunCommand, RunOneCommand
 from lpcraft.commands.version import VersionCommand
 
@@ -43,6 +44,9 @@ _basic_commands = [
     RunOneCommand,
     VersionCommand,
 ]
+_launchpad_commands = [
+    ReleaseCommand,
+]
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -51,7 +55,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         argv = sys.argv[1:]
 
     emit.init(EmitterMode.BRIEF, "lpcraft", f"Starting {lpcraft_version}")
-    command_groups = [CommandGroup("Basic", _basic_commands)]
+    command_groups = [
+        CommandGroup("Basic", _basic_commands),
+        CommandGroup("Launchpad", _launchpad_commands),
+    ]
     summary = "Run Launchpad CI jobs."
     extra_global_args = [
         GlobalArgument(

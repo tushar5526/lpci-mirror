@@ -1,0 +1,680 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<wadl:application xmlns:html="http://www.w3.org/1999/xhtml" xmlns:wadl="http://research.sun.com/wadl/2006/10" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://research.sun.com/wadl/2006/10/wadl.xsd">
+
+  <wadl:doc title="About this service">The Launchpad web service allows automated
+        clients to access most of the functionality available on the
+        Launchpad web site. For help getting started, see
+        <html:a href="https://help.launchpad.net/API/">the help wiki.</html:a></wadl:doc>
+
+  <wadl:doc title="About version devel">This version of the web service reflects the most
+        recent changes made. It may abruptly change without
+        warning. Periodically, these changes are bundled up and given a
+        permanent version number.</wadl:doc>
+
+  
+  <wadl:resources base="https://api.launchpad.net/devel/">
+    <wadl:resource path="" type="#service-root" />
+  </wadl:resources>
+
+  
+  <wadl:resource_type id="service-root">
+    <wadl:doc>The root of the web service.</wadl:doc>
+    <wadl:method name="GET" id="service-root-get">
+      <wadl:response>
+        <wadl:representation href="#service-root-json" />
+        <wadl:representation mediaType="application/vnd.sun.wadl+xml" id="service-root-wadl" />
+        </wadl:response>
+      </wadl:method>
+  </wadl:resource_type>
+
+  
+  <wadl:representation mediaType="application/json" id="service-root-json">
+    
+      <wadl:param style="plain" name="archives_collection_link" path="$['archives_collection_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#archives" />
+      </wadl:param>
+    
+    
+      <wadl:param style="plain" name="git_repositories_collection_link" path="$['git_repositories_collection_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#git_repositories" />
+      </wadl:param>
+    
+    
+      </wadl:representation>
+
+  
+
+  
+  
+    <wadl:resource_type id="archives">
+      <wadl:doc>
+Interface for ArchiveSet
+</wadl:doc>
+      <wadl:method id="archives-getByReference" name="GET">
+        <wadl:doc>
+Return the IArchive with the given archive reference.
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getByReference">
+              <wadl:doc>The name of the operation being invoked.</wadl:doc>
+            </wadl:param>
+            <wadl:param style="query" name="reference" required="true">
+             <wadl:doc>
+Archive reference string
+</wadl:doc>
+              
+            </wadl:param>
+          
+        </wadl:request>
+        <wadl:response>
+          
+          <wadl:representation href="https://api.launchpad.net/devel/#archive-full" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+  
+  
+    <wadl:resource_type id="git_repositories">
+      <wadl:doc>
+Interface representing the set of Git repositories.
+</wadl:doc>
+      <wadl:method id="git_repositories-getByPath" name="GET">
+        <wadl:doc>
+<html:p>Find a repository by its path.</html:p>
+<html:p>Any of these forms may be used:</html:p>
+<html:pre class="rst-literal-block">
+Unique names:
+    ~OWNER/PROJECT/+git/NAME
+    ~OWNER/DISTRO/+source/SOURCE/+git/NAME
+    ~OWNER/+git/NAME
+Owner-target default aliases:
+    ~OWNER/PROJECT
+    ~OWNER/DISTRO/+source/SOURCE
+Official aliases:
+    PROJECT
+    DISTRO/+source/SOURCE
+</html:pre>
+<html:p>Return None if no match was found.</html:p>
+
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getByPath">
+              <wadl:doc>The name of the operation being invoked.</wadl:doc>
+            </wadl:param>
+            <wadl:param style="query" name="path" required="true">
+             <wadl:doc>
+Repository path
+</wadl:doc>
+              
+            </wadl:param>
+          
+        </wadl:request>
+        <wadl:response>
+          
+          <wadl:representation href="https://api.launchpad.net/devel/#git_repository-full" />
+        </wadl:response>
+      </wadl:method>
+      </wadl:resource_type>
+
+  
+  
+    <wadl:resource_type id="archive">
+      <wadl:doc>
+Main Archive interface.
+</wadl:doc>
+      <wadl:method id="archive-uploadCIBuild" name="POST">
+        <wadl:doc>
+Upload the output of a CI build to this archive.
+</wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/x-www-form-urlencoded">
+            <wadl:param style="query" name="ws.op" required="true" fixed="uploadCIBuild" />
+            <wadl:param style="query" name="ci_build" required="true">
+              
+              <wadl:link resource_type="https://api.launchpad.net/devel/#ci_build" />
+            </wadl:param>
+            <wadl:param style="query" name="to_series" required="true">
+              <wadl:doc>
+Target distroseries name
+</wadl:doc>
+              
+            </wadl:param>
+            <wadl:param style="query" name="to_pocket" required="true">
+              <wadl:doc>
+Target pocket name
+</wadl:doc>
+              
+            </wadl:param>
+            <wadl:param style="query" name="to_channel" required="false">
+              <wadl:doc>
+Target channel
+</wadl:doc>
+              
+            </wadl:param>
+          </wadl:representation>
+        </wadl:request>
+        
+      </wadl:method>
+      </wadl:resource_type>
+
+
+    <wadl:representation mediaType="application/json" id="archive-full">
+      <wadl:param style="plain" name="self_link" path="$['self_link']">
+        <wadl:doc>The canonical link to this resource.</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#archive" />
+      </wadl:param>
+      <wadl:param style="plain" name="web_link" path="$['web_link']">
+        <wadl:doc>
+          The canonical human-addressable web link to this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:doc>
+          The link to the WADL description of this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="http_etag" path="$['http_etag']">
+        <wadl:doc>
+          The value of the HTTP ETag for this resource.
+        </wadl:doc>
+      </wadl:param>
+      </wadl:representation>
+
+    <wadl:resource_type id="archive-page-resource">
+      <wadl:method name="GET" id="archive-page-resource-get">
+        <wadl:response>
+          <wadl:representation href="#archive-page" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+    <wadl:representation mediaType="application/json" id="archive-page">
+
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:link />
+      </wadl:param>
+
+      
+
+      <wadl:param style="plain" name="total_size" path="$['total_size']" required="false" />
+
+      <wadl:param style="plain" name="total_size_link" path="$['total_size_link']" required="false">
+        <wadl:link resource_type="#ScalarValue" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="start" path="$['start']" required="true" />
+
+      <wadl:param style="plain" name="next_collection_link" path="$['next_collection_link']">
+        <wadl:link resource_type="#archive-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="prev_collection_link" path="$['prev_collection_link']">
+        <wadl:link resource_type="#archive-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="entries" path="$['entries']" required="true" />
+
+      <wadl:param style="plain" name="entry_links" path="$['entries'][*]['self_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#archive" />
+      </wadl:param>
+  </wadl:representation>
+
+  
+  
+    <wadl:resource_type id="ci_build">
+      <wadl:doc>
+A build record for a pipeline of CI jobs.
+</wadl:doc>
+      <wadl:method name="GET" id="ci_build-get">
+        <wadl:response>
+          <wadl:representation href="https://api.launchpad.net/devel/#ci_build-full" />
+          <wadl:representation mediaType="application/xhtml+xml" id="ci_build-xhtml" />
+          <wadl:representation mediaType="application/vnd.sun.wadl+xml" id="ci_build-wadl" />
+        </wadl:response>
+      </wadl:method>
+
+      </wadl:resource_type>
+
+
+    <wadl:representation mediaType="application/json" id="ci_build-full">
+      <wadl:param style="plain" name="self_link" path="$['self_link']">
+        <wadl:doc>The canonical link to this resource.</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#ci_build" />
+      </wadl:param>
+      <wadl:param style="plain" name="web_link" path="$['web_link']">
+        <wadl:doc>
+          The canonical human-addressable web link to this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:doc>
+          The link to the WADL description of this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="http_etag" path="$['http_etag']">
+        <wadl:doc>
+          The value of the HTTP ETag for this resource.
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param style="plain" required="true" name="buildstate" path="$['buildstate']">
+        <wadl:doc>
+<html:p>Status</html:p>
+<html:p>The current status of the job.</html:p>
+
+</wadl:doc>
+        
+        <wadl:option value="Needs building" />
+        <wadl:option value="Successfully built" />
+        <wadl:option value="Failed to build" />
+        <wadl:option value="Dependency wait" />
+        <wadl:option value="Chroot problem" />
+        <wadl:option value="Build for superseded Source" />
+        <wadl:option value="Currently building" />
+        <wadl:option value="Failed to upload" />
+        <wadl:option value="Uploading build" />
+        <wadl:option value="Cancelling build" />
+        <wadl:option value="Cancelled build" />
+      </wadl:param>
+      <wadl:param style="plain" required="true" name="datebuilt" path="$['datebuilt']" type="xsd:dateTime">
+        <wadl:doc>
+<html:p>Date finished</html:p>
+<html:p>The timestamp when the build farm job was finished.</html:p>
+
+</wadl:doc>
+        
+      </wadl:param>
+      </wadl:representation>
+
+    <wadl:resource_type id="ci_build-page-resource">
+      <wadl:method name="GET" id="ci_build-page-resource-get">
+        <wadl:response>
+          <wadl:representation href="#ci_build-page" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+    <wadl:representation mediaType="application/json" id="ci_build-page">
+
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:link />
+      </wadl:param>
+
+      
+
+      <wadl:param style="plain" name="total_size" path="$['total_size']" required="false" />
+
+      <wadl:param style="plain" name="total_size_link" path="$['total_size_link']" required="false">
+        <wadl:link resource_type="#ScalarValue" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="start" path="$['start']" required="true" />
+
+      <wadl:param style="plain" name="next_collection_link" path="$['next_collection_link']">
+        <wadl:link resource_type="#ci_build-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="prev_collection_link" path="$['prev_collection_link']">
+        <wadl:link resource_type="#ci_build-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="entries" path="$['entries']" required="true" />
+
+      <wadl:param style="plain" name="entry_links" path="$['entries'][*]['self_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#ci_build" />
+      </wadl:param>
+  </wadl:representation>
+
+  
+  
+    <wadl:resource_type id="git_ref">
+      <wadl:doc>
+A reference in a Git repository.
+</wadl:doc>
+      <wadl:method name="GET" id="git_ref-get">
+        <wadl:response>
+          <wadl:representation href="https://api.launchpad.net/devel/#git_ref-full" />
+          <wadl:representation mediaType="application/xhtml+xml" id="git_ref-xhtml" />
+          <wadl:representation mediaType="application/vnd.sun.wadl+xml" id="git_ref-wadl" />
+        </wadl:response>
+      </wadl:method>
+
+      </wadl:resource_type>
+
+
+    <wadl:representation mediaType="application/json" id="git_ref-full">
+      <wadl:param style="plain" name="self_link" path="$['self_link']">
+        <wadl:doc>The canonical link to this resource.</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#git_ref" />
+      </wadl:param>
+      <wadl:param style="plain" name="web_link" path="$['web_link']">
+        <wadl:doc>
+          The canonical human-addressable web link to this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:doc>
+          The link to the WADL description of this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="http_etag" path="$['http_etag']">
+        <wadl:doc>
+          The value of the HTTP ETag for this resource.
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param style="plain" required="true" name="commit_sha1" path="$['commit_sha1']">
+        <wadl:doc>
+<html:p>Commit SHA-1</html:p>
+<html:p>The full SHA-1 object name of the commit object referenced by this reference.</html:p>
+
+</wadl:doc>
+        
+      </wadl:param>
+      </wadl:representation>
+
+    <wadl:resource_type id="git_ref-page-resource">
+      <wadl:method name="GET" id="git_ref-page-resource-get">
+        <wadl:response>
+          <wadl:representation href="#git_ref-page" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+    <wadl:representation mediaType="application/json" id="git_ref-page">
+
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:link />
+      </wadl:param>
+
+      
+
+      <wadl:param style="plain" name="total_size" path="$['total_size']" required="false" />
+
+      <wadl:param style="plain" name="total_size_link" path="$['total_size_link']" required="false">
+        <wadl:link resource_type="#ScalarValue" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="start" path="$['start']" required="true" />
+
+      <wadl:param style="plain" name="next_collection_link" path="$['next_collection_link']">
+        <wadl:link resource_type="#git_ref-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="prev_collection_link" path="$['prev_collection_link']">
+        <wadl:link resource_type="#git_ref-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="entries" path="$['entries']" required="true" />
+
+      <wadl:param style="plain" name="entry_links" path="$['entries'][*]['self_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#git_ref" />
+      </wadl:param>
+  </wadl:representation>
+
+  
+  
+    <wadl:resource_type id="git_repository">
+      <wadl:doc>
+A Git repository.
+</wadl:doc>
+      <wadl:method id="git_repository-getStatusReports" name="GET">
+        <wadl:doc>
+<html:p>Retrieves the list of reports that exist for a commit.</html:p>
+<html:blockquote>
+<html:table class="rst-docutils field-list" frame="void" rules="none">
+<html:col class="field-name" />
+<html:col class="field-body" />
+<html:tbody valign="top">
+<html:tr class="rst-field"><html:th class="rst-field-name" colspan="2">param commit_sha1:</html:th></html:tr>
+<html:tr class="rst-field"><html:td>\&#160;</html:td><html:td class="rst-field-body">The commit sha1 for the report.</html:td>
+</html:tr>
+</html:tbody>
+</html:table>
+</html:blockquote>
+<html:p>Scopes: <html:tt class="rst-docutils literal">repository:build_status</html:tt></html:p>
+
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getStatusReports" />
+            <wadl:param style="query" name="commit_sha1" required="true">
+              <wadl:doc>
+The Git commit for which this report is built.
+</wadl:doc>
+              
+            </wadl:param>
+          
+        </wadl:request>
+        <wadl:response>
+          
+          <wadl:representation href="https://api.launchpad.net/devel/#revision_status_report-page" />
+        </wadl:response>
+      </wadl:method>
+      <wadl:method id="git_repository-getRefByPath" name="GET">
+        <wadl:doc>
+<html:p>Look up a single reference in this repository by path.</html:p>
+<html:table class="rst-docutils field-list" frame="void" rules="none">
+<html:col class="field-name" />
+<html:col class="field-body" />
+<html:tbody valign="top">
+<html:tr class="rst-field"><html:th class="rst-field-name">param path:</html:th><html:td class="rst-field-body">A string to look up as a path.</html:td>
+</html:tr>
+<html:tr class="rst-field"><html:th class="rst-field-name">return:</html:th><html:td class="rst-field-body">An IGitRef, or None.</html:td>
+</html:tr>
+</html:tbody>
+</html:table>
+
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getRefByPath" />
+            <wadl:param style="query" name="path" required="true">
+              <wadl:doc>
+A string to look up as a path.
+</wadl:doc>
+              
+            </wadl:param>
+          
+        </wadl:request>
+        <wadl:response>
+          
+          <wadl:representation href="https://api.launchpad.net/devel/#git_ref-full" />
+        </wadl:response>
+      </wadl:method>
+      </wadl:resource_type>
+
+
+    <wadl:representation mediaType="application/json" id="git_repository-full">
+      <wadl:param style="plain" name="self_link" path="$['self_link']">
+        <wadl:doc>The canonical link to this resource.</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#git_repository" />
+      </wadl:param>
+      <wadl:param style="plain" name="web_link" path="$['web_link']">
+        <wadl:doc>
+          The canonical human-addressable web link to this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:doc>
+          The link to the WADL description of this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="http_etag" path="$['http_etag']">
+        <wadl:doc>
+          The value of the HTTP ETag for this resource.
+        </wadl:doc>
+      </wadl:param>
+      </wadl:representation>
+
+    <wadl:resource_type id="git_repository-page-resource">
+      <wadl:method name="GET" id="git_repository-page-resource-get">
+        <wadl:response>
+          <wadl:representation href="#git_repository-page" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+    <wadl:representation mediaType="application/json" id="git_repository-page">
+
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:link />
+      </wadl:param>
+
+      
+
+      <wadl:param style="plain" name="total_size" path="$['total_size']" required="false" />
+
+      <wadl:param style="plain" name="total_size_link" path="$['total_size_link']" required="false">
+        <wadl:link resource_type="#ScalarValue" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="start" path="$['start']" required="true" />
+
+      <wadl:param style="plain" name="next_collection_link" path="$['next_collection_link']">
+        <wadl:link resource_type="#git_repository-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="prev_collection_link" path="$['prev_collection_link']">
+        <wadl:link resource_type="#git_repository-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="entries" path="$['entries']" required="true" />
+
+      <wadl:param style="plain" name="entry_links" path="$['entries'][*]['self_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#git_repository" />
+      </wadl:param>
+  </wadl:representation>
+
+  
+  
+    <wadl:resource_type id="revision_status_report">
+      <wadl:doc>
+An revision status report for a Git commit.
+</wadl:doc>
+      <wadl:method name="GET" id="revision_status_report-get">
+        <wadl:response>
+          <wadl:representation href="https://api.launchpad.net/devel/#revision_status_report-full" />
+          <wadl:representation mediaType="application/xhtml+xml" id="revision_status_report-xhtml" />
+          <wadl:representation mediaType="application/vnd.sun.wadl+xml" id="revision_status_report-wadl" />
+        </wadl:response>
+      </wadl:method>
+
+      <wadl:method id="revision_status_report-getArtifactURLs" name="GET">
+        <wadl:doc>
+<html:p>Retrieves the list of URLs for artifacts that exist for this report.</html:p>
+<html:blockquote>
+<html:table class="rst-docutils field-list" frame="void" rules="none">
+<html:col class="field-name" />
+<html:col class="field-body" />
+<html:tbody valign="top">
+<html:tr class="rst-field"><html:th class="rst-field-name" colspan="2">param artifact_type:</html:th></html:tr>
+<html:tr class="rst-field"><html:td>\&#160;</html:td><html:td class="rst-field-body">The type of artifact for the report.</html:td>
+</html:tr>
+</html:tbody>
+</html:table>
+</html:blockquote>
+<html:p>Scopes: <html:tt class="rst-docutils literal">repository:build_status</html:tt></html:p>
+
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getArtifactURLs" />
+            <wadl:param style="query" name="artifact_type" required="false">
+              
+              
+              <wadl:option value="Log" />
+              <wadl:option value="Binary" />
+            </wadl:param>
+          
+        </wadl:request>
+        
+      </wadl:method>
+      </wadl:resource_type>
+
+
+    <wadl:representation mediaType="application/json" id="revision_status_report-full">
+      <wadl:param style="plain" name="self_link" path="$['self_link']">
+        <wadl:doc>The canonical link to this resource.</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#revision_status_report" />
+      </wadl:param>
+      <wadl:param style="plain" name="web_link" path="$['web_link']">
+        <wadl:doc>
+          The canonical human-addressable web link to this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:doc>
+          The link to the WADL description of this resource.
+        </wadl:doc>
+        <wadl:link />
+      </wadl:param>
+      <wadl:param style="plain" name="http_etag" path="$['http_etag']">
+        <wadl:doc>
+          The value of the HTTP ETag for this resource.
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param style="plain" required="true" name="ci_build_link" path="$['ci_build_link']">
+        <wadl:doc>
+The CI build that produced this report.
+</wadl:doc>
+        <wadl:link resource_type="https://api.launchpad.net/devel/#ci_build" />
+      </wadl:param>
+      </wadl:representation>
+
+    <wadl:resource_type id="revision_status_report-page-resource">
+      <wadl:method name="GET" id="revision_status_report-page-resource-get">
+        <wadl:response>
+          <wadl:representation href="#revision_status_report-page" />
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource_type>
+
+    <wadl:representation mediaType="application/json" id="revision_status_report-page">
+
+      <wadl:param style="plain" name="resource_type_link" path="$['resource_type_link']">
+        <wadl:link />
+      </wadl:param>
+
+      
+
+      <wadl:param style="plain" name="total_size" path="$['total_size']" required="false" />
+
+      <wadl:param style="plain" name="total_size_link" path="$['total_size_link']" required="false">
+        <wadl:link resource_type="#ScalarValue" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="start" path="$['start']" required="true" />
+
+      <wadl:param style="plain" name="next_collection_link" path="$['next_collection_link']">
+        <wadl:link resource_type="#revision_status_report-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="prev_collection_link" path="$['prev_collection_link']">
+        <wadl:link resource_type="#revision_status_report-page-resource" />
+      </wadl:param>
+
+      <wadl:param style="plain" name="entries" path="$['entries']" required="true" />
+
+      <wadl:param style="plain" name="entry_links" path="$['entries'][*]['self_link']">
+        <wadl:link resource_type="https://api.launchpad.net/devel/#revision_status_report" />
+      </wadl:param>
+  </wadl:representation>
+
+  
+  
+    <xs:simpleType name="binary">
+   <xs:list itemType="byte" />
+  </xs:simpleType>
+
+</wadl:application>
