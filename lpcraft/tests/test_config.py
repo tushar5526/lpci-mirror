@@ -634,7 +634,7 @@ class TestConfig(TestCase):
             path,
         )
 
-    def test_missing_ppa_and_components(self):
+    def test_missing_components_when_url_is_specified(self):
         path = self.create_config(
             dedent(
                 """
@@ -655,8 +655,8 @@ class TestConfig(TestCase):
         )
         self.assertRaisesRegex(
             ValidationError,
-            r"One of the following keys is required with an appropriate"
-            r" value: 'components', 'ppa'.",
+            r"The 'components' key is required when the 'url' key"
+            r" is specified.",
             Config.load,
             path,
         )

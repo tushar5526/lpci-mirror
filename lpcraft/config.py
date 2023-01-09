@@ -162,26 +162,29 @@ class PackageRepository(ModelConfigDefaults):
     def validate_multiple_fields(
         cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
-        if "url" not in values and "ppa" not in values:
-            raise ValueError(
-                "One of the following keys is required with an appropriate"
-                " value: 'url', 'ppa'."
-            )
-        elif "url" in values and "ppa" in values:
-            raise ValueError(
-                "Only one of the following keys can be specified:"
-                " 'url', 'ppa'."
-            )
-        elif "ppa" not in values and "components" not in values:
-            raise ValueError(
-                "One of the following keys is required with an appropriate"
-                " value: 'components', 'ppa'."
-            )
-        elif "ppa" in values and "components" in values:
-            raise ValueError(
-                "The 'components' key is not allowed when the 'ppa' key is"
-                " specified. PPAs only support the 'main' component."
-            )
+        if "url" in values:
+            if "ppa" in values:
+                raise ValueError(
+                    "Only one of the following keys can be specified:"
+                    " 'url', 'ppa'."
+                )
+            if "components" not in values:
+                raise ValueError(
+                    "The 'components' key is required when the 'url' key"
+                    " is specified."
+                )
+        else:
+            if "ppa" not in values:
+                raise ValueError(
+                    "One of the following keys is required with an appropriate"
+                    " value: 'url', 'ppa'."
+                )
+            if "components" in values:
+                raise ValueError(
+                    "The 'components' key is not allowed when the 'ppa' key is"
+                    " specified. PPAs only support the 'main' component."
+                )
+
         return values
 
     @validator("components", pre=True, always=True)
