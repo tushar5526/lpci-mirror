@@ -2,12 +2,14 @@
 Version history
 ===============
 
-0.0.40 (unreleased)
+0.0.40 (2023-01-13)
 ===================
 
 - Fix the leakage of package repositories from a job to the next.
 - Add support for Python 3.11.
 - Set sensible default values for some package repository fields.
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5800-1.
 
 0.0.39 (2023-01-06)
 ===================
