@@ -276,7 +276,9 @@ class Job(ModelConfigDefaults):
             if not package_repository.suites:
                 if not package_repositories:
                     package_repositories = v.copy()
-                package_repositories[index].suites = [values["series"]]
+                package_repositories[index].suites = [
+                    PackageSuite[values["series"]]
+                ]
         return package_repositories or v
 
     @pydantic.root_validator(pre=True)

@@ -601,9 +601,21 @@ class TestConfig(TestCase):
         )
         config = Config.load(path)
 
-        for package_repository in config.jobs["test"][0].package_repositories:
-            self.assertEqual(["deb"], package_repository.formats)
-            self.assertEqual(["focal"], package_repository.suites)
+        package_repository_1 = config.jobs["test"][0].package_repositories[0]
+        self.assertEqual(["deb"], package_repository_1.formats)
+        self.assertEqual(["focal"], package_repository_1.suites)
+        self.assertEqual(
+            [f"deb {LAUNCHPAD_PPA_BASE_URL}/launchpad/ppa/ubuntu focal main"],
+            list(package_repository_1.sources_list_lines()),
+        )
+
+        package_repository_2 = config.jobs["test"][0].package_repositories[1]
+        self.assertEqual(["deb"], package_repository_2.formats)
+        self.assertEqual(["focal"], package_repository_2.suites)
+        self.assertEqual(
+            ["deb https://canonical.example.org/ubuntu focal main"],
+            list(package_repository_2.sources_list_lines()),
+        )
 
     def test_missing_ppa_and_url(self):
         path = self.create_config(
