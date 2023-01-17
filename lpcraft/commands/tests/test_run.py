@@ -12,7 +12,7 @@ from typing import Any, AnyStr, Dict, List, Optional
 from unittest.mock import ANY, Mock, call, patch
 
 import responses
-from craft_providers.lxd import launch
+from craft_providers.lxd import LXC, launch
 from fixtures import TempDir
 from testtools.matchers import MatchesStructure
 
@@ -3075,6 +3075,88 @@ class TestRun(RunBaseTestCase):
             json.loads((job_output / "properties").read_text()),
         )
 
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_no_gpu_nvidia_option(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # Without --gpu-nvidia, containers are launched with a basic profile.
+        lxc = Mock(spec=LXC)
+        lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        lxc.project_list.return_value = []
+        lxc.remote_list.return_value = {}
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=lxc, lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        lxc.profile_edit.assert_called_once_with(
+            profile="default",
+            config={"config": {}, "devices": {}},
+            project="test-project",
+            remote="test-remote",
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_gpu_nvidia_option(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # With --gpu-nvidia, containers are launched with a profile that
+        # enables GPU passthrough.
+        lxc = Mock(spec=LXC)
+        lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        lxc.project_list.return_value = []
+        lxc.remote_list.return_value = {}
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=lxc, lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run", "--gpu-nvidia")
+
+        self.assertEqual(0, result.exit_code)
+        lxc.profile_edit.assert_called_once_with(
+            profile="default",
+            config={
+                "config": {"nvidia.runtime": "true"},
+                "devices": {"gpu": {"type": "gpu"}},
+            },
+            project="test-project",
+            remote="test-remote",
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_config_file_not_under_project_directory(self):
@@ -4213,4 +4295,86 @@ class TestRunOne(RunBaseTestCase):
         self.assertEqual(
             {"foo": "bar", "license": {"path": "LICENSE.txt", "spdx": None}},
             json.loads((job_output / "properties").read_text()),
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_no_gpu_nvidia_option(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # Without --gpu-nvidia, containers are launched with a basic profile.
+        lxc = Mock(spec=LXC)
+        lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        lxc.project_list.return_value = []
+        lxc.remote_list.return_value = {}
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=lxc, lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "test", "0")
+
+        self.assertEqual(0, result.exit_code)
+        lxc.profile_edit.assert_called_once_with(
+            profile="default",
+            config={"config": {}, "devices": {}},
+            project="test-project",
+            remote="test-remote",
+        )
+
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_gpu_nvidia_option(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        # With --gpu-nvidia, containers are launched with a profile that
+        # enables GPU passthrough.
+        lxc = Mock(spec=LXC)
+        lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        lxc.project_list.return_value = []
+        lxc.remote_list.return_value = {}
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=lxc, lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess([], 0)
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: echo test
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run-one", "--gpu-nvidia", "test", "0")
+
+        self.assertEqual(0, result.exit_code)
+        lxc.profile_edit.assert_called_once_with(
+            profile="default",
+            config={
+                "config": {"nvidia.runtime": "true"},
+                "devices": {"gpu": {"type": "gpu"}},
+            },
+            project="test-project",
+            remote="test-remote",
         )

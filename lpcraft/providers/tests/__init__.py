@@ -41,6 +41,8 @@ def makeLXDProvider(
     """Create a custom LXDProvider for tests."""
     if lxc is None:
         lxc = Mock(spec=LXC)
+        lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        lxc.project_list.return_value = []
         lxc.remote_list.return_value = {}
     lxd_installer = FakeLXDInstaller(
         can_install=can_install,

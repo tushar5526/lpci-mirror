@@ -246,6 +246,7 @@ class LXDProvider(Provider):
         project_path: Path,
         series: str,
         architecture: str,
+        gpu_nvidia: bool = False,
     ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 
@@ -268,6 +269,31 @@ class LXDProvider(Provider):
             raise CommandError(str(error)) from error
         base_configuration = LPCraftBuilddBaseConfiguration(
             alias=alias, environment=environment, hostname=instance_name
+        )
+
+        if self.lxd_project not in self.lxc.project_list(self.lxd_remote):
+            self.lxc.project_create(
+                project=self.lxd_project, remote=self.lxd_remote
+            )
+        # Copy the default profile from the default project and adjust it
+        # for our needs.  Unfortunately we have to edit the default profile
+        # in our project since there's no way to get craft-providers to use
+        # a different profile, but at least the profile is within the scope
+        # of the project so shouldn't affect other users of LXD.
+        profile = self.lxc.profile_show(
+            profile="default", project="default", remote=self.lxd_remote
+        )
+        if gpu_nvidia:
+            profile["config"]["nvidia.runtime"] = "true"
+            profile["devices"]["gpu"] = {"type": "gpu"}
+        else:
+            profile["config"].pop("nvidia.runtime", None)
+            profile["devices"].pop("gpu", None)
+        self.lxc.profile_edit(
+            profile="default",
+            config=profile,
+            project=self.lxd_project,
+            remote=self.lxd_remote,
         )
 
         try:

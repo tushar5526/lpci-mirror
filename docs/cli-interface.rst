@@ -49,6 +49,10 @@ lpcraft run optional arguments
 
   This option is repeatable.
 
+- ``--gpu-nvidia`` (experimental)
+
+  This option requires an NVIDIA GPU on the host system.
+
 lpcraft run-one
 ---------------
 

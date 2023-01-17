@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.42 (unreleased)
+===================
+
+- Add experimental ``--gpu-nvidia`` option.
+
 0.0.41 (2023-01-18)
 ===================
 

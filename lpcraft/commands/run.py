@@ -469,6 +469,7 @@ def _run_job(
     env_from_cli: Optional[List[str]] = None,
     plugin_settings: Optional[List[str]] = None,
     secrets: Optional[Dict[str, str]] = None,
+    gpu_nvidia: bool = False,
 ) -> None:
     """Run a single job."""
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
@@ -538,6 +539,7 @@ def _run_job(
         project_path=cwd,
         series=job.series,
         architecture=host_architecture,
+        gpu_nvidia=gpu_nvidia,
     ) as instance:
         snaps = list(itertools.chain(*pm.hook.lpcraft_install_snaps()))
         for snap in snaps:
@@ -681,6 +683,15 @@ class RunCommand(BaseCommand):
             dest="package_repositories",
             help="Provide an additional package repository.",
         )
+        parser.add_argument(
+            "--gpu-nvidia",
+            action="store_true",
+            default=False,
+            help=(
+                "Pass through an NVIDIA GPU from the host system.  "
+                "(Experimental option, subject to change.)"
+            ),
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -730,6 +741,7 @@ class RunCommand(BaseCommand):
                             env_from_cli=args.set_env,
                             plugin_settings=args.plugin_setting,
                             secrets=secrets,
+                            gpu_nvidia=args.gpu_nvidia,
                         )
 
                 except CommandError as e:
@@ -836,6 +848,15 @@ class RunOneCommand(BaseCommand):
             dest="package_repositories",
             help="Provide an additional package repository.",
         )
+        parser.add_argument(
+            "--gpu-nvidia",
+            action="store_true",
+            default=False,
+            help=(
+                "Pass through an NVIDIA GPU from the host system.  "
+                "(Experimental option, subject to change.)"
+            ),
+        )
 
     def run(self, args: Namespace) -> int:
         """Run the command."""
@@ -885,6 +906,7 @@ class RunOneCommand(BaseCommand):
                 env_from_cli=args.set_env,
                 plugin_settings=args.plugin_setting,
                 secrets=secrets,
+                gpu_nvidia=args.gpu_nvidia,
             )
         finally:
             if args.clean:

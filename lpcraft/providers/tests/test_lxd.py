@@ -414,6 +414,11 @@ class TestLXDProvider(TestCase):
     def test_launched_environment(self):
         expected_instance_name = "lpcraft-my-project-12345-focal-amd64"
         mock_lxc = Mock(spec=LXC)
+        mock_lxc.profile_show.return_value = {
+            "config": {"sentinel": "true"},
+            "devices": {"eth0": {}},
+        }
+        mock_lxc.project_list.return_value = []
         mock_lxc.remote_list.return_value = {}
         mock_launcher = Mock(spec=launch)
         provider = makeLXDProvider(lxc=mock_lxc, lxd_launcher=mock_launcher)
@@ -426,6 +431,22 @@ class TestLXDProvider(TestCase):
         ) as instance:
             self.assertIsNotNone(instance)
             mock_lxc.remote_add.assert_called_once()
+            mock_lxc.project_list.assert_called_once_with("test-remote")
+            mock_lxc.project_create.assert_called_once_with(
+                project="test-project", remote="test-remote"
+            )
+            mock_lxc.profile_show.assert_called_once_with(
+                profile="default", project="default", remote="test-remote"
+            )
+            mock_lxc.profile_edit.assert_called_once_with(
+                profile="default",
+                config={
+                    "config": {"sentinel": "true"},
+                    "devices": {"eth0": {}},
+                },
+                project="test-project",
+                remote="test-remote",
+            )
             self.assertEqual(
                 [
                     call(
@@ -694,3 +715,75 @@ class TestLXDProvider(TestCase):
                 pass  # pragma: no cover
 
         self.assertIs(error, raised.exception.__cause__)
+
+    def test_launched_environment_reuses_existing_profile(self):
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        mock_lxc.project_list.return_value = ["test-project"]
+        mock_lxc.remote_list.return_value = {"test-remote": {}}
+        mock_launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=mock_lxc, lxd_launcher=mock_launcher)
+
+        with provider.launched_environment(
+            project_name="my-project",
+            project_path=self.mock_path,
+            series="focal",
+            architecture="amd64",
+        ) as instance:
+            self.assertIsNotNone(instance)
+            mock_lxc.project_create.assert_not_called()
+
+    def test_launched_environment_removes_gpu_nvidia_configuration(self):
+        # With gpu_nvidia=False, launched_environment removes any existing
+        # NVIDIA GPU configuration from the default profile.
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.profile_show.return_value = {
+            "config": {"nvidia.runtime": "true"},
+            "devices": {"gpu": {"type": "gpu"}},
+        }
+        mock_lxc.project_list.return_value = []
+        mock_lxc.remote_list.return_value = {}
+        mock_launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=mock_lxc, lxd_launcher=mock_launcher)
+
+        with provider.launched_environment(
+            project_name="my-project",
+            project_path=self.mock_path,
+            series="focal",
+            architecture="amd64",
+        ) as instance:
+            self.assertIsNotNone(instance)
+            mock_lxc.profile_edit.assert_called_once_with(
+                profile="default",
+                config={"config": {}, "devices": {}},
+                project="test-project",
+                remote="test-remote",
+            )
+
+    def test_launched_environment_adds_gpu_nvidia_configuration(self):
+        # With gpu_nvidia=True, launched_environment adds NVIDIA GPU
+        # configuration to the default profile.
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.profile_show.return_value = {"config": {}, "devices": {}}
+        mock_lxc.project_list.return_value = []
+        mock_lxc.remote_list.return_value = {}
+        mock_launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=mock_lxc, lxd_launcher=mock_launcher)
+
+        with provider.launched_environment(
+            project_name="my-project",
+            project_path=self.mock_path,
+            series="focal",
+            architecture="amd64",
+            gpu_nvidia=True,
+        ) as instance:
+            self.assertIsNotNone(instance)
+            mock_lxc.profile_edit.assert_called_once_with(
+                profile="default",
+                config={
+                    "config": {"nvidia.runtime": "true"},
+                    "devices": {"gpu": {"type": "gpu"}},
+                },
+                project="test-project",
+                remote="test-remote",
+            )

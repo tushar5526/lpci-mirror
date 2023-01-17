@@ -108,6 +108,7 @@ class Provider(ABC):
         project_path: Path,
         series: str,
         architecture: str,
+        gpu_nvidia: bool = False,
     ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 
@@ -115,4 +116,6 @@ class Provider(ABC):
         :param project_path: Path to project.
         :param series: Distribution series name.
         :param architecture: Targeted architecture name.
+        :param gpu_nvidia: If True, pass through an NVIDIA GPU from the host
+            to the environment.
         """
