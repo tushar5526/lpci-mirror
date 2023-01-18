@@ -51,7 +51,8 @@ lpcraft run optional arguments
 
 - ``--gpu-nvidia`` (experimental)
 
-  This option requires an NVIDIA GPU on the host system.
+  This option requires an NVIDIA GPU on the host system; if passed on a
+  system without such a GPU, container setup will fail.
 
 lpcraft run-one
 ---------------
