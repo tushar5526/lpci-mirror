@@ -5,6 +5,8 @@ Version history
 0.0.41 (unreleased)
 ===================
 
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5810-1/.
 
 0.0.40 (2023-01-13)
 ===================
