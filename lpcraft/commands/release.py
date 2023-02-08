@@ -70,7 +70,7 @@ class ReleaseCommand(BaseCommand):
             # XXX cjwatson 2023-01-04: Ideally this would check for the git
             # service corresponding to the --launchpad argument rather than
             # hardcoding git.launchpad.net.
-            if parsed_url.netloc == "git.launchpad.net":
+            if parsed_url.hostname == "git.launchpad.net":
                 args.repository = parsed_url.path
             else:
                 raise CommandError(

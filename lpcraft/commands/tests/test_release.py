@@ -474,3 +474,49 @@ class TestRelease(CommandBaseTestCase):
                 ],
             ),
         )
+
+    def test_release_from_current_branch_with_username(self):
+        self.set_up_local_branch(
+            "feature", "origin", "git+ssh://username@git.launchpad.net/example"
+        )
+        lp = self.make_fake_launchpad()
+        commit_sha1 = "1" * 40
+        lp.git_repositories = {
+            "getByPath": lambda path: {
+                "getRefByPath": lambda path: {"commit_sha1": commit_sha1},
+                "getStatusReports": lambda commit_sha1: {
+                    "entries": [
+                        {
+                            "ci_build": {
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        }
+                    ]
+                },
+            }
+        }
+        lp.archives = {
+            "getByReference": lambda reference: {
+                "uploadCIBuild": self.fake_upload
+            }
+        }
+
+        result = self.run_command(
+            "release",
+            "ppa:owner/ubuntu/name",
+            "focal",
+            "edge",
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=0,
+                messages=[
+                    f"Released build of example:{commit_sha1} to "
+                    f"ppa:owner/ubuntu/name focal edge."
+                ],
+            ),
+        )
