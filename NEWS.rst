@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.0.45 (unreleased)
+===================
+
+- Replace deprecated setuptools directive.
+  See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-license-file.
+
 0.0.44 (2023-02-09)
 ===================
 
