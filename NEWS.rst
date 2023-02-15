@@ -2,11 +2,14 @@
 Version history
 ===============
 
-0.0.45 (unreleased)
+0.0.45 (2023-02-15)
 ===================
 
 - Replace deprecated setuptools directive.
   See https://setuptools.pypa.io/en/latest/references/keywords.html#keyword-license-file.
+
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5871-1/.
 
 0.0.44 (2023-02-09)
 ===================
