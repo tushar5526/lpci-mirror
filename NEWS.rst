@@ -7,6 +7,8 @@ Version history
 
 - Update dependencies.
 
+- Fix deprecation warning in `lxd.launch` (changed API in `craft-providers`).
+
 0.0.45 (2023-02-15)
 ===================
 

@@ -461,7 +461,7 @@ class TestLXDProvider(TestCase):
                         auto_clean=True,
                         auto_create_project=True,
                         map_user_uid=True,
-                        use_snapshots=True,
+                        use_base_instance=True,
                         project="test-project",
                         remote="test-remote",
                         lxc=mock_lxc,
