@@ -5,6 +5,9 @@ Version history
 0.0.46 (unreleased)
 ===================
 
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5891-1//.
+
 - Update dependencies.
 
 - Fix deprecation warning in `lxd.launch` (changed API in `craft-providers`).
