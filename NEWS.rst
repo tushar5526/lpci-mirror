@@ -2,11 +2,18 @@
 Version history
 ===============
 
-0.0.46 (unreleased)
+0.0.47 (2023-03-01)
 ===================
 
 - Rebuild the Snap package to include updated system packages.
-  See https://ubuntu.com/security/notices/USN-5891-1//.
+  See https://ubuntu.com/security/notices/USN-5821-3/.
+
+
+0.0.46 (2023-02-28)
+===================
+
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5891-1/.
 
 - Update dependencies.
 
