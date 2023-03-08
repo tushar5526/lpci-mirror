@@ -20,7 +20,11 @@ from lpcraft.config import (
     LAUNCHPAD_PPA_BASE_URL,
     Config,
     OutputDistributeEnum,
+    PackageComponent,
+    PackageFormat,
     PackageRepository,
+    PackageSuite,
+    PackageType,
     PPAShortFormURL,
     get_ppa_url_parts,
 )
@@ -479,10 +483,10 @@ class TestConfig(TestCase):
         self.assertEqual(
             [
                 PackageRepository(
-                    type="apt",
-                    formats=["deb"],
-                    components=["main"],
-                    suites=["focal"],
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.focal],
                     url=AnyHttpUrl(
                         "https://canonical.example.org/artifactory/jammy-golang-backport",  # noqa: E501
                         scheme="https",
@@ -493,10 +497,10 @@ class TestConfig(TestCase):
                     ),
                 ),
                 PackageRepository(
-                    type="apt",
-                    formats=["deb"],
-                    components=["main"],
-                    suites=["focal"],
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.focal],
                     url=AnyHttpUrl(
                         "https://canonical.example.org/artifactory/jammy-golang-backport",  # noqa: E501
                         scheme="https",

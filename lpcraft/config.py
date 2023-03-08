@@ -47,13 +47,13 @@ class OutputDistributeEnum(Enum):
 class Output(ModelConfigDefaults):
     """Job output properties."""
 
-    paths: Optional[List[StrictStr]]
-    distribute: Optional[OutputDistributeEnum]
-    channels: Optional[List[StrictStr]]
+    paths: Optional[List[StrictStr]] = None
+    distribute: Optional[OutputDistributeEnum] = None
+    channels: Optional[List[StrictStr]] = None
     # instead of `Any` this should be something like `JSONSerializable`
-    properties: Optional[Dict[StrictStr, Any]]
-    dynamic_properties: Optional[Path]
-    expires: Optional[timedelta]
+    properties: Optional[Dict[StrictStr, Any]] = None
+    dynamic_properties: Optional[Path] = None
+    expires: Optional[timedelta] = None
 
     @pydantic.validator("expires")
     def validate_expires(cls, v: timedelta) -> timedelta:
@@ -151,12 +151,12 @@ class PackageRepository(ModelConfigDefaults):
     """
 
     type: PackageType  # e.g. `apt``
-    ppa: Optional[PPAShortFormURL]  # e.g. `launchpad/ubuntu/ppa`
-    formats: Optional[List[PackageFormat]]  # e.g. `[deb, deb-src]`
-    components: Optional[List[PackageComponent]]  # e.g. `[main, universe]`
-    suites: Optional[List[PackageSuite]]  # e.g. `[bionic, focal]`
-    url: Optional[AnyHttpUrl]
-    trusted: Optional[bool]
+    ppa: Optional[PPAShortFormURL] = None  # e.g. `launchpad/ubuntu/ppa`
+    formats: Optional[List[PackageFormat]] = None  # e.g. `[deb, deb-src]`
+    components: Optional[List[PackageComponent]] = None  # e.g. `[main]`
+    suites: Optional[List[PackageSuite]] = None  # e.g. `[bionic, focal]`
+    url: Optional[AnyHttpUrl] = None
+    trusted: Optional[bool] = False
 
     @root_validator(pre=True)
     def validate_multiple_fields(

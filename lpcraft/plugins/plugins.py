@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 class BaseConfig(
     pydantic.BaseModel,
     extra=pydantic.Extra.forbid,
-    frozen=True,
+    allow_mutation=False,
     alias_generator=lambda s: s.replace("_", "-"),
     underscore_attrs_are_private=True,
 ):
