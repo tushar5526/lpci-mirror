@@ -430,7 +430,6 @@ class TestLXDProvider(TestCase):
             architecture="amd64",
         ) as instance:
             self.assertIsNotNone(instance)
-            mock_lxc.remote_add.assert_called_once()
             mock_lxc.project_list.assert_called_once_with("test-remote")
             mock_lxc.project_create.assert_called_once_with(
                 project="test-project", remote="test-remote"
@@ -700,7 +699,7 @@ class TestLXDProvider(TestCase):
         self, mock_lxd
     ):  # noqa: E501
         error = LXDError(brief="Boom")
-        mock_lxd.configure_buildd_image_remote.side_effect = error
+        mock_lxd.get_remote_image.side_effect = error
         # original behavior has to be restored as lxd is now a mock
         mock_lxd.LXDError = LXDError
         provider = makeLXDProvider()

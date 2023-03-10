@@ -10,7 +10,7 @@ charset-normalizer==3.0.1
     # via requests
 craft-cli==1.2.0
     # via -r requirements.in
-craft-providers==1.7.2
+craft-providers==1.8.0
     # via -r requirements.in
 idna==3.4
     # via requests

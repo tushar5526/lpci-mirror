@@ -116,6 +116,10 @@ class PackageSuite(str, Enum):
     e.g. xenial, focal, ...
     """
 
+    # XXX jugmac00 2023-03-10 the intention of this class was to verify that
+    # only supported distroseries are present in the .launchpad.yaml file
+    # but this does not work as intended, as you can specify arbitrary
+    # strings which later possibly result in a KeyError
     bionic = "bionic"  # 18.04
     focal = "focal"  # 20.04
     jammy = "jammy"  # 22.04

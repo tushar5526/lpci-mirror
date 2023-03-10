@@ -2,8 +2,13 @@
 Version history
 ===============
 
-0.0.48 (unreleased)
+0.0.48 (2023-03-10)
 ===================
+
+- Add support for non-LTS releases, that is currently lunar and kinetic.
+  Please note that we use daily cloud images
+  (https://cloud-images.ubuntu.com/daily/) for this purpose,
+  so we cannot guarantee stability.
 
 - Fix various ``mypy`` errors.
 

@@ -264,7 +264,7 @@ class LXDProvider(Provider):
         )
         environment = self.get_command_environment()
         try:
-            image_remote = lxd.configure_buildd_image_remote(lxc=self.lxc)
+            image_remote = lxd.get_remote_image(alias.value)
         except lxd.LXDError as error:
             raise CommandError(str(error)) from error
         base_configuration = LPCraftBuilddBaseConfiguration(
@@ -301,7 +301,7 @@ class LXDProvider(Provider):
                 name=instance_name,
                 base_configuration=base_configuration,
                 image_name=series,
-                image_remote=image_remote,
+                image_remote=image_remote.remote_name,
                 auto_clean=True,
                 auto_create_project=True,
                 map_user_uid=True,

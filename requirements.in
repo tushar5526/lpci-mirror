@@ -1,5 +1,5 @@
 craft-cli
-craft-providers
+craft-providers>=1.8.0  # 1.8.0 added support of non-LTS releases
 pydantic
 PyYAML
 python-dotenv
