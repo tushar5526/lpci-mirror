@@ -267,6 +267,11 @@ class LXDProvider(Provider):
             image_remote = lxd.get_remote_image(alias.value)
         except lxd.LXDError as error:
             raise CommandError(str(error)) from error
+        # XXX 2023-03-10 jugmac00: The following line is not explicitly covered
+        # by our test suite. We probably need to add something like
+        # `mock_lxd.get_remote_image` and then assert on `add_remote` being
+        # called.
+        image_remote.add_remote(lxc=self.lxc)
         base_configuration = LPCraftBuilddBaseConfiguration(
             alias=alias, environment=environment, hostname=instance_name
         )

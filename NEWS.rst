@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.49 (2023-03-10)
+===================
+- Fix regression from adding support for non-LTS releases. With the latest
+  release of `craft-providers` we need to explicitly add a remote for images.
+
 0.0.48 (2023-03-10)
 ===================
 
