@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.0.50 (2023-03-20)
+===================
+- Rebuild the Snap package to include updated system packages.
+  See https://ubuntu.com/security/notices/USN-5960-1.
+
 0.0.49 (2023-03-10)
 ===================
 - Fix regression from adding support for non-LTS releases. With the latest
