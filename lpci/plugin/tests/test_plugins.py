@@ -679,6 +679,43 @@ class TestPlugins(CommandBaseTestCase):
         ]
         self.assertEqual("info/recipe", plugin_match[0].build_target)
 
+    def test_conda_build_plugin_finds_recipe_custom_folder(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    conda-channels:
+                        - conda-forge
+                    conda-packages:
+                        - mamba
+                        - pip
+                    conda-python: 3.8
+                    recipe-folder: custominfo
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        Path("include/fake_subdir").mkdir(parents=True)
+        meta_yaml = Path("custominfo/recipe/meta.yaml")
+        meta_yaml.parent.mkdir(parents=True)
+        meta_yaml.touch()
+        config_obj = lpcraft.config.Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual("custominfo/recipe", plugin_match[0].build_target)
+
     def test_conda_build_plugin_finds_recipe_with_fake_parent(self):
         config = dedent(
             """

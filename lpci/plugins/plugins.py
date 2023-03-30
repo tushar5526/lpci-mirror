@@ -264,11 +264,21 @@ class CondaBuildPlugin(MiniCondaPlugin):
         conda_channels: Optional[List[StrictStr]]
         conda_packages: Optional[List[StrictStr]]
         conda_python: Optional[StrictStr]
+        recipe_folder: Optional[StrictStr]
 
     DEFAULT_CONDA_PACKAGES = ("conda-build",)
+    DEFAULT_RECIPE_FOLDER = "./info"
 
     def get_plugin_config(self) -> "CondaBuildPlugin.Config":
         return cast(CondaBuildPlugin.Config, self.config.plugin_config)
+
+    @property
+    def recipe_folder(self) -> str:
+        recipe_folder = self.DEFAULT_RECIPE_FOLDER
+        plugin_config = self.get_plugin_config()
+        if plugin_config.recipe_folder:
+            recipe_folder = plugin_config.recipe_folder
+        return recipe_folder
 
     @staticmethod
     def _has_recipe(dir_: Path) -> bool:
@@ -300,7 +310,7 @@ class CondaBuildPlugin(MiniCondaPlugin):
                         continue
             raise FileNotFoundError
 
-        return _find_recipe_dir(Path("."))
+        return _find_recipe_dir(Path(self.recipe_folder))
 
     def find_build_target(self) -> str:
         def find_parents(pth: Path) -> Path:
