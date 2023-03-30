@@ -486,6 +486,44 @@ class TestPlugins(CommandBaseTestCase):
 
     @patch("lpci.commands.run.get_provider")
     @patch("lpci.commands.run.get_host_architecture", return_value="amd64")
+    def test_conda_build_plugin_settings(self):
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    build-target: info/recipe/parent
+                    series: focal
+                    architectures: amd64
+                    plugin: conda-build
+                    run: |
+                        pip install --upgrade pytest
+        """
+        )
+        config_path = Path(".launchpad.yaml")
+        config_path.write_text(config)
+        config_obj = lpcraft.config.Config.load(config_path)
+        self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
+        pm = get_plugin_manager(config_obj.jobs["build"][0])
+        plugins = pm.get_plugins()
+        plugin_match = [
+            _ for _ in plugins if _.__class__.__name__ == "CondaBuildPlugin"
+        ]
+        self.assertEqual(
+            [
+                "defaults",
+            ],
+            plugin_match[0].conda_channels,
+        )
+        self.assertEqual(
+            ["PYTHON=3.8", "conda-build"], plugin_match[0].conda_packages
+        )
+        self.assertEqual("./info", plugin_match[0].recipe_folder)
+
+    @patch("lpci.commands.run.get_provider")
+    @patch("lpci.commands.run.get_host_architecture", return_value="amd64")
     def test_conda_build_plugin(
         self, mock_get_host_architecture, mock_get_provider
     ):
@@ -517,6 +555,8 @@ class TestPlugins(CommandBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
         Path("info/recipe/parent").mkdir(parents=True)
+        Path("info/a.txt").touch()
+        Path("info/b.txt").touch()
         Path("info/recipe/meta.yaml").touch()
         Path("info/recipe/parent/meta.yaml").touch()
         pre_run_command = dedent(
