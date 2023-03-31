@@ -543,12 +543,17 @@ def _run_job(
     ) as instance:
         snaps = list(itertools.chain(*pm.hook.lpcraft_install_snaps()))
         for snap in snaps:
-            emit.progress(f"Running `snap install {snap}`")
+            emit.progress(
+                "Running `snap install "
+                + f"{snap.name} "
+                + f"(channel={snap.channel}, "
+                + f"classic={snap.classic})`"
+            )
             install_from_store(
                 executor=instance,
-                snap_name=snap,
-                channel="latest/stable",
-                classic=True,
+                snap_name=snap.name,
+                channel=snap.channel,
+                classic=snap.classic,
             )
         packages = list(itertools.chain(*pm.hook.lpcraft_install_packages()))
         if packages:

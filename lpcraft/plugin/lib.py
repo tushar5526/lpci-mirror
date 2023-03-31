@@ -10,7 +10,7 @@ The provided functionality can be extended by additional plugins.
 
 from __future__ import annotations
 
-from lpcraft.config import Job
+from lpcraft.config import Job, Snap
 from lpcraft.plugin import hookimpl
 
 
@@ -28,7 +28,7 @@ class InternalPlugins:
         return []
 
     @hookimpl  # type: ignore
-    def lpcraft_install_snaps(self) -> list[str]:
+    def lpcraft_install_snaps(self) -> list[Snap]:
         if self.config.snaps:
             return self.config.snaps
         return []

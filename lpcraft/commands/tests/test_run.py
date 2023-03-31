@@ -1956,7 +1956,7 @@ class TestRun(RunBaseTestCase):
     @responses.activate
     @patch("lpcraft.commands.run.get_provider")
     @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
-    def test_install_snaps(
+    def test_install_snaps_classic_parameter(
         self, mock_get_host_architecture, mock_get_provider
     ):
         def run_side_effect(
@@ -1985,7 +1985,11 @@ class TestRun(RunBaseTestCase):
                     series: focal
                     architectures: amd64
                     run: tox
-                    snaps: [chromium, firefox]
+                    snaps:
+                        - name: chromium
+                          classic: True
+                        - name: firefox
+                          classic: True
             """
         )
         Path(".launchpad.yaml").write_text(config)
@@ -2050,6 +2054,379 @@ class TestRun(RunBaseTestCase):
                 ),
             ],
             execute_run.call_args_list,
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_provided_as_list_of_strings(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        def run_side_effect(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[bytes]":
+            if command[0] == "curl":
+                response = {"result": {"revision": "1"}, "status-code": 200}
+                return subprocess.CompletedProcess(
+                    [], 0, stdout=json.dumps(response).encode()
+                )
+            else:
+                return subprocess.CompletedProcess([], 0)
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.side_effect = run_side_effect
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps: [chromium, firefox]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        result = self.run_command("run")
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "chromium",
+                        "--channel",
+                        "latest/stable",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/chromium",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "firefox",
+                        "--channel",
+                        "latest/stable",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/firefox",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/build/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_wrong_array_format(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps: [1, True, 3]
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+        result = self.run_command("run")
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            "You configured a Snap, "
+            + "but you used an unknown format. "
+            + "Please refer to the documentation for an "
+            + "overview of supported formats.",
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_channel_parameter(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+        def run_side_effect(
+            command: List[str], **kwargs: Any
+        ) -> "subprocess.CompletedProcess[bytes]":
+            if command[0] == "curl":
+                response = {"result": {"revision": "1"}, "status-code": 200}
+                return subprocess.CompletedProcess(
+                    [], 0, stdout=json.dumps(response).encode()
+                )
+            else:
+                return subprocess.CompletedProcess([], 0)
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.side_effect = run_side_effect
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps:
+                        - name: black
+                          channel: 22/stable
+                        - firefox
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "black",
+                        "--channel",
+                        "22/stable",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/black",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "snap",
+                        "install",
+                        "firefox",
+                        "--channel",
+                        "latest/stable",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    [
+                        "curl",
+                        "--silent",
+                        "--unix-socket",
+                        "/run/snapd.socket",
+                        "http://localhost/v2/snaps/firefox",
+                    ],
+                    check=True,
+                    capture_output=True,
+                ),
+                call(
+                    ["bash", "--noprofile", "--norc", "-ec", "tox"],
+                    cwd=Path("/build/lpcraft/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                ),
+            ],
+            execute_run.call_args_list,
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_snap_name_missing(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps:
+                        - classic: True
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            "You configured a Snap " + "but you did not specify a name.",
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_snap_channel_none(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps:
+                        - name: chromium
+                          channel:
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            "You configured a Snap `channel`, "
+            + "but you did not specify a value.",
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_snap_classic_none(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps:
+                        - name: chromium
+                          classic:
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            "You configured a Snap `classic`, "
+            + "but you did not specify a value. "
+            + "Valid values would either be `True` or `False`.",
+        )
+
+    @responses.activate
+    @patch("lpcraft.commands.run.get_provider")
+    @patch("lpcraft.commands.run.get_host_architecture", return_value="amd64")
+    def test_install_snaps_classic_wrong_value(
+        self, mock_get_host_architecture, mock_get_provider
+    ):
+
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        config = dedent(
+            """
+            pipeline:
+                - test
+
+            jobs:
+                test:
+                    series: focal
+                    architectures: amd64
+                    run: tox
+                    snaps:
+                        - name: chromium
+                          classic: wrong_value
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(1, result.exit_code)
+        self.assertRegex(
+            str(result.errors[0]),
+            "You configured a Snap `classic`, "
+            + "but you did not specify a valid value. "
+            + "Valid values would either be `True` or `False`.",
         )
 
     @patch("lpcraft.commands.run.get_provider")

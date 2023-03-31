@@ -26,6 +26,7 @@ from lpcraft.config import (
     PackageSuite,
     PackageType,
     PPAShortFormURL,
+    Snap,
     get_ppa_url_parts,
 )
 from lpcraft.errors import CommandError
@@ -370,12 +371,18 @@ class TestConfig(TestCase):
                     test:
                         series: focal
                         architectures: amd64
-                        snaps: [chromium, firefox]
+                        snaps: [name: chromium, name: firefox]
                 """
             )
         )
         config = Config.load(path)
-        self.assertEqual(["chromium", "firefox"], config.jobs["test"][0].snaps)
+        self.assertEqual(
+            [
+                Snap(name="chromium", channel="latest/stable", classic=False),
+                Snap(name="firefox", channel="latest/stable", classic=False),
+            ],
+            config.jobs["test"][0].snaps,
+        )
 
     def test_load_config_without_snaps(self):
         path = self.create_config(

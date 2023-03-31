@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.0.51 (2023-04-05)
+===================
+- Add support for snap's channel and confinement level.
+  See https://snapcraft.io/docs/channels and
+  https://snapcraft.io/docs/snap-confinement.
+
 0.0.50 (2023-03-20)
 ===================
 - Rebuild the Snap package to include updated system packages.

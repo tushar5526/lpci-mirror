@@ -242,6 +242,33 @@ class PackageRepository(ModelConfigDefaults):
                     yield f"{format.value} {self.url!s} {suite.value} {' '.join(self.components)}"  # noqa: E501
 
 
+class Snap(ModelConfigDefaults):
+    """A snap definition."""
+
+    name: StrictStr
+    channel: Optional[StrictStr] = "latest/stable"
+    classic: Optional[bool] = False
+
+    @validator("channel")
+    def prevent_channel_none(cls, v: StrictStr) -> Any:
+        if v is None:
+            raise ValueError(
+                "You configured a Snap `channel`, "
+                + "but you did not specify a value."
+            )
+        return v
+
+    @validator("classic")
+    def prevent_classic_none(cls, v: bool) -> Any:
+        if v is None:
+            raise ValueError(
+                "You configured a Snap `classic`, "
+                + "but you did not specify a value. "
+                + "Valid values would either be `True` or `False`."
+            )
+        return v
+
+
 class Job(ModelConfigDefaults):
     """A job definition."""
 
@@ -257,7 +284,7 @@ class Job(ModelConfigDefaults):
     environment: Optional[Dict[str, Optional[str]]]
     output: Optional[Output]
     input: Optional[Input]
-    snaps: Optional[List[StrictStr]]
+    snaps: Optional[List[Snap]]
     packages: Optional[List[StrictStr]]
     package_repositories: List[PackageRepository] = []
     plugin: Optional[StrictStr]
@@ -270,6 +297,36 @@ class Job(ModelConfigDefaults):
         if isinstance(v, str):
             v = [v]
         return v
+
+    @pydantic.validator("snaps", pre=True)
+    def validate_snaps(cls, v: List[Any]) -> Any:
+        clean_values = []
+        for value in v:
+            # Backward compatibility, i.e. [chromium, firefox]
+            if type(value) is str:
+                clean_values.append({"name": value})
+            elif type(value) is dict:
+                if "name" not in value or value["name"] is None:
+                    raise ValueError(
+                        "You configured a Snap "
+                        + "but you did not specify a name."
+                    )
+                if "classic" in value and value["classic"] is not None:
+                    if type(value["classic"]) is not bool:
+                        raise ValueError(
+                            "You configured a Snap `classic`, "
+                            + "but you did not specify a valid value. "
+                            + "Valid values would either be `True` or `False`."
+                        )
+                clean_values.append(value)
+            else:
+                raise ValueError(
+                    "You configured a Snap, "
+                    + "but you used an unknown format. "
+                    + "Please refer to the documentation for an "
+                    + "overview of supported formats."
+                )
+        return clean_values
 
     @pydantic.validator("package_repositories")
     def validate_package_repositories(

@@ -63,6 +63,7 @@ Job definitions
 
 ``snaps`` (optional)
     Snaps to install as dependencies of this job.
+    Also see the :ref:`snap-properties` section below.
 
 ``environment`` (optional)
     A mapping of environment variable names to values, to be set while
@@ -170,6 +171,26 @@ artifacts.  (This mirrors the output file structure created by ``lpcraft run
     A path, relative to the build tree of a project, identifying a directory
     to which the artifacts of the chosen job will be copied; the directory
     will be created if necessary.  Paths may not escape the build tree.
+
+.. _snap-properties:
+
+Snap properties
+-----------------
+
+``name``
+    The name of a snap will be installed..
+
+``channel`` (optional)
+    `Channel <https://snapcraft.io/docs/channels>`_
+    defining which release of a snap want to install.
+    Default value: ``latest/stable``.
+
+
+``classic`` (optional)
+    Classic boolean defining whether to use or not
+    `confiment=classic
+    <https://snapcraft.io/docs/snap-confinement>`_.
+    Default value: False.
 
 .. _package-repositories:
 
