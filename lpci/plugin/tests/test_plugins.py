@@ -555,8 +555,6 @@ class TestPlugins(CommandBaseTestCase):
         )
         Path(".launchpad.yaml").write_text(config)
         Path("info/recipe/parent").mkdir(parents=True)
-        Path("info/a.txt").touch()
-        Path("info/b.txt").touch()
         Path("info/recipe/meta.yaml").touch()
         Path("info/recipe/parent/meta.yaml").touch()
         pre_run_command = dedent(
@@ -601,6 +599,7 @@ class TestPlugins(CommandBaseTestCase):
             ),
             execute_run.call_args_list[0],
         )
+
         self.assertEqual(
             call(
                 [
@@ -744,10 +743,23 @@ class TestPlugins(CommandBaseTestCase):
         config_path = Path(".launchpad.yaml")
         config_path.write_text(config)
         Path("include/fake_subdir").mkdir(parents=True)
+        Path("custominfo").mkdir(parents=True)
+        Path("custominfo/a.txt").touch()
+        Path("custominfo/b.txt").touch()
+
+        config_obj = lpcraft.config.Config.load(config_path)
+
+        self.assertRaisesRegex(
+            RuntimeError,
+            "No build target found",
+            get_plugin_manager,
+            config_obj.jobs["build"][0],
+        )
+
         meta_yaml = Path("custominfo/recipe/meta.yaml")
         meta_yaml.parent.mkdir(parents=True)
         meta_yaml.touch()
-        config_obj = lpcraft.config.Config.load(config_path)
+
         self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
         pm = get_plugin_manager(config_obj.jobs["build"][0])
         plugins = pm.get_plugins()
