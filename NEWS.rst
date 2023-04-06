@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.0.52 (Unreleased)
+===================
+- Fix regression from adding support to snap keys
+  passed as strings. For these keys confinement classic
+  must be True by default to ensure backward compatibility.
+
 0.0.51 (2023-04-05)
 ===================
 - Add support for snap's channel and confinement level.

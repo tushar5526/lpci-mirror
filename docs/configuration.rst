@@ -192,6 +192,13 @@ Snap properties
     <https://snapcraft.io/docs/snap-confinement>`_.
     Default value: False.
 
+.. note::
+
+    To ensure backward compatibility default value for
+    classic is True when defining snaps as a list of strings.
+    (i.e. [chromium, firefox]).
+    Please note that this format for defining snaps is deprecated.
+
 .. _package-repositories:
 
 Package-repositories properties
