@@ -178,17 +178,16 @@ Snap properties
 -----------------
 
 ``name``
-    The name of a snap will be installed..
+    The name of the snap to install.
 
 ``channel`` (optional)
     `Channel <https://snapcraft.io/docs/channels>`_
-    defining which release of a snap want to install.
+    defining which release of a snap to install.
     Default value: ``latest/stable``.
 
-
 ``classic`` (optional)
-    Classic boolean defining whether to use or not
-    `confiment=classic
+    If True, allow installing snaps that use
+    `classic confinement
     <https://snapcraft.io/docs/snap-confinement>`_.
     Default value: False.
 
