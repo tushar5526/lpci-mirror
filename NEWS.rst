@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.0.52 (Unreleased)
+0.0.52 (2023-04-06)
 ===================
 - Fix regression from adding support to snap keys
   passed as strings. For these keys confinement classic
