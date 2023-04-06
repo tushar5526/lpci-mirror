@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import pydantic
+from craft_cli import emit
 from pydantic import AnyHttpUrl, StrictStr, root_validator, validator
 
 from lpcraft.errors import ConfigurationError
@@ -304,7 +305,17 @@ class Job(ModelConfigDefaults):
         for value in v:
             # Backward compatibility, i.e. [chromium, firefox]
             if type(value) is str:
-                clean_values.append({"name": value})
+                emit.message(
+                    f"Warning: You configured snap `{value}` but "
+                    + "you used a deprecated format. "
+                    + "\nPlease use "
+                    + f"\n...\n-name: {value}\n"
+                    + " classic: True\n...\n"
+                    + "instead.\n"
+                    + "Please refer to the documentation for an "
+                    + "overview of supported formats.",
+                )
+                clean_values.append({"name": value, "classic": True})
             elif type(value) is dict:
                 if "name" not in value or value["name"] is None:
                     raise ValueError(
