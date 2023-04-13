@@ -57,7 +57,10 @@ parts:
     requirements:
       - requirements.txt
     build-packages:
+      - cargo
       - libffi-dev
+      - libssl-dev
+      - rustc
     stage-packages:
       - git
       - apt
