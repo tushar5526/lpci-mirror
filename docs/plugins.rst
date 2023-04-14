@@ -1,50 +1,50 @@
-Extending lpcraft
-=================
+Extending lpci
+==============
 
-lpcraft uses `pluggy <https://pluggy.readthedocs.io/>`_ to customize the
+lpci uses `pluggy <https://pluggy.readthedocs.io/>`_ to customize the
 default behaviour. For example the following code snippet would extend the
 packages which need to be installed into an environment by additional
 requirements:
 
 .. code-block:: python
 
-    from lpcraft.plugin import hookimpl
+    from lpci.plugin import hookimpl
 
 
     @hookimpl
-    def lpcraft_install_packages():
+    def lpci_install_packages():
         return ["tox"]
 
 Plugin discovery
 ----------------
 
 As currently only builtin plugins are supported,
-you need to define a plugin in ``lpcraft/plugins/<plugin>``
-and import the module in ``lpcraft/plugins/__init__.py``.
+you need to define a plugin in ``lpci/plugins/<plugin>``
+and import the module in ``lpci/plugins/__init__.py``.
 
 Plugin implementation
 ---------------------
 
 Please consult the `pluggy <https://pluggy.readthedocs.io/>`_  documentation,
-and have a look at the ``lpcraft/plugins`` directory for inspiration.
+and have a look at the ``lpci/plugins`` directory for inspiration.
 
 Name of the hook
 ****************
 
-.. automodule:: lpcraft.plugin
+.. automodule:: lpci.plugin
    :members:
    :exclude-members: hookimpl
 
 Implementation marker
 *********************
 
-.. autodata:: lpcraft.plugin.hookimpl
+.. autodata:: lpci.plugin.hookimpl
    :no-value:
 
 Available hooks
 ***************
 
-.. automodule:: lpcraft.plugin.hookspecs
+.. automodule:: lpci.plugin.hookspecs
    :members:
 
 .. _plugin_configuration_keys:
@@ -97,7 +97,7 @@ interpolate the command, like in the following example:
         INTERPOLATES_RUN_COMMAND = True
 
         @hookimpl
-        def lpcraft_execute_run(self) -> str:
+        def lpci_execute_run(self) -> str:
             run = self.config.run or ""
             return textwrap.dedent(
                 f"""\
@@ -113,7 +113,7 @@ commands.
 Builtin plugins
 ---------------
 
-.. automodule:: lpcraft.plugins.plugins
+.. automodule:: lpci.plugins.plugins
    :members:
 
 Using a builtin plugin

@@ -5,37 +5,37 @@ CLI interface
 Please note that this is only a small selection of the available commands and
 options.
 
-Please run ``lpcraft --help`` to see all commands.
+Please run ``lpci --help`` to see all commands.
 
-lpcraft run
------------
+lpci run
+--------
 
 This command runs all jobs listed via pipelines from a configuration file.
 
 **Example:**
 
-``lpcraft run``
+``lpci run``
 
-lpcraft run optional arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lpci run optional arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``--package-repository`` (provide an additional repository), e.g.
-  ``lpcraft run --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
+  ``lpci run --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
   This option is repeatable.
 
 - ``--plugin-setting``, e.g.
-  ``lpcraft run --plugin-setting="foo=bar"``
+  ``lpci run --plugin-setting="foo=bar"``
 
   This option is repeatable.
 
 - ``--replace-package-repositories SOURCE_LINE``, e.g.
-  ``lpcraft run --replace-package-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
+  ``lpci run --replace-package-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted"``
 
   This option is repeatable.
 
 
 - ``--secrets``, e.g.
-  ``lpcraft run --secrets="<path-to-configuration-file>"``
+  ``lpci run --secrets="<path-to-configuration-file>"``
 
   The configuration file should look like...
 
@@ -45,7 +45,7 @@ lpcraft run optional arguments
     another_key: another_secret
 
 - ``--set-env KEY=VALUE``, e.g.
-  ``lpcraft run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
+  ``lpci run --set-env="PIP_INDEX_URL=http://pypi.example.com/simple"``
 
   This option is repeatable.
 
@@ -54,36 +54,36 @@ lpcraft run optional arguments
   This option requires an NVIDIA GPU on the host system; if passed on a
   system without such a GPU, container setup will fail.
 
-lpcraft run-one
----------------
+lpci run-one
+------------
 
 This command runs one specified job.
 
 **Example:**
 
-``lpcraft run-one test 0``
+``lpci run-one test 0``
 
 where ``test`` is the job name and ``0`` is the index of the job/matrix.
 
-lpcraft run-one optional arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lpci run-one optional arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``--package-repository`` (provide an additional repository), e.g.
-  ``lpcraft run-one --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
+  ``lpci run-one --package-repository "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
   This option is repeatable.
 
 - ``--plugin-setting``, e.g.
-  ``lpcraft run-one --plugin-setting="foo=bar" test 0``
+  ``lpci run-one --plugin-setting="foo=bar" test 0``
 
   This option is repeatable.
 
 - ``--replace-package-repositories SOURCE_LINE``, e.g.
-  ``lpcraft run-one --replace-package-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
+  ``lpci run-one --replace-package-repositories "deb http://archive.ubuntu.com/ubuntu/ focal main restricted" test 0``
 
   This option is repeatable.
 
 - ``--secrets``, e.g.
-  ``lpcraft run-one --secrets="<path-to-configuration-file>" test 0``
+  ``lpci run-one --secrets="<path-to-configuration-file>" test 0``
 
   The configuration file should look like...
 
@@ -93,12 +93,12 @@ lpcraft run-one optional arguments
     another_key: another_secret
 
 - ``--set-env KEY=VALUE``, e.g.
-  ``lpcraft run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``
+  ``lpci run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``
 
   This option is repeatable.
 
-lpcraft release
----------------
+lpci release
+------------
 
 This command releases a Launchpad build of a commit to a target archive
 (which must be configured with a repository format that accepts packages of
@@ -107,10 +107,10 @@ successfully built and has some attached files.
 
 **Example:**
 
-``lpcraft release ppa:ubuntu-security/soss/soss-python-stable-local focal edge``
+``lpci release ppa:ubuntu-security/soss/soss-python-stable-local focal edge``
 
-lpcraft release optional arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lpci release optional arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``--launchpad INSTANCE`` to use a Launchpad instance other than
   production.

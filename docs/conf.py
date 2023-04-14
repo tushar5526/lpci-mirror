@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "lpcraft"
-copyright = "2021-2022, Canonical Ltd"
+project = "lpci"
+copyright = "2021-2023, Canonical Ltd"
 
 
 # -- General configuration ---------------------------------------------------

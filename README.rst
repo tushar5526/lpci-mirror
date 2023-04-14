@@ -1,8 +1,8 @@
-=======
-lpcraft
-=======
+====
+lpci
+====
 
-``lpcraft`` is a runner for continuous integration jobs in Launchpad.  It is
+``lpci`` is a runner for continuous integration jobs in Launchpad.  It is
 intended mainly for use in Launchpad builders, but can also be installed and
 used locally on branches with a ``.launchpad.yaml`` file.
 
@@ -15,16 +15,16 @@ the CLI design is based on both those tools.
 Running
 =======
 
-``lpcraft`` is mainly intended to be consumed as a snap.  Simply install with
-``sudo snap install lpcraft --classic``.
+``lpci`` is mainly intended to be consumed as a snap.  Simply install with
+``sudo snap install lpci --classic``.
 
-You can also run ``lpcraft run`` from a directory containing ``.launchpad.yaml``.
+You can also run ``lpci run`` from a directory containing ``.launchpad.yaml``.
 
-To save the output from a job, use ``lpcraft run --output-directory
+To save the output from a job, use ``lpci run --output-directory
 /path/to/output/directory``.
 
 Documentation
 =============
 
-For more extensive documentation, see `lpcraft on readthedocs
-<https://lpcraft.readthedocs.io/en/latest/>`_.
+For more extensive documentation, see `lpci on readthedocs
+<https://lpci.readthedocs.io/en/latest/>`_.

@@ -14,7 +14,8 @@ How to create a new release
   following the `semver <https://semver.org/>`_ recommendations
 
 - once the MP has been merged to the ``main`` branch,
-  a `Launchpad recipe <https://launchpad.net/~launchpad/lpcraft/+snap/lpcraft>`_
+  a `Launchpad recipe
+  <https://launchpad.net/~launchpad/lpci/+snap/lpci>`_
   automatically builds and publishes Snap packages to the ``edge`` channel
 
 - once the Snaps have been published,
@@ -22,15 +23,15 @@ How to create a new release
 
       .. code:: bash
 
-        snap refresh --edge lpcraft
+        snap refresh --edge lpci
 
 - in order to make sure nothing is broken, run
 
       .. code:: bash
 
-         lpcraft -v
+         lpci -v
 
-- go to the `Releases page <https://snapcraft.io/lpcraft/releases>`_
+- go to the `Releases page <https://snapcraft.io/lpci/releases>`_
   of the Snap store to promote the release from ``edge`` to ``stable``
 
     - click on the cog icon next to ``latest/edge``
@@ -44,7 +45,7 @@ Some additional information
 - members of the Launchpad team can use the ``Request builds`` button
   on that recipe if they need updated builds urgently
 
-- lpcraft currently only makes use of ``stable`` and ``edge``,
+- lpci currently only makes use of ``stable`` and ``edge``,
   though this may change in future if necessary
 
 - most users, as well as default CI builds in Launchpad,

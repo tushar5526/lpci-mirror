@@ -1,12 +1,12 @@
-.. lpcraft documentation master file, created by
+.. lpci documentation master file, created by
    sphinx-quickstart on Tue Dec  7 12:44:23 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-lpcraft
-=======
+lpci
+====
 
-``lpcraft`` is a runner for continuous integration jobs in Launchpad.  It is
+``lpci`` is a runner for continuous integration jobs in Launchpad.  It is
 intended mainly for use in Launchpad builders, but can also be installed and
 used locally on branches with a ``.launchpad.yaml`` file.
 
@@ -35,7 +35,7 @@ Example configuration
             output:
                 paths: [output]
 
-    $ lpcraft run --output-directory out
+    $ lpci run --output-directory out
     Running the job
     $ tree out  # Find out the location of the output file
     out

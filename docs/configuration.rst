@@ -155,12 +155,12 @@ Input properties
 
 Input makes artifacts from previous pipeline stages available.  This only
 works if those artifacts were saved using the ``--output-directory`` option
-to ``lpcraft run``.
+to ``lpci run``.
 
-``lpcraft`` copies artifact data to the ``files`` subdirectory of the
+``lpci`` copies artifact data to the ``files`` subdirectory of the
 designated target directory, and writes a ``properties`` file in the
 designated target directory with JSON-encoded properties of the copied
-artifacts.  (This mirrors the output file structure created by ``lpcraft run
+artifacts.  (This mirrors the output file structure created by ``lpci run
 --output-directory``.)
 
 ``job-name``

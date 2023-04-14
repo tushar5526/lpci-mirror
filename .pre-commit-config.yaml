@@ -10,9 +10,9 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
-        exclude: lpcraft/commands/tests/launchpad-wadl\.xml
+        exclude: lpci/commands/tests/launchpad-wadl\.xml
     -   id: trailing-whitespace
-        exclude: lpcraft/commands/tests/launchpad-wadl\.xml
+        exclude: lpci/commands/tests/launchpad-wadl\.xml
 -   repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:

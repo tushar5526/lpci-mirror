@@ -1,21 +1,21 @@
 # Copyright 2021 Canonical Ltd.  This software is licensed under the
 # GNU General Public License version 3 (see the file LICENSE).
 
-name: lpcraft
+name: lpci
 base: core20
 summary: Runner for Launchpad CI jobs
 license: GPL-3.0
 description: |
-  lpcraft is a runner for Launchpad CI jobs.  You can use it locally, though
+  lpci is a runner for Launchpad CI jobs.  You can use it locally, though
   most people will use it via Launchpad.  Create a `.launchpad.yaml` file
   describing the builds and tests you want to run, and Launchpad will run them
   for you.
-adopt-info: lpcraft  # look for 'snapcraftctl set-*' in the lpcraft part
+adopt-info: lpci  # look for 'snapcraftctl set-*' in the lpci part
 compression: lzo
 
 apps:
-  lpcraft:
-    command: bin/python3 $SNAP/bin/lpcraft
+  lpci:
+    command: bin/python3 $SNAP/bin/lpci
     environment:
       # have the cache outside of the version dirs (avoids keeping N copies)
       XDG_CACHE_HOME: $SNAP_USER_COMMON/cache
@@ -50,7 +50,7 @@ parts:
       snapcraftctl build
       install -D -m 0755 $SNAPCRAFT_PROJECT_DIR/snap/local/sitecustomize.py $SNAPCRAFT_PART_INSTALL/usr/lib/python3.8/sitecustomize.py
 
-  lpcraft:
+  lpci:
     after: [python3]
     source: .
     plugin: python

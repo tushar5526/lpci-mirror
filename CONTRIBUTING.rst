@@ -10,12 +10,12 @@ Prerequisites
 Usage
 -----
 
-Install the ``lpcraft`` project in editable mode inside a virtualenv environment named ``venv``.
+Install the ``lpci`` project in editable mode inside a virtualenv environment named ``venv``.
 
   .. code:: bash
 
     $ tox --devenv venv
-    $ venv/bin/lpcraft --help  # Alternatively, you can activate the virtualenv environment.
+    $ venv/bin/lpci --help  # Alternatively, you can activate the virtualenv environment.
 
 List the ``tox`` environments available for this project.
 
@@ -42,7 +42,7 @@ the tests, arguments can be passed to ``pytest``.
 
   .. code:: bash
 
-    $ tox -e py38 -- lpcraft/commands/tests/test_run.py
+    $ tox -e py38 -- lpci/commands/tests/test_run.py
     $ tox -e py38 -- -k test_missing_config_file
     $ tox -e py39 -- --lf
 
@@ -84,6 +84,6 @@ Build the documentation locally.
 .. note::
 
     In order to update the `project's documentation
-    <https://lpcraft.readthedocs.io/en/latest/>`_ online,
+    <https://lpci.readthedocs.io/en/latest/>`_ online,
     after having pushed your changes to the repository, you need to trigger a
     manual build on the project's dashboard on https://readthedocs.org.
