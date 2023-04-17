@@ -7,6 +7,15 @@ options.
 
 Please run ``lpci --help`` to see all commands.
 
+lpci global arguments
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``--debug-shell``, shell into the environment if the run fails, e.g.
+  ``lpci run --debug-shell``
+  ``lpci run-one --debug-shell``
+  ``lpci release --debug-shell``
+
+
 lpci run
 --------
 
