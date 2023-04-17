@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.1.1 (unreleased)
+==================
+
+- Add a ``--debug-shell`` flag.
+
 0.1.0 (unreleased)
 ==================
 
