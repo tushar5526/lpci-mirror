@@ -78,6 +78,52 @@ class TestMain(TestCase):
             emitter.recorder.interactions[-1],
         )
 
+    @patch("lpci.commands.run.RunCommand.run")
+    def test_debug_shell_mode_exception(self, mock_run):
+        self.useFixture(MockPatch("sys.argv", ["lpci", "--debug-shell"]))
+        mock_run.side_effect = RuntimeError()
+
+        with RecordingEmitterFixture() as emitter:
+            ret = main()
+
+        self.assertEqual(1, ret)
+        self.assertEqual(
+            call(
+                "progress",
+                "Launching debug shell on build environment...",
+                permanent=True,
+            ),
+            emitter.recorder.interactions[-2],
+        )
+        self.assertEqual(
+            call("error", CraftError("lpci internal error: RuntimeError()")),
+            emitter.recorder.interactions[-1],
+        )
+
+    @patch("lpci.commands.run.RunCommand.run")
+    def test_debug_shell_mode_craft_exception(self, mock_run):
+        self.useFixture(MockPatch("sys.argv", ["lpci", "--debug-shell"]))
+        mock_run.side_effect = CraftError(
+            "lpci internal error: RuntimeError()"
+        )
+
+        with RecordingEmitterFixture() as emitter:
+            ret = main()
+
+        self.assertEqual(1, ret)
+        self.assertEqual(
+            call(
+                "progress",
+                "Launching debug shell on build environment...",
+                permanent=True,
+            ),
+            emitter.recorder.interactions[-2],
+        )
+        self.assertEqual(
+            call("error", CraftError("lpci internal error: RuntimeError()")),
+            emitter.recorder.interactions[-1],
+        )
+
     def test_quiet_mode(self):
         # temporary test until cli API is set and a more meaningful test is
         # possible

@@ -4,6 +4,8 @@
 """Main entry point."""
 
 import logging
+import pathlib
+import subprocess
 import sys
 from typing import List, Optional
 
@@ -35,6 +37,22 @@ def _configure_logger(name: str) -> None:
     logger.setLevel(logging.DEBUG)
 
 
+def _launch_shell(
+    *, cwd: Optional[pathlib.Path] = None, error: Exception
+) -> None:
+    """Launch a user shell for debugging environment.
+
+    :param cwd: Working directory to start user in.
+    """
+    emit.progress(
+        "Launching debug shell on build environment...", permanent=True
+    )
+
+    emit.error(error)
+
+    subprocess.run(["bash"], check=False, cwd=cwd)
+
+
 _configure_logger("craft_providers")
 
 
@@ -54,6 +72,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
+    debug_shell = False
     emit.init(EmitterMode.BRIEF, "lpci", f"Starting {lpci_version}")
     command_groups = [
         CommandGroup("Basic", _basic_commands),
@@ -67,7 +86,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             "-V",
             "--version",
             "Show version information and exit",
-        )
+        ),
+        GlobalArgument(
+            "debugshell",
+            "flag",
+            "-ds",
+            "--debug-shell",
+            "Shell into the environment if the run fails",
+        ),
     ]
 
     # dispatcher = Dispatcher(
@@ -94,6 +120,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             default_command=RunCommand,
         )
         global_args = dispatcher.pre_parse_args(argv)
+        if global_args["debugshell"]:
+            debug_shell = True
         if global_args["version"]:
             emit.message(lpci_version)
             emit.ended_ok()
@@ -109,7 +137,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         emit.ended_ok()
         ret = 0
     except CraftError as e:
-        emit.error(e)
+        if debug_shell:
+            _launch_shell(error=e)
+        else:
+            emit.error(e)
         ret = e.retcode
     except KeyboardInterrupt as e:
         error = CraftError("Interrupted.")
@@ -119,7 +150,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     except Exception as e:
         error = CraftError(f"lpci internal error: {e!r}")
         error.__cause__ = e
-        emit.error(error)
+        if debug_shell:
+            _launch_shell(error=error)
+        else:
+            emit.error(error)
         ret = 1
     else:
         emit.ended_ok()
