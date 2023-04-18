@@ -2,17 +2,14 @@
 Version history
 ===============
 
-0.1.1 (unreleased)
-==================
-
-- Add a ``--debug-shell`` flag.
-
 0.1.0 (unreleased)
 ==================
 
 - Add a ``release`` command.
 
 - Rename project to ``lpci``.
+
+- Add a ``--debug-shell`` flag.
 
 0.0.52 (2023-04-06)
 ===================
