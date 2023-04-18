@@ -484,8 +484,6 @@ class TestPlugins(CommandBaseTestCase):
         )
         self.assertEqual(["PYTHON=3.8", "pip"], plugin_match[0].conda_packages)
 
-    @patch("lpci.commands.run.get_provider")
-    @patch("lpci.commands.run.get_host_architecture", return_value="amd64")
     def test_conda_build_plugin_settings(self):
         config = dedent(
             """
@@ -504,7 +502,7 @@ class TestPlugins(CommandBaseTestCase):
         )
         config_path = Path(".launchpad.yaml")
         config_path.write_text(config)
-        config_obj = lpcraft.config.Config.load(config_path)
+        config_obj = lpci.config.Config.load(config_path)
         self.assertEqual(config_obj.jobs["build"][0].plugin, "conda-build")
         pm = get_plugin_manager(config_obj.jobs["build"][0])
         plugins = pm.get_plugins()
@@ -747,7 +745,7 @@ class TestPlugins(CommandBaseTestCase):
         Path("custominfo/a.txt").touch()
         Path("custominfo/b.txt").touch()
 
-        config_obj = lpcraft.config.Config.load(config_path)
+        config_obj = lpci.config.Config.load(config_path)
 
         self.assertRaisesRegex(
             RuntimeError,

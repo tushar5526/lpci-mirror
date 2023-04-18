@@ -11,6 +11,10 @@ Version history
 
 - Add a ``--debug-shell`` flag.
 
+- Add a ``recipe_folder`` parameter to specify
+  the recipe itself, or the recipe search path
+  using conda-build-plugin.
+
 0.0.52 (2023-04-06)
 ===================
 - Fix regression from adding support to snap keys
