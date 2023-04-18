@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.1.0 (unreleased)
+0.1.0 (2023-04-18)
 ==================
 
 - Add a ``release`` command.
