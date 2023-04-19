@@ -4,7 +4,7 @@ Version history
 
 0.1.1 (unreleased)
 ==================
-- Nothing yet.
+- Fix the yaml formatting in the snap deprecated format warning.
 
 0.1.0 (2023-04-18)
 ==================

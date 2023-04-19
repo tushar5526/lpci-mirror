@@ -309,8 +309,8 @@ class Job(ModelConfigDefaults):
                     f"Warning: You configured snap `{value}` but "
                     + "you used a deprecated format. "
                     + "\nPlease use "
-                    + f"\n...\n-name: {value}\n"
-                    + " classic: True\n...\n"
+                    + f"\n...\n- name: {value}\n"
+                    + "  classic: true\n...\n"
                     + "instead.\n"
                     + "Please refer to the documentation for an "
                     + "overview of supported formats.",
@@ -327,7 +327,7 @@ class Job(ModelConfigDefaults):
                         raise ValueError(
                             "You configured a Snap `classic`, "
                             + "but you did not specify a valid value. "
-                            + "Valid values would either be `True` or `False`."
+                            + "Valid values would either be `true` or `false`."
                         )
                 clean_values.append(value)
             else:
