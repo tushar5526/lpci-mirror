@@ -348,6 +348,12 @@ class LXDProvider(Provider):
                     ],
                     check=True,
                 )
+                self._internal_execute_run(
+                    instance,
+                    instance_name,
+                    ["rm", "-f", "/usr/local/sbin/policy-rc.d"],
+                    check=True,
+                )
             except subprocess.CalledProcessError as error:
                 raise CommandError(str(error)) from error
             finally:

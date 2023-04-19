@@ -6,6 +6,9 @@ Version history
 ==================
 - Fix the yaml formatting in the snap deprecated format warning.
 
+- Fix ``policy-rc.d`` issue preventing services
+  from running into the container.
+
 0.1.0 (2023-04-18)
 ==================
 

@@ -498,6 +498,18 @@ class TestLXDProvider(TestCase):
                         runner=subprocess.run,
                         check=True,
                     ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=[
+                            "rm",
+                            "-f",
+                            "/usr/local/sbin/policy-rc.d",
+                        ],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
                     call().unmount(target=Path("/root/tmp-project")),
                 ],
                 mock_launcher.mock_calls,
