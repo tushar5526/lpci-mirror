@@ -6,6 +6,10 @@
 from pathlib import Path
 
 
+def get_non_root_user() -> str:
+    return "_lpci"
+
+
 def get_managed_environment_home_path() -> Path:
     """Path for home when running in managed environment."""
     return Path("/root")

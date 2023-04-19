@@ -433,8 +433,12 @@ def _run_instance_command(
     host_architecture: str,
     remote_cwd: Path,
     environment: Optional[Dict[str, Optional[str]]],
+    root: bool = True,
 ) -> None:
     full_run_cmd = ["bash", "--noprofile", "--norc", "-ec", command]
+    if not root:
+        full_run_cmd[:0] = ["runuser", "-u", env.get_non_root_user(), "--"]
+
     emit.progress("Running command for the job...")
     original_mode = emit.get_mode()
     if original_mode == EmitterMode.BRIEF:
@@ -475,6 +479,11 @@ def _run_job(
     # XXX jugmac00 2022-04-27: we should create a configuration object to be
     # passed in and not so many arguments
     job = config.jobs[job_name][job_index]
+    root = job.root
+
+    # workaround necessary to please coverage
+    assert isinstance(root, bool)
+
     host_architecture = get_host_architecture()
     if host_architecture not in job.architectures:
         return
@@ -540,6 +549,7 @@ def _run_job(
         series=job.series,
         architecture=host_architecture,
         gpu_nvidia=gpu_nvidia,
+        root=root,
     ) as instance:
         snaps = list(itertools.chain(*pm.hook.lpci_install_snaps()))
         for snap in snaps:
@@ -583,6 +593,7 @@ def _run_job(
                     host_architecture=host_architecture,
                     remote_cwd=remote_cwd,
                     environment=environment,
+                    root=root,
                 )
         if config.license:
             if not job.output:

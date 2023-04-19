@@ -9,6 +9,8 @@ Version history
 - Fix ``policy-rc.d`` issue preventing services
   from running into the container.
 
+- Add a ``root`` flag.
+
 0.1.0 (2023-04-18)
 ==================
 

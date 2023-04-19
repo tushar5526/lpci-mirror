@@ -500,10 +500,151 @@ class TestLXDProvider(TestCase):
                     ),
                     call().lxc.exec(
                         instance_name=expected_instance_name,
+                        command=["rm", "-f", "/usr/local/sbin/policy-rc.d"],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().unmount(target=Path("/root/tmp-project")),
+                ],
+                mock_launcher.mock_calls,
+            )
+            mock_launcher.reset_mock()
+
+        self.assertEqual(
+            [
+                call().lxc.exec(
+                    instance_name=expected_instance_name,
+                    command=["rm", "-rf", "/build/lpci/project"],
+                    project="test-project",
+                    remote="test-remote",
+                    runner=subprocess.run,
+                    check=True,
+                ),
+                call().unmount_all(),
+                call().stop(),
+            ],
+            mock_launcher.mock_calls,
+        )
+
+    @patch("os.environ", {"PATH": "not-using-host-path"})
+    def test_launched_environment_default_user(self):
+        expected_instance_name = "lpci-my-project-12345-focal-amd64"
+        mock_lxc = Mock(spec=LXC)
+        mock_lxc.profile_show.return_value = {
+            "config": {"sentinel": "true"},
+            "devices": {"eth0": {}},
+        }
+        mock_lxc.project_list.return_value = []
+        mock_lxc.remote_list.return_value = {}
+        mock_launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxc=mock_lxc, lxd_launcher=mock_launcher)
+
+        with provider.launched_environment(
+            project_name="my-project",
+            project_path=self.mock_path,
+            series="focal",
+            architecture="amd64",
+            root=False,
+        ) as instance:
+            self.assertIsNotNone(instance)
+            mock_lxc.project_list.assert_called_once_with("test-remote")
+            mock_lxc.project_create.assert_called_once_with(
+                project="test-project", remote="test-remote"
+            )
+            mock_lxc.profile_show.assert_called_once_with(
+                profile="default", project="default", remote="test-remote"
+            )
+            mock_lxc.profile_edit.assert_called_once_with(
+                profile="default",
+                config={
+                    "config": {"sentinel": "true"},
+                    "devices": {"eth0": {}},
+                },
+                project="test-project",
+                remote="test-remote",
+            )
+            self.assertEqual(
+                [
+                    call(
+                        name=expected_instance_name,
+                        base_configuration=LPCIBuilddBaseConfiguration(
+                            alias=BuilddBaseAlias.FOCAL,
+                            environment={"PATH": _base_path},
+                            hostname=expected_instance_name,
+                        ),
+                        image_name="focal",
+                        image_remote="craft-com.ubuntu.cloud-buildd",
+                        auto_clean=True,
+                        auto_create_project=True,
+                        map_user_uid=True,
+                        use_base_instance=True,
+                        project="test-project",
+                        remote="test-remote",
+                        lxc=mock_lxc,
+                    ),
+                    call().mount(
+                        host_source=self.mock_path,
+                        target=Path("/root/tmp-project"),
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=["rm", "-rf", "/build/lpci/project"],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=["mkdir", "-p", "/build/lpci"],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
                         command=[
-                            "rm",
-                            "-f",
-                            "/usr/local/sbin/policy-rc.d",
+                            "cp",
+                            "-a",
+                            "/root/tmp-project",
+                            "/build/lpci/project",
+                        ],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=["rm", "-f", "/usr/local/sbin/policy-rc.d"],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=[
+                            "sh",
+                            "-c",
+                            "getent passwd _lpci >/dev/null"
+                            + " || useradd -m -U _lpci",
+                        ],
+                        project="test-project",
+                        remote="test-remote",
+                        runner=subprocess.run,
+                        check=True,
+                    ),
+                    call().lxc.exec(
+                        instance_name=expected_instance_name,
+                        command=[
+                            "chown",
+                            "-R",
+                            "_lpci:_lpci",
+                            "/build/lpci/project",
                         ],
                         project="test-project",
                         remote="test-remote",

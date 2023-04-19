@@ -20,6 +20,7 @@ from pydantic import StrictStr
 from lpci.env import (
     get_managed_environment_home_path,
     get_managed_environment_project_path,
+    get_non_root_user,
 )
 from lpci.errors import CommandError
 from lpci.providers._base import Provider, sanitize_lxd_instance_name
@@ -238,6 +239,34 @@ class LXDProvider(Provider):
             **kwargs,
         )
 
+    def _set_up_non_root_user(
+        self,
+        instance: lxd.LXDInstance,
+        instance_name: str,
+    ) -> None:
+
+        default_user = get_non_root_user()
+        create_cmd = "getent passwd " + default_user + " >/dev/null"
+        create_cmd += " || useradd -m -U " + default_user
+
+        # Create default user if doesn't exist.
+        self._internal_execute_run(
+            instance, instance_name, ["sh", "-c", create_cmd], check=True
+        )
+
+        # Give ownership of the project directory to _lpci
+        self._internal_execute_run(
+            instance,
+            instance_name,
+            [
+                "chown",
+                "-R",
+                f"{default_user}:{default_user}",
+                str(get_managed_environment_project_path()),
+            ],
+            check=True,
+        )
+
     @contextmanager
     def launched_environment(
         self,
@@ -247,6 +276,7 @@ class LXDProvider(Provider):
         series: str,
         architecture: str,
         gpu_nvidia: bool = False,
+        root: bool = True,
     ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 
@@ -354,6 +384,10 @@ class LXDProvider(Provider):
                     ["rm", "-f", "/usr/local/sbin/policy-rc.d"],
                     check=True,
                 )
+                if not root:
+                    self._set_up_non_root_user(
+                        instance=instance, instance_name=instance_name
+                    )
             except subprocess.CalledProcessError as error:
                 raise CommandError(str(error)) from error
             finally:

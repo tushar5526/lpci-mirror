@@ -109,6 +109,7 @@ class Provider(ABC):
         series: str,
         architecture: str,
         gpu_nvidia: bool = False,
+        root: bool = False,
     ) -> Generator[lxd.LXDInstance, None, None]:
         """Launch environment for specified series and architecture.
 

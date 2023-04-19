@@ -9,6 +9,9 @@ from lpci import env
 
 
 class TestEnvironment(TestCase):
+    def test_get_non_root_user(self):
+        self.assertEqual("_lpci", env.get_non_root_user())
+
     def test_get_managed_environment_home_path(self):
         self.assertEqual(
             Path("/root"), env.get_managed_environment_home_path()

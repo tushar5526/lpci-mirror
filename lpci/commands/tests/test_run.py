@@ -3537,6 +3537,55 @@ class TestRun(RunBaseTestCase):
             remote="test-remote",
         )
 
+    @patch("lpci.commands.run.get_provider")
+    @patch("lpci.commands.run.get_host_architecture", return_value="amd64")
+    def test_root_field(self, mock_get_host_architecture, mock_get_provider):
+        launcher = Mock(spec=launch)
+        provider = makeLXDProvider(lxd_launcher=launcher)
+        mock_get_provider.return_value = provider
+        execute_run = launcher.return_value.execute_run
+        execute_run.return_value = subprocess.CompletedProcess("_lpci", 0)
+        config = dedent(
+            """
+            pipeline:
+                - build
+
+            jobs:
+                build:
+                    root: False
+                    series: focal
+                    architectures: amd64
+                    run: whoami
+            """
+        )
+        Path(".launchpad.yaml").write_text(config)
+
+        result = self.run_command("run")
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [
+                call(
+                    [
+                        "runuser",
+                        "-u",
+                        "_lpci",
+                        "--",
+                        "bash",
+                        "--noprofile",
+                        "--norc",
+                        "-ec",
+                        "whoami",
+                    ],
+                    cwd=Path("/build/lpci/project"),
+                    env={},
+                    stdout=ANY,
+                    stderr=ANY,
+                )
+            ],
+            execute_run.call_args_list,
+        )
+
 
 class TestRunOne(RunBaseTestCase):
     def test_config_file_not_under_project_directory(self):

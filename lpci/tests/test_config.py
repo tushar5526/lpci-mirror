@@ -848,3 +848,46 @@ class TestConfig(TestCase):
             Config.load,
             path,
         )
+
+    def test_root_value(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        root: True
+                        series: focal
+                        architectures: amd64
+                """
+            )
+        )
+        config = Config.load(path)
+        root_value = config.jobs["test"][0].root
+        self.assertEqual(True, root_value)
+
+    def test_bad_root_value(self):
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        root: bad_value
+                        series: focal
+                        architectures: amd64
+                """
+            )
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "You configured `root` parameter, "
+            + "but you did not specify a valid value. "
+            + "Valid values would either be `true` or `false`.",
+            Config.load,
+            path,
+        )

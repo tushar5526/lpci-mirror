@@ -290,6 +290,7 @@ class Job(ModelConfigDefaults):
     package_repositories: List[PackageRepository] = []
     plugin: Optional[StrictStr]
     plugin_config: Optional[BaseConfig]
+    root: Optional[bool] = True
 
     @pydantic.validator("architectures", pre=True)
     def validate_architectures(
@@ -297,6 +298,16 @@ class Job(ModelConfigDefaults):
     ) -> List[_Identifier]:
         if isinstance(v, str):
             v = [v]
+        return v
+
+    @pydantic.validator("root", pre=True)
+    def validate_root(cls, v: Any) -> Any:
+        if type(v) is not bool or v is None:
+            raise ValueError(
+                "You configured `root` parameter, "
+                + "but you did not specify a valid value. "
+                + "Valid values would either be `true` or `false`."
+            )
         return v
 
     @pydantic.validator("snaps", pre=True)
