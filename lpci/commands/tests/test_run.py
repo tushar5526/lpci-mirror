@@ -2429,7 +2429,7 @@ class TestRun(RunBaseTestCase):
             str(result.errors[0]),
             "You configured a Snap `classic`, "
             + "but you did not specify a valid value. "
-            + "Valid values would either be `True` or `False`.",
+            + "Valid values would either be `true` or `false`.",
         )
 
     @patch("lpci.commands.run.get_provider")
