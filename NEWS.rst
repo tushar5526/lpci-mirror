@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.1.2 (unreleased)
+==================
+
+- Add a ``dev0`` suffix documentation.
+
 0.1.1 (2023-04-21)
 ==================
 - Fix the yaml formatting in the snap deprecated format warning.

@@ -41,6 +41,11 @@ How to create a new release
 
 Some additional information
 ***************************
+- It is best practice to use ``dev0`` version's suffix defining a new
+  development version into ``setup.cfg`` after a release,
+  so when building that version for testing, it does not show the old version number.
+  Once we want to release, we remove the suffix, to indicate that
+  this is no longer a development version.
 
 - members of the Launchpad team can use the ``Request builds`` button
   on that recipe if they need updated builds urgently
