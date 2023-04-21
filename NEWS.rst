@@ -5,7 +5,7 @@ Version history
 0.1.2 (unreleased)
 ==================
 
-- Add a ``dev0`` suffix documentation.
+- Add ``dev0`` suffix documentation.
 
 0.1.1 (2023-04-21)
 ==================
