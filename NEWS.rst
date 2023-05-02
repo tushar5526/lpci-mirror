@@ -2,8 +2,11 @@
 Version history
 ===============
 
-0.1.2 (unreleased)
+0.1.2 (2023-05-02)
 ==================
+
+- Rebuild the Snap package to include updated system packages
+  https://ubuntu.com/security/notices/USN-6050-1/.
 
 - Add ``dev0`` suffix documentation.
 
