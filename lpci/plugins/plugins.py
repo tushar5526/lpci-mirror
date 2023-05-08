@@ -206,29 +206,19 @@ class MiniCondaPlugin(BasePlugin):
             /tmp/miniconda.sh -b
         fi
         export PATH=$HOME/miniconda3/bin:$PATH
-        conda remove --all -q -y -n $CONDA_ENV
-        conda create -n $CONDA_ENV -q -y {conda_channels} {' '.join(self.conda_packages)}
-        source activate $CONDA_ENV
+        conda install -q -y {conda_channels} {' '.join(self.conda_packages)}
         {run}"""  # noqa:E501
         )
 
     @hookimpl  # type: ignore
     def lpci_execute_run(self) -> str:
         run = self.config.run or ""
-        return textwrap.dedent(
-            f"""
-        export PATH=$HOME/miniconda3/bin:$PATH
-        source activate $CONDA_ENV
-        {run}"""
-        )
+        return textwrap.dedent(f"{run}")
 
     @hookimpl  # type: ignore
     def lpci_execute_after_run(self) -> str:
         run = f"; {self.config.run_after}" if self.config.run_after else ""
-        return (
-            "export PATH=$HOME/miniconda3/bin:$PATH; "
-            f"source activate $CONDA_ENV; conda env export{run}"
-        )
+        return f"export PATH=$HOME/miniconda3/bin:$PATH; conda env export{run}"
 
 
 @register(name="conda-build")
@@ -406,7 +396,6 @@ class CondaBuildPlugin(MiniCondaPlugin):
         return textwrap.dedent(
             f"""
             export PATH=$HOME/miniconda3/bin:$PATH
-            source activate $CONDA_ENV
             {build_command}{conda_channels}{configs} {self.build_target}
             {run_command}"""
         )

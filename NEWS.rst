@@ -7,6 +7,9 @@ Version history
 
 - Fix default value for the `root` flag in documentation.
 
+- Fix conda-build plugin to install and run outside
+  of a conda environment.
+
 0.2.1 (2023-06-06)
 ==================
 

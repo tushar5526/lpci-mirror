@@ -364,22 +364,13 @@ class TestPlugins(CommandBaseTestCase):
             /tmp/miniconda.sh -b
         fi
         export PATH=$HOME/miniconda3/bin:$PATH
-        conda remove --all -q -y -n $CONDA_ENV
-        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults PYTHON=3.8 mamba pip
-        source activate $CONDA_ENV
+        conda install -q -y -c conda-forge -c defaults PYTHON=3.8 mamba pip
         """  # noqa:E501
         )
 
-        run_command = dedent(
-            """
-            export PATH=$HOME/miniconda3/bin:$PATH
-            source activate $CONDA_ENV
-            pip install --upgrade pytest
-        """
-        )
+        run_command = dedent("""pip install --upgrade pytest\n""")
         post_run_command = (
-            "export PATH=$HOME/miniconda3/bin:$PATH; "
-            "source activate $CONDA_ENV; conda env export"
+            "export PATH=$HOME/miniconda3/bin:$PATH; conda env export"
         )
 
         self.run_command("run")
@@ -563,22 +554,18 @@ class TestPlugins(CommandBaseTestCase):
             /tmp/miniconda.sh -b
         fi
         export PATH=$HOME/miniconda3/bin:$PATH
-        conda remove --all -q -y -n $CONDA_ENV
-        conda create -n $CONDA_ENV -q -y -c conda-forge -c defaults -c https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/ PYTHON=3.8 conda-build mamba pip
-        source activate $CONDA_ENV
+        conda install -q -y -c conda-forge -c defaults -c https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/ PYTHON=3.8 conda-build mamba pip
         """  # noqa:E501
         )
         run_command = dedent(
             """
             export PATH=$HOME/miniconda3/bin:$PATH
-            source activate $CONDA_ENV
             conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults -c https://user:pass@canonical.example.com/artifactory/soss-conda-stable-local/ info/recipe/parent
             pip install --upgrade pytest
         """  # noqa: E501
         )
         post_run_command = (
-            "export PATH=$HOME/miniconda3/bin:$PATH; "
-            "source activate $CONDA_ENV; conda env export"
+            "export PATH=$HOME/miniconda3/bin:$PATH; conda env export"
         )
 
         self.run_command(
@@ -866,7 +853,6 @@ class TestPlugins(CommandBaseTestCase):
         run_command = dedent(
             """
             export PATH=$HOME/miniconda3/bin:$PATH
-            source activate $CONDA_ENV
             conda-build --no-anaconda-upload --output-folder dist -c conda-forge -c defaults -m info/recipe/parent/conda_build_config.yaml -m info/recipe/conda_build_config.yaml info/recipe/parent
             pip install --upgrade pytest
         """  # noqa: E501
