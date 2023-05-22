@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.1.3 (unreleased)
+==================
+
+- Add support for non-LTS devel release, which is currently mantic.
+
 0.1.2 (2023-05-02)
 ==================
 

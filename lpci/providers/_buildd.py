@@ -20,6 +20,7 @@ SERIES_TO_BUILDD_IMAGE_ALIAS = {
     "jammy": bases.BuilddBaseAlias.JAMMY,
     "kinetic": bases.BuilddBaseAlias.KINETIC,
     "lunar": bases.BuilddBaseAlias.LUNAR,
+    "devel": bases.BuilddBaseAlias.DEVEL,
 }
 
 
