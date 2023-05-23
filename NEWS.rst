@@ -2,10 +2,13 @@
 Version history
 ===============
 
-0.1.3 (unreleased)
+0.2.0 (unreleased)
 ==================
 
 - Add support for non-LTS devel release, which is currently mantic.
+
+- Update Python dependencies, especially `Cryptography`, see CVE-2023-0286 and
+  CVE-2023-23931.
 
 0.1.2 (2023-05-02)
 ==================

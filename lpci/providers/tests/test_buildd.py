@@ -2,7 +2,7 @@
 # GNU General Public License version 3 (see the file LICENSE).
 
 import pytest
-from craft_providers.bases.buildd import BuilddBaseAlias
+from craft_providers.bases.ubuntu import BuilddBaseAlias
 from testtools import TestCase
 
 from lpci.providers._buildd import LPCIBuilddBaseConfiguration
