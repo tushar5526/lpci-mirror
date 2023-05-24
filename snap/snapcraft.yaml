@@ -62,6 +62,7 @@ parts:
       - libssl-dev
       - rustc
       - pkg-config
+      - python3-dev
     stage-packages:
       - git
       - apt
