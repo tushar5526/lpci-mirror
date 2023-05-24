@@ -46,6 +46,7 @@ parts:
       - python3-setuptools
       - python3-venv
       - python3-wheel
+      - python3-dev
     override-build: |
       snapcraftctl build
       install -D -m 0755 $SNAPCRAFT_PROJECT_DIR/snap/local/sitecustomize.py $SNAPCRAFT_PART_INSTALL/usr/lib/python3.8/sitecustomize.py
@@ -62,7 +63,6 @@ parts:
       - libssl-dev
       - rustc
       - pkg-config
-      - python3-dev
     stage-packages:
       - git
       - apt
