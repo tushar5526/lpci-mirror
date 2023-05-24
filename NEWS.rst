@@ -10,6 +10,9 @@ Version history
 - Update Python dependencies, especially `Cryptography`, see CVE-2023-0286 and
   CVE-2023-23931.
 
+- Fix Snap build issues for lpci on platforms which do not offer pre-built
+  wheels for Cryptography.
+
 0.1.2 (2023-05-02)
 ==================
 

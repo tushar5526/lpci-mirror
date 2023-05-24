@@ -61,6 +61,7 @@ parts:
       - libffi-dev
       - libssl-dev
       - rustc
+      - pkg-config
     stage-packages:
       - git
       - apt
