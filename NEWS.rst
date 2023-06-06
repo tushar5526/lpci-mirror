@@ -2,6 +2,16 @@
 Version history
 ===============
 
+0.2.1 (2023-06-06)
+==================
+
+- Rebuild the Snap package to include updated system packages with fixes
+ for the following vulnerabilities.
+
+  * https://ubuntu.com/security/notices/USN-6112-2/
+  * https://ubuntu.com/security/notices/USN-6138-1/
+  * https://ubuntu.com/security/notices/USN-6139-1/
+
 0.2.0 (2023-05-24)
 ==================
 
