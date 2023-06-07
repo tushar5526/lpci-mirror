@@ -64,7 +64,8 @@ built with packages from the Ubuntu archive that have since received security
 updates.
 
 To address this, we have to rebuild the snap from the `Launchpad recipe
-<https://launchpad.net/~launchpad/lpci/+snap/lpci>`_ page by requesting new builds.
+<https://launchpad.net/~launchpad/lpci/+snap/lpci>`_ page by requesting new builds. Use
+the default options that are pre-selected when doing this.
 
 Once the builds have been completed and published to the Snap Store, follow the steps
 in the ``How to create a new release`` section above, starting from the 3rd step about
