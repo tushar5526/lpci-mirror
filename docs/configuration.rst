@@ -76,7 +76,7 @@ Job definitions
     If ``true``, run shell commands declared by ``run-before``,
     ``run``, and ``run-after`` as root;
     if ``false``, run them as a non-root user (``_lpci``).
-    Default value: ``false``.
+    Default value: ``true``.
 
 ``run-before`` (optional)
     A string (possibly multi-line) containing shell commands to run for this

@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.2.2 (unreleased)
+==================
+
+- Fix default value for the `root` flag in documentation.
+
 0.2.1 (2023-06-06)
 ==================
 
