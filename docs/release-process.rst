@@ -39,6 +39,9 @@ How to create a new release
     - click on ``Promote to: latest/stable``
     - finally, hit the ``Save`` button in the top right corner to apply the changes
 
+- go to the project's `Read the Docs <https://readthedocs.org/projects/lpci/>`_
+  site and trigger ``Build version`` to get the updated documentation online
+
 Some additional information
 ***************************
 - It is best practice to use ``dev0`` version's suffix defining a new
