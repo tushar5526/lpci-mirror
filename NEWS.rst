@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.2.3 (unreleased)
+0.2.3 (2023-07-20)
 ==================
 
 - Upgrade ``PyYAML`` to 6.0.1 to fix https://github.com/yaml/pyyaml/issues/601,
