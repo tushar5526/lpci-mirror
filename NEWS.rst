@@ -5,7 +5,8 @@ Version history
 0.2.3 (unreleased)
 ==================
 
-- Nothing yet.
+- Upgrade ``PyYAML`` to 6.0.1 to fix https://github.com/yaml/pyyaml/issues/601,
+  which was causing errors during the installation of ``PyYAML``.
 
 0.2.2 (2023-07-14)
 ==================
