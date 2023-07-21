@@ -2,6 +2,6 @@ craft-cli
 craft-providers>=1.8.1  # 1.8.1 added support of bases.BuilddBaseAlias.DEVEL
 launchpadlib[keyring]
 pydantic
-PyYAML
+PyYAML>=6.0.1  # 6.0.0 is not compatible with a current cython version
 python-dotenv
 pluggy
