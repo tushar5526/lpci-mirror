@@ -23,9 +23,10 @@ Top-level configuration
 
 ``pipeline`` (required)
      List of stages; each stage is either a job name or a list of job names.
-     If a stage is a list of job names, then those jobs are executed in
-     parallel.  Stages are executed in series, and subsequent stages only
-     execute if previous stages succeeded.
+     Stages are executed in series, and subsequent stages only execute if
+     previous stages succeeded.
+     (We plan to allow parallel job execution within each stage in the future,
+     but that hasn't yet been implemented.)
 
      Job names are :ref:`identifiers <identifiers>`.
 
