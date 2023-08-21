@@ -68,7 +68,8 @@ Job definitions
 
 ``environment`` (optional)
     A mapping of environment variable names to values, to be set while
-    running the job.
+    running the job. Takes precedence over environment variables set by
+    plugins. Can be overridden via CLI.
 
 ``plugin`` (optional)
     A plugin which will be used for this job. See :doc:`../plugins`

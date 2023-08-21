@@ -104,7 +104,8 @@ lpci run-one optional arguments
 - ``--set-env KEY=VALUE``, e.g.
   ``lpci run-one --set-env="PIP_INDEX_URL=http://pypi.example.com/simple" test 0``
 
-  This option is repeatable.
+  This option is repeatable. Takes precedence over environment variables set by
+  the configuration file and by plugins.
 
 lpci release
 ------------

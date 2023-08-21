@@ -519,19 +519,19 @@ def _run_job(
         )
 
     # XXX jugmac00 2021-12-17: extract inferring environment variables
+
+    # environment variables are combined from several sources, with the
+    # following order of precedence:
+    # CLI > configuration file > plugin setting
     rv = pm.hook.lpci_set_environment()
     if rv:
-        # XXX jugmac00 2021-12-17: check for length or reduce?
-        env_from_plugin = rv[0]
+        environment = rv[0]
     else:
-        env_from_plugin = {}
-
+        environment = {}
     env_from_configuration = job.environment
     if env_from_configuration is not None:
-        env_from_plugin.update(env_from_configuration)
-    environment = env_from_plugin
+        environment.update(env_from_configuration)
     if env_from_cli:
-        # XXX jugmac00 2022-05-13: use _convert_config_list_to_dict
         pairs_from_cli = dict(
             pair.split("=", maxsplit=1) for pair in env_from_cli
         )
