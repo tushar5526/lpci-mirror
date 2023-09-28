@@ -3,11 +3,14 @@
 
 import re
 from argparse import ArgumentParser, Namespace
+from collections import defaultdict
 from operator import attrgetter
+from typing import Dict, List
 from urllib.parse import urlparse
 
 from craft_cli import BaseCommand, emit
 from launchpadlib.launchpad import Launchpad
+from lazr.restfulclient.resource import Entry
 
 from lpci.errors import CommandError
 from lpci.git import get_current_branch, get_current_remote_url
@@ -52,13 +55,21 @@ class ReleaseCommand(BaseCommand):
             ),
         )
         parser.add_argument(
+            "-a",
+            "--architecture",
+            help=(
+                "Only release the latest build for this architecture "
+                "(defaults to the latest build for each built architecture)"
+            ),
+        )
+        parser.add_argument(
             "archive", help="Target archive, e.g. ppa:OWNER/DISTRIBUTION/NAME"
         )
         parser.add_argument("suite", help="Target suite, e.g. focal")
         parser.add_argument("channel", help="Target channel, e.g. edge")
 
-    def run(self, args: Namespace) -> int:
-        """Run the command."""
+    def _check_args(self, args: Namespace) -> None:
+        """Check and process arguments."""
         if args.repository is None:
             current_remote_url = get_current_remote_url()
             if current_remote_url is None:
@@ -86,9 +97,9 @@ class ReleaseCommand(BaseCommand):
                     "branch."
                 )
 
-        launchpad = Launchpad.login_with(
-            "lpci", args.launchpad_instance, version="devel"
-        )
+    def _find_builds(
+        self, launchpad: Launchpad, args: Namespace
+    ) -> Dict[str, List[Entry]]:
         repository = launchpad.git_repositories.getByPath(path=args.repository)
         if repository is None:
             raise CommandError(
@@ -107,6 +118,10 @@ class ReleaseCommand(BaseCommand):
             report.ci_build
             for report in reports
             if report.ci_build is not None
+            and (
+                args.architecture is None
+                or report.ci_build.arch_tag == args.architecture
+            )
             and report.ci_build.buildstate == "Successfully built"
             and report.getArtifactURLs(artifact_type="Binary")
         ]
@@ -115,20 +130,44 @@ class ReleaseCommand(BaseCommand):
                 f"{args.repository}:{args.commit} has no completed CI "
                 f"builds with attached files."
             )
-        latest_build = sorted(builds, key=attrgetter("datebuilt"))[-1]
+        builds_by_arch = defaultdict(list)
+        for build in builds:
+            builds_by_arch[build.arch_tag].append(build)
+        return builds_by_arch
+
+    def _release_build(
+        self, launchpad: Launchpad, build: Entry, args: Namespace
+    ) -> None:
         archive = launchpad.archives.getByReference(reference=args.archive)
         description = (
-            f"build of {args.repository}:{args.commit} to "
+            f"{build.arch_tag} build of {args.repository}:{args.commit} to "
             f"{args.archive} {args.suite} {args.channel}"
         )
         if args.dry_run:
             emit.message(f"Would release {description}.")
         else:
             archive.uploadCIBuild(
-                ci_build=latest_build,
+                ci_build=build,
                 to_series=args.suite,
                 to_pocket="Release",
                 to_channel=args.channel,
             )
             emit.message(f"Released {description}.")
+
+    def run(self, args: Namespace) -> int:
+        """Run the command."""
+        self._check_args(args)
+        launchpad = Launchpad.login_with(
+            "lpci", args.launchpad_instance, version="devel"
+        )
+        builds_by_arch = self._find_builds(launchpad, args)
+        if args.architecture is not None:
+            arch_tags = [args.architecture]
+        else:
+            arch_tags = sorted(builds_by_arch)
+        for arch_tag in arch_tags:
+            latest_build = sorted(
+                builds_by_arch[arch_tag], key=attrgetter("datebuilt")
+            )[-1]
+            self._release_build(launchpad, latest_build, args)
         return 0

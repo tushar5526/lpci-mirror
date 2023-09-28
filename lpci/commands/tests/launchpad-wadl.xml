@@ -263,6 +263,12 @@ A build record for a pipeline of CI jobs.
           The value of the HTTP ETag for this resource.
         </wadl:doc>
       </wadl:param>
+      <wadl:param style="plain" required="true" name="arch_tag" path="$['arch_tag']">
+        <wadl:doc>
+Architecture tag
+</wadl:doc>
+        
+      </wadl:param>
       <wadl:param style="plain" required="true" name="buildstate" path="$['buildstate']">
         <wadl:doc>
 <html:p>Status</html:p>
@@ -281,6 +287,7 @@ A build record for a pipeline of CI jobs.
         <wadl:option value="Uploading build" />
         <wadl:option value="Cancelling build" />
         <wadl:option value="Cancelled build" />
+        <wadl:option value="Gathering build output" />
       </wadl:param>
       <wadl:param style="plain" required="true" name="datebuilt" path="$['datebuilt']" type="xsd:dateTime">
         <wadl:doc>
@@ -425,6 +432,37 @@ A reference in a Git repository.
       <wadl:doc>
 A Git repository.
 </wadl:doc>
+      <wadl:method id="git_repository-getRefByPath" name="GET">
+        <wadl:doc>
+<html:p>Look up a single reference in this repository by path.</html:p>
+<html:table class="rst-docutils field-list" frame="void" rules="none">
+<html:col class="field-name" />
+<html:col class="field-body" />
+<html:tbody valign="top">
+<html:tr class="rst-field"><html:th class="rst-field-name">param path:</html:th><html:td class="rst-field-body">A string to look up as a path.</html:td>
+</html:tr>
+<html:tr class="rst-field"><html:th class="rst-field-name">return:</html:th><html:td class="rst-field-body">An IGitRef, or None.</html:td>
+</html:tr>
+</html:tbody>
+</html:table>
+
+</wadl:doc>
+        <wadl:request>
+          
+            <wadl:param style="query" name="ws.op" required="true" fixed="getRefByPath" />
+            <wadl:param style="query" name="path" required="true">
+              <wadl:doc>
+A string to look up as a path.
+</wadl:doc>
+              
+            </wadl:param>
+          
+        </wadl:request>
+        <wadl:response>
+          
+          <wadl:representation href="https://api.launchpad.net/devel/#git_ref-full" />
+        </wadl:response>
+      </wadl:method>
       <wadl:method id="git_repository-getStatusReports" name="GET">
         <wadl:doc>
 <html:p>Retrieves the list of reports that exist for a commit.</html:p>
@@ -456,37 +494,6 @@ The Git commit for which this report is built.
         <wadl:response>
           
           <wadl:representation href="https://api.launchpad.net/devel/#revision_status_report-page" />
-        </wadl:response>
-      </wadl:method>
-      <wadl:method id="git_repository-getRefByPath" name="GET">
-        <wadl:doc>
-<html:p>Look up a single reference in this repository by path.</html:p>
-<html:table class="rst-docutils field-list" frame="void" rules="none">
-<html:col class="field-name" />
-<html:col class="field-body" />
-<html:tbody valign="top">
-<html:tr class="rst-field"><html:th class="rst-field-name">param path:</html:th><html:td class="rst-field-body">A string to look up as a path.</html:td>
-</html:tr>
-<html:tr class="rst-field"><html:th class="rst-field-name">return:</html:th><html:td class="rst-field-body">An IGitRef, or None.</html:td>
-</html:tr>
-</html:tbody>
-</html:table>
-
-</wadl:doc>
-        <wadl:request>
-          
-            <wadl:param style="query" name="ws.op" required="true" fixed="getRefByPath" />
-            <wadl:param style="query" name="path" required="true">
-              <wadl:doc>
-A string to look up as a path.
-</wadl:doc>
-              
-            </wadl:param>
-          
-        </wadl:request>
-        <wadl:response>
-          
-          <wadl:representation href="https://api.launchpad.net/devel/#git_ref-full" />
         </wadl:response>
       </wadl:method>
       </wadl:resource_type>

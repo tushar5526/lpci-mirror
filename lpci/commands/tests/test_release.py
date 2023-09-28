@@ -269,6 +269,7 @@ class TestRelease(CommandBaseTestCase):
                     "entries": [
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
                             },
@@ -301,7 +302,7 @@ class TestRelease(CommandBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=0,
                 messages=[
-                    f"Would release build of example:{commit_sha1} to "
+                    f"Would release amd64 build of example:{commit_sha1} to "
                     f"ppa:owner/ubuntu/name focal edge."
                 ],
             ),
@@ -318,6 +319,7 @@ class TestRelease(CommandBaseTestCase):
                     "entries": [
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
                             },
@@ -325,6 +327,7 @@ class TestRelease(CommandBaseTestCase):
                         },
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 12, 0, 0),
                             },
@@ -356,7 +359,7 @@ class TestRelease(CommandBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=0,
                 messages=[
-                    f"Released build of example:{commit_sha1} to "
+                    f"Released amd64 build of example:{commit_sha1} to "
                     f"ppa:owner/ubuntu/name focal edge."
                 ],
             ),
@@ -366,8 +369,9 @@ class TestRelease(CommandBaseTestCase):
             upload,
             MatchesListwise(
                 [
-                    MatchesStructure(
-                        datebuilt=Equals(datetime(2022, 1, 1, 12, 0, 0))
+                    MatchesStructure.byEquality(
+                        arch_tag="amd64",
+                        datebuilt=datetime(2022, 1, 1, 12, 0, 0),
                     ),
                     Equals("focal"),
                     Equals("Release"),
@@ -385,6 +389,7 @@ class TestRelease(CommandBaseTestCase):
                     "entries": [
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
                             },
@@ -392,6 +397,7 @@ class TestRelease(CommandBaseTestCase):
                         },
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 12, 0, 0),
                             },
@@ -423,7 +429,7 @@ class TestRelease(CommandBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=0,
                 messages=[
-                    f"Released build of example:{commit_sha1} to "
+                    f"Released amd64 build of example:{commit_sha1} to "
                     f"ppa:owner/ubuntu/name focal edge."
                 ],
             ),
@@ -442,6 +448,7 @@ class TestRelease(CommandBaseTestCase):
                     "entries": [
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
                             },
@@ -469,7 +476,7 @@ class TestRelease(CommandBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=0,
                 messages=[
-                    f"Released build of example:{commit_sha1} to "
+                    f"Released amd64 build of example:{commit_sha1} to "
                     f"ppa:owner/ubuntu/name focal edge."
                 ],
             ),
@@ -488,6 +495,7 @@ class TestRelease(CommandBaseTestCase):
                     "entries": [
                         {
                             "ci_build": {
+                                "arch_tag": "amd64",
                                 "buildstate": "Successfully built",
                                 "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
                             },
@@ -515,8 +523,200 @@ class TestRelease(CommandBaseTestCase):
             MatchesStructure.byEquality(
                 exit_code=0,
                 messages=[
-                    f"Released build of example:{commit_sha1} to "
+                    f"Released amd64 build of example:{commit_sha1} to "
                     f"ppa:owner/ubuntu/name focal edge."
                 ],
+            ),
+        )
+
+    def test_release_multiple_architectures(self):
+        lp = self.make_fake_launchpad()
+        commit_sha1 = "1" * 40
+        lp.git_repositories = {
+            "getByPath": lambda path: {
+                "getRefByPath": lambda path: {"commit_sha1": commit_sha1},
+                "getStatusReports": lambda commit_sha1: {
+                    "entries": [
+                        {
+                            "ci_build": {
+                                "arch_tag": "amd64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "arm64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 1, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "amd64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 12, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "arm64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 13, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                    ]
+                },
+            }
+        }
+        lp.archives = {
+            "getByReference": lambda reference: {
+                "uploadCIBuild": self.fake_upload
+            }
+        }
+
+        result = self.run_command(
+            "release",
+            "--repository",
+            "example",
+            "--commit",
+            "branch",
+            "ppa:owner/ubuntu/name",
+            "focal",
+            "edge",
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=0,
+                messages=[
+                    f"Released amd64 build of example:{commit_sha1} to "
+                    f"ppa:owner/ubuntu/name focal edge.",
+                    f"Released arm64 build of example:{commit_sha1} to "
+                    f"ppa:owner/ubuntu/name focal edge.",
+                ],
+            ),
+        )
+        self.assertThat(
+            self.uploads,
+            MatchesListwise(
+                [
+                    MatchesListwise(
+                        [
+                            MatchesStructure.byEquality(
+                                arch_tag="amd64",
+                                datebuilt=datetime(2022, 1, 1, 12, 0, 0),
+                            ),
+                            Equals("focal"),
+                            Equals("Release"),
+                            Equals("edge"),
+                        ]
+                    ),
+                    MatchesListwise(
+                        [
+                            MatchesStructure.byEquality(
+                                arch_tag="arm64",
+                                datebuilt=datetime(2022, 1, 1, 13, 0, 0),
+                            ),
+                            Equals("focal"),
+                            Equals("Release"),
+                            Equals("edge"),
+                        ],
+                    ),
+                ]
+            ),
+        )
+
+    def test_release_select_single_architecture(self):
+        lp = self.make_fake_launchpad()
+        commit_sha1 = "1" * 40
+        lp.git_repositories = {
+            "getByPath": lambda path: {
+                "getRefByPath": lambda path: {"commit_sha1": commit_sha1},
+                "getStatusReports": lambda commit_sha1: {
+                    "entries": [
+                        {
+                            "ci_build": {
+                                "arch_tag": "amd64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 0, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "arm64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 1, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "amd64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 12, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                        {
+                            "ci_build": {
+                                "arch_tag": "arm64",
+                                "buildstate": "Successfully built",
+                                "datebuilt": datetime(2022, 1, 1, 13, 0, 0),
+                            },
+                            "getArtifactURLs": lambda artifact_type: ["url"],
+                        },
+                    ]
+                },
+            }
+        }
+        lp.archives = {
+            "getByReference": lambda reference: {
+                "uploadCIBuild": self.fake_upload
+            }
+        }
+
+        result = self.run_command(
+            "release",
+            "--repository",
+            "example",
+            "--commit",
+            "branch",
+            "--architecture",
+            "amd64",
+            "ppa:owner/ubuntu/name",
+            "focal",
+            "edge",
+        )
+
+        self.assertThat(
+            result,
+            MatchesStructure.byEquality(
+                exit_code=0,
+                messages=[
+                    f"Released amd64 build of example:{commit_sha1} to "
+                    f"ppa:owner/ubuntu/name focal edge.",
+                ],
+            ),
+        )
+        [upload] = self.uploads
+        self.assertThat(
+            upload,
+            MatchesListwise(
+                [
+                    MatchesStructure.byEquality(
+                        arch_tag="amd64",
+                        datebuilt=datetime(2022, 1, 1, 12, 0, 0),
+                    ),
+                    Equals("focal"),
+                    Equals("Release"),
+                    Equals("edge"),
+                ]
             ),
         )

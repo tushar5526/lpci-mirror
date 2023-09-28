@@ -2,6 +2,13 @@
 Version history
 ===============
 
+0.2.4 (unreleased)
+==================
+
+- Fix ``lpci release`` to release the latest build of each architecture (or
+  a single architecture selected by the new ``--architecture`` option),
+  rather than only releasing the latest build regardless of architecture.
+
 0.2.3 (2023-07-20)
 ==================
 

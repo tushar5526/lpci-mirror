@@ -23,7 +23,7 @@ keep_collections = {
 
 keep_entries = {
     "archive": ["uploadCIBuild"],
-    "ci_build": ["buildstate", "datebuilt", "get"],
+    "ci_build": ["arch_tag", "buildstate", "datebuilt", "get"],
     "git_ref": ["commit_sha1", "get"],
     "git_repository": ["getRefByPath", "getStatusReports"],
     "revision_status_report": [

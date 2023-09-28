@@ -135,3 +135,6 @@ lpci release optional arguments
 - ``--commit ID`` to specify the source Git branch name, tag name, or commit
   ID (defaults to the tip commit found for the current branch in the
   upstream repository).
+
+- ``--architecture NAME`` to only release the builds for this architecture
+  (defaults to the latest build for each built architecture).
