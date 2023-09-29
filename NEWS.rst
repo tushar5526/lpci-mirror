@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.2.4 (unreleased)
+0.2.4 (2023-09-29)
 ==================
 
 - Fix ``lpci release`` to release the latest build of each architecture (or
