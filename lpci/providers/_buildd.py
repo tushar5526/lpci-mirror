@@ -18,8 +18,8 @@ SERIES_TO_BUILDD_IMAGE_ALIAS = {
     "bionic": bases.BuilddBaseAlias.BIONIC,
     "focal": bases.BuilddBaseAlias.FOCAL,
     "jammy": bases.BuilddBaseAlias.JAMMY,
-    "kinetic": bases.BuilddBaseAlias.KINETIC,
     "lunar": bases.BuilddBaseAlias.LUNAR,
+    "mantic": bases.BuilddBaseAlias.MANTIC,
     "devel": bases.BuilddBaseAlias.DEVEL,
 }
 
@@ -42,6 +42,6 @@ class LPCIBuilddBaseConfiguration(bases.BuilddBase):
             raise TypeError
         return (
             self.alias == other.alias
-            and self.environment == other.environment
-            and self.hostname == other.hostname
+            and self._environment == other._environment
+            and self._hostname == other._hostname
         )

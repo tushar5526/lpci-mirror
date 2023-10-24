@@ -21,13 +21,13 @@ class InternalPlugins:
     def __init__(self, config: Job) -> None:
         self.config = config
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         if self.config.packages:
             return self.config.packages
         return []
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_snaps(self) -> list[Snap]:
         if self.config.snaps:
             return self.config.snaps

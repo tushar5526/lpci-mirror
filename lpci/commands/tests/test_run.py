@@ -2010,6 +2010,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2021,6 +2022,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     [
@@ -2033,6 +2035,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2044,6 +2047,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
@@ -2107,6 +2111,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2118,6 +2123,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     [
@@ -2130,6 +2136,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2141,6 +2148,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
@@ -2242,6 +2250,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2253,6 +2262,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     [
@@ -2265,6 +2275,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=600,
                 ),
                 call(
                     [
@@ -2276,6 +2287,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
+                    timeout=60,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],

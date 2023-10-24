@@ -64,17 +64,17 @@ class ToxPlugin(BasePlugin):
         within the job definition.
     """
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         return ["python3-pip"]
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_run(self) -> str:
         # XXX jugmac00 2022-01-07: we should consider using a requirements.txt
         # as this allows updating via `pip-tools`
         return "python3 -m pip install tox==3.24.5; tox"
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_set_environment(self) -> dict[str, str | None]:
         # Work around https://github.com/tox-dev/tox/issues/2372: without
         # this, tox won't pass through the lower-case proxy environment
@@ -91,7 +91,7 @@ class PyProjectBuildPlugin(BasePlugin):
         `pyproject-build` within the job definition.
     """
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         # Ubuntu 20.04 does not provide a packaged version of build,
         # so we need pip to install it
@@ -103,7 +103,7 @@ class PyProjectBuildPlugin(BasePlugin):
             "python3-venv",
         ]
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_run(self) -> str:
         # XXX jugmac00 2022-01-20: we should consider using a PPA
         return "python3 -m pip install build==0.7.0; python3 -m build"
@@ -179,12 +179,12 @@ class MiniCondaPlugin(BasePlugin):
                 conda_channels.append(soss_channel)
         return conda_channels
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_set_environment(self) -> dict[str, str]:
         # `CONDA_ENV` sets the name of the Conda virtual environment
         return {"CONDA_ENV": "lpci"}
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         return [
             "git",
@@ -194,7 +194,7 @@ class MiniCondaPlugin(BasePlugin):
             "wget",
         ]
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_before_run(self) -> str:
         run = self.config.run_before or ""
         conda_channels = " ".join(f"-c {_}" for _ in self.conda_channels)
@@ -210,12 +210,12 @@ class MiniCondaPlugin(BasePlugin):
         {run}"""  # noqa:E501
         )
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_run(self) -> str:
         run = self.config.run or ""
         return textwrap.dedent(f"{run}")
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_after_run(self) -> str:
         run = f"; {self.config.run_after}" if self.config.run_after else ""
         return f"export PATH=$HOME/miniconda3/bin:$PATH; conda env export{run}"
@@ -343,25 +343,25 @@ class CondaBuildPlugin(MiniCondaPlugin):
             return self.find_build_target()
         return build_target
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_set_environment(self) -> dict[str, str]:
         # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
         rv: dict[str, str] = super().lpci_set_environment()
         return rv
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_before_run(self) -> str:
         # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
         rv: str = super().lpci_execute_before_run()
         return rv
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_after_run(self) -> str:
         # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
         rv: str = super().lpci_execute_after_run()
         return rv
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         # XXX techalchemy 2022-04-01: mypy is struggling with the super() call
         base_packages: list[str] = super().lpci_install_packages()
@@ -385,7 +385,7 @@ class CondaBuildPlugin(MiniCondaPlugin):
         )
         return base_packages
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_run(self) -> str:
         conda_channels = " ".join(f"-c {_}" for _ in self.conda_channels)
         conda_channels = f" {conda_channels}" if conda_channels else ""
@@ -436,12 +436,12 @@ class GolangPlugin(BasePlugin):
     def get_plugin_config(self) -> "GolangPlugin.Config":
         return cast(GolangPlugin.Config, self.config.plugin_config)
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_install_packages(self) -> list[str]:
         version = self.get_plugin_config().golang_version
         return [f"golang-{version}"]
 
-    @hookimpl  # type: ignore
+    @hookimpl
     def lpci_execute_run(self) -> str:
         version = self.get_plugin_config().golang_version
         run_command = self.config.run or ""

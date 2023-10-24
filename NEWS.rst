@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.2.5 (unreleased)
+==================
+
+- Add support for 23.10 (mantic).
+- Remove support for 22.10 (kinetic).
+
 0.2.4 (2023-09-29)
 ==================
 

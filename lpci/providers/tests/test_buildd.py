@@ -22,8 +22,8 @@ class TestLPCIBuilddBaseConfiguration(TestCase):
             "18.04": BuilddBaseAlias.BIONIC.value,
             "20.04": BuilddBaseAlias.FOCAL.value,
             "22.04": BuilddBaseAlias.JAMMY.value,
-            "22.10": BuilddBaseAlias.KINETIC.value,
             "23.04": BuilddBaseAlias.LUNAR.value,
+            "23.10": BuilddBaseAlias.MANTIC.value,
             "devel": BuilddBaseAlias.DEVEL.value,
         }
         for k, v in alias_mapping.items():
