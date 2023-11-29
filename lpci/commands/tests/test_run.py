@@ -21,6 +21,9 @@ from lpci.commands.tests import CommandBaseTestCase
 from lpci.errors import CommandError, ConfigurationError
 from lpci.providers.tests import makeLXDProvider
 
+TIMEOUT_CURL = 60
+TIMEOUT_SNAP_INSTALL = 600
+
 
 class LocalExecuteRun:
     """A fake LXDInstance.execute_run that runs subprocesses locally.
@@ -2010,7 +2013,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2022,7 +2025,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     [
@@ -2035,7 +2038,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2047,7 +2050,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
@@ -2111,7 +2114,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2123,7 +2126,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     [
@@ -2136,7 +2139,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2148,7 +2151,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
@@ -2250,7 +2253,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2262,7 +2265,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     [
@@ -2275,7 +2278,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=600,
+                    timeout=TIMEOUT_SNAP_INSTALL,
                 ),
                 call(
                     [
@@ -2287,7 +2290,7 @@ class TestRun(RunBaseTestCase):
                     ],
                     check=True,
                     capture_output=True,
-                    timeout=60,
+                    timeout=TIMEOUT_CURL,
                 ),
                 call(
                     ["bash", "--noprofile", "--norc", "-ec", "tox"],
