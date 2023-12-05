@@ -2,7 +2,7 @@
 Version history
 ===============
 
-0.2.5 (unreleased)
+0.2.5 (2023-12-05)
 ==================
 
 - Add support for 23.10 (mantic).
