@@ -2,6 +2,13 @@
 Version history
 ===============
 
+0.2.6 (2024-02-19)
+==================
+
+- Fix the bug in the `sitecustomize.py` bundled with the `lpci` snap to
+  get the snap build working on `snapcraft` 8.x versions. See
+  https://bugs.launchpad.net/lpci/+bug/2053109.
+
 0.2.5 (2023-12-05)
 ==================
 
