@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.2.7 (unreleased)
+==================
+
+- Remove support for Lunar, which EOLed January 2024.
+
 0.2.6 (2024-02-19)
 ==================
 
