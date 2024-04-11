@@ -1,5 +1,5 @@
 craft-cli
-craft-providers>=1.19.0  # 1.19.0 added support of bases.BuilddBaseAlias.MANTIC
+craft-providers>=1.23.1  # 1.23.1 fixed LXD version naming support
 launchpadlib[keyring]
 pydantic
 PyYAML>=6.0.1  # 6.0.0 is not compatible with a current cython version

@@ -6,6 +6,7 @@ Version history
 ==================
 
 - Remove support for Lunar, which EOLed January 2024.
+- Update dependencies to add support for new lxd version schema.
 
 0.2.6 (2024-02-19)
 ==================
