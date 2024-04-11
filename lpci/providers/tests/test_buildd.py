@@ -22,11 +22,10 @@ class TestLPCIBuilddBaseConfiguration(TestCase):
             "18.04": BuilddBaseAlias.BIONIC.value,
             "20.04": BuilddBaseAlias.FOCAL.value,
             "22.04": BuilddBaseAlias.JAMMY.value,
-            "23.04": BuilddBaseAlias.LUNAR.value,
             "23.10": BuilddBaseAlias.MANTIC.value,
+            "24.04": BuilddBaseAlias.NOBLE.value,
             "devel": BuilddBaseAlias.DEVEL.value,
         }
         for k, v in alias_mapping.items():
             self.assertEqual(k, v)
-
         self.assertEqual(len(BuilddBaseAlias), len(alias_mapping))

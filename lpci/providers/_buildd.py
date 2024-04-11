@@ -19,6 +19,7 @@ SERIES_TO_BUILDD_IMAGE_ALIAS = {
     "focal": bases.BuilddBaseAlias.FOCAL,
     "jammy": bases.BuilddBaseAlias.JAMMY,
     "mantic": bases.BuilddBaseAlias.MANTIC,
+    "noble": bases.BuilddBaseAlias.NOBLE,
     "devel": bases.BuilddBaseAlias.DEVEL,
 }
 
