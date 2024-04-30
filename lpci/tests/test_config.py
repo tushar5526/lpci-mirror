@@ -522,6 +522,114 @@ class TestConfig(TestCase):
             config.jobs["test"][0].package_repositories,
         )
 
+    def test_package_repositories_support_all_supported_LTS_releases(self):
+        """Supported releases as of now:
+
+        - bionic
+        - focal
+        - jammy
+        - noble
+        """
+        path = self.create_config(
+            dedent(
+                """
+                pipeline:
+                    - test
+
+                jobs:
+                    test:
+                        series: bionic
+                        architectures: amd64
+                        packages: [nginx, apache2]
+                        package-repositories:
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [bionic]
+                              url: https://canonical.example.org/artifactory/bionic-golang-backport
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [focal]
+                              url: https://canonical.example.org/artifactory/focal-golang-backport
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [jammy]
+                              url: https://canonical.example.org/artifactory/jammy-golang-backport
+                            - type: apt
+                              formats: [deb]
+                              components: [main]
+                              suites: [noble]
+                              url: https://canonical.example.org/artifactory/noble-golang-backport
+                """  # noqa: E501
+            )
+        )
+
+        config = Config.load(path)
+
+        self.assertEqual(
+            [
+                PackageRepository(
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.bionic],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/bionic-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/bionic-golang-backport",
+                    ),
+                ),
+                PackageRepository(
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.focal],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/focal-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/focal-golang-backport",
+                    ),
+                ),
+                PackageRepository(
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.jammy],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/jammy-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/jammy-golang-backport",
+                    ),
+                ),
+                PackageRepository(
+                    type=PackageType.apt,
+                    formats=[PackageFormat.deb],
+                    components=[PackageComponent.main],
+                    suites=[PackageSuite.noble],
+                    url=AnyHttpUrl(
+                        "https://canonical.example.org/artifactory/noble-golang-backport",  # noqa: E501
+                        scheme="https",
+                        host="canonical.example.org",
+                        tld="org",
+                        host_type="domain",
+                        path="/artifactory/noble-golang-backport",
+                    ),
+                ),
+            ],
+            config.jobs["test"][0].package_repositories,
+        )
+
     def test_package_repositories_as_string(self):
         path = self.create_config(
             dedent(

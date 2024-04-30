@@ -2,6 +2,11 @@
 Version history
 ===============
 
+0.2.8 (2024-04-30)
+==================
+
+- Add support for Noble for additional archives (PPAs).
+
 0.2.7 (2024-04-11)
 ==================
 
