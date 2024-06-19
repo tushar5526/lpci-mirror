@@ -2,6 +2,12 @@
 Version history
 ===============
 
+0.2.9 (2024-06-19)
+==================
+
+- Add support for Ubuntu 24.10 (Oracular). Please note that PPAs are not yet
+  supported, see https://bugs.launchpad.net/lpci/+bug/2068868.
+
 0.2.8 (2024-04-30)
 ==================
 

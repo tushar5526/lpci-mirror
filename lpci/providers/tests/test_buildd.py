@@ -24,6 +24,7 @@ class TestLPCIBuilddBaseConfiguration(TestCase):
             "22.04": BuilddBaseAlias.JAMMY.value,
             "23.10": BuilddBaseAlias.MANTIC.value,
             "24.04": BuilddBaseAlias.NOBLE.value,
+            "24.10": BuilddBaseAlias.ORACULAR.value,
             "devel": BuilddBaseAlias.DEVEL.value,
         }
         for k, v in alias_mapping.items():
