@@ -16,7 +16,7 @@ craft-cli==2.5.1
     # via -r requirements.in
 craft-providers==1.24.0
     # via -r requirements.in
-cryptography==42.0.8
+cryptography==43.0.1
     # via secretstorage
 distro==1.9.0
     # via lazr-restfulclient
